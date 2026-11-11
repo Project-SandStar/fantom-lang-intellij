@@ -71,13 +71,13 @@ Decide whether to drop `pluginUntilBuild` (`gradle.properties:12`) so each new I
 
 ### Task 2.1: Build a `.fan` test corpus
 **Priority:** P1
-**Status:** Not Started
+**Status:** Done (2026-11-11, branch `grammar/fantom-corpus`)
 
-Collect 30 to 60 real `.fan` files (SkySpark pods, mcpfantom `fan/`, the 60-file sample listed in tree-sitter.md). Add a Gradle test source set with the IntelliJ test framework (`testFramework(TestFrameworkType.Platform)` in `build.gradle.kts:43` is commented out). Write a `ParsingTestCase` that parses each file and asserts no `PsiErrorElement`. Record the starting error count.
+Corpus is the seven Fantom distributions in `/Users/alper/fantom` (1.0.78 to 1.0.84, 869 files in 1.0.84). Test harness: `FantomCorpusParsingTest` and `FantomSnippetDumpTest` in `src/test/kotlin`, 42 snippets in `src/test/testData/snippets`. Baseline for 1.0.84: 4,590 errors in 560 of 869 files. How to run, the baseline, the root causes and the rewrite plan are in [grammar-work.md](grammar-work.md).
 
 ### Task 2.2: Fix the top grammar gaps
 **Priority:** P1
-**Status:** Not Started
+**Status:** In Progress (plan in [grammar-work.md](grammar-work.md) section 6, no grammar edits made yet)
 
 From the corpus, rank error causes. Known suspects from `Fantom.flex` and `Fantom.bnf`: DSL strings (`DSL_STRING` is commented out in `FantomParserDefinition.kt:43`), nested block comments, `using [java]` FFI imports, map type shorthand `Str:Int`, closures vs function types, `it`-blocks, facets with arguments. Fix one gap per PR with a corpus file that proves it.
 

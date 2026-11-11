@@ -1,4 +1,5 @@
 import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
+import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 
 fun properties(key: String) = providers.gradleProperty(key)
 fun environment(key: String) = providers.environmentVariable(key)
@@ -40,8 +41,12 @@ dependencies {
         plugins(properties("platformPlugins").map { it.split(',') })
 
         pluginVerifier()
-        // testFramework(TestFrameworkType.Platform.JUnit4)
+        testFramework(TestFrameworkType.Platform)
     }
+
+    // Known gaps in the Platform test framework: JUnit 4 and opentest4j are not pulled in.
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.opentest4j:opentest4j:1.3.0")
 }
 
 sourceSets {
@@ -107,6 +112,19 @@ tasks {
 
     wrapper {
         gradleVersion = properties("gradleVersion").get()
+    }
+
+    test {
+        useJUnit()
+        // Corpus of real .fan files to parse. Colon-separated list of folders.
+        // Example: FANTOM_CORPUS=/Users/me/fantom/fantom-1.0.84/src ./gradlew test
+        systemProperty("fantom.corpus", System.getenv("FANTOM_CORPUS") ?: "")
+        systemProperty("fantom.corpus.failOnErrors", System.getenv("FANTOM_CORPUS_FAIL") ?: "false")
+        systemProperty("fantom.snippets", System.getenv("FANTOM_SNIPPETS") ?: "")
+        testLogging {
+            showStandardStreams = true
+            events("passed", "failed", "skipped")
+        }
     }
 
     generateLexer {

@@ -12,7 +12,9 @@ Published on the JetBrains Marketplace as plugin 20289
 
 Docs live in `docs/`: [report.md](docs/report.md) (state of the plugin),
 [tasks.md](docs/tasks.md) (work list), [tree-sitter.md](docs/tree-sitter.md)
-(can the tree-sitter grammar replace or help the parser).
+(can the tree-sitter grammar replace or help the parser),
+[grammar-work.md](docs/grammar-work.md) (lexer and parser rewrite: corpus,
+baseline, root causes, plan; read it before touching `src/main/grammar`).
 
 ## Use context-mode for reading and searching
 

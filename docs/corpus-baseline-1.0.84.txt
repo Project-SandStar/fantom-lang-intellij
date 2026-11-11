@@ -1,0 +1,590 @@
+files=869 lines=182562 errors=4590 badChars=0 filesWithErrors=560
+
+# top error messages
+625	':', '::', '?', IDENTIFIER or '[' expected, got '('
+301	':', '::', '?', IDENTIFIER or '[' expected, got '.'
+228	':', '::', '?', IDENTIFIER or '[' expected, got '='
+224	':', '::', '?', IDENTIFIER or '[' expected, got ')'
+198	'!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, is, isnot or '||' expected, got ','
+185	'make' unexpected
+162	':', '::', '?', IDENTIFIER or '[' expected, got ','
+146	'(', ':=' or '{' expected, got ','
+127	'(', ':=' or '{' expected, got ')'
+85	'!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ':=', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, IDENTIFIER, '[', as, is, isnot, '{' or '||' expected, got ')'
+84	'!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ':=', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, IDENTIFIER, '[', as, is, isnot, '{' or '||' expected, got '++'
+83	'!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, is, isnot, '{' or '||' expected, got ')'
+77	'++' unexpected
+72	':', '::', '?', IDENTIFIER or '[' expected, got '}'
+67	<type def> or FANDOC_LINE_COMMENT expected, got 'override'
+60	':', '::', '?', IDENTIFIER or '[' expected, got '|'
+57	<bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'i'
+55	':', '::', '?', IDENTIFIER or '[' expected, got 'this'
+52	IDENTIFIER expected, got 'make'
+51	<type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan'
+50	<field flag>, <method flag>, <type>, new or static expected, got 'new'
+50	'!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, is, isnot, '|' or '||' expected, got ','
+48	':', '::', '?', IDENTIFIER or '[' expected, got ':='
+45	'!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, '[', as, else, is, isnot, '{' or '||' expected, got ':='
+43	'!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, is, isnot, '{' or '||' expected, got ','
+
+# per file: errors badChars lines path | first error
+142	0	1097	/Users/alper/fantom/fantom-1.0.84/src/sql/test/SqlConnPoolTest.fan | line 39: <formal full> or '|' expected, got '{' :: reset := |->| { actors.each |a| { a.lastName.val = null } }
+84	0	168	/Users/alper/fantom/fantom-1.0.84/src/util/test/FloatArrayTest.fan | line 33: <formal full> or '|' expected, got '{' :: {
+84	0	213	/Users/alper/fantom/fantom-1.0.84/src/util/test/IntArrayTest.fan | line 82: <formal full> or '|' expected, got '{' :: {
+65	0	336	/Users/alper/fantom/fantom-1.0.84/src/testDomkit/fan/ButtonTest.fan | line 38: '!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, is, isnot or '||' expected, got ',' :: Button { it.text="Button"; it.onAction { echo("# Button-1") }},
+62	0	495	/Users/alper/fantom/fantom-1.0.84/src/xml/test/ParserTest.fan | line 119: '!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, is, isnot or '||' expected, got ',' :: XElem("alpha") { XElem("beta"), },
+57	0	789	/Users/alper/fantom/fantom-1.0.84/src/testSys/fan/IntTest.fan | line 206: <bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'x' :: verifyEq(x++, 5); verifyEq(x, 6)
+51	0	304	/Users/alper/fantom/fantom-1.0.84/src/testSys/fan/LogTest.fan | line 91: ':=' or ';' expected, got '.' :: log.err("xyz")
+45	0	389	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/ast/TypeDef.fan | line 20: 'make' unexpected :: new make(CNamespace ns, Loc loc, CompilationUnit unit, Str name, Int flags := 0)
+44	0	1345	/Users/alper/fantom/fantom-1.0.84/src/testSys/fan/StrTest.fan | line 611: '!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, is, isnot or '||' expected, got '""' :: "".each |Int c| { chars.add(c) }
+41	0	54	/Users/alper/fantom/fantom-1.0.84/src/compilerJava/fan/JavaPrimitives.fan | line 23: 'make' unexpected :: new make(JavaBridge bridge)
+39	0	383	/Users/alper/fantom/fantom-1.0.84/src/wisp/fan/WispService.fan | line 136: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, '[', as, else, is, isnot, '{' or '||' expected, got ':=' :: pairs := Str[,]
+38	0	484	/Users/alper/fantom/fantom-1.0.84/src/testSys/fan/TypeTest.fan | line 286: <bool>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'Func' :: verifyEq(Func#.parameterize(["R":Void#]), |->|#)
+37	0	79	/Users/alper/fantom/fantom-1.0.84/src/testSys/fan/ParserTotureTest.fan | line 66: IDENTIFIER expected, got 'Int' :: verifyEq([Int:Str][]#get.returns, [Int:Str]#)
+35	0	1089	/Users/alper/fantom/fantom-1.0.84/src/xml/fan/XParser.fan | line 77: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ':=', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, IDENTIFIER, '[', as, is, isnot, '{' or '||' expected, got '++' :: depth++
+34	0	1065	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/parser/Tokenizer.fan | line 27: 'make' unexpected :: new make(Compiler compiler, Loc loc, Str buf, Bool isDoc)
+34	0	552	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/util/CallResolver.fan | line 24: 'make' unexpected :: new make(Compiler compiler, TypeDef? curType, MethodDef? curMethod, NameExpr exp
+33	0	452	/Users/alper/fantom/fantom-1.0.84/src/fanc/fan/java/JavaNativeGen.fan | line 92: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, '[', as, else, is, isnot, '{' or '||' expected, got ':=' :: dstDir := JavaUtil.podDir(outDir, pod.name)
+33	0	695	/Users/alper/fantom/fantom-1.0.84/src/markdown/fan/parser/DocumentParser.fan | line 124: <stmt> expected, got 'private' :: override SourceLine? line := null { private set }
+32	0	512	/Users/alper/fantom/fantom-1.0.84/src/cryptoJava/test/JCsrTest.fan | line 407: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ':=', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, IDENTIFIER, '[', as, is, isnot, '{' or '||' expected, got '++' :: while (tempLen > 0) { numOctets++; tempLen = tempLen.shiftr(8) }
+32	0	1353	/Users/alper/fantom/fantom-1.0.84/src/sql/test/SqlTest.fan | line 94: ':=' or ';' expected, got '(' :: verify(db.meta.tableExists(valsTable))
+31	0	1723	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/assembler/CodeAsm.fan | line 19: 'make' unexpected :: new make(Compiler compiler, Loc loc, FPod fpod, MethodDef? curMethod)
+31	0	320	/Users/alper/fantom/fantom-1.0.84/src/util/test/JsonTest.fan | line 79: <bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'i' :: for (i := 0; i < 32; i++)
+31	0	345	/Users/alper/fantom/fantom-1.0.84/src/web/test/UtilTest.fan | line 30: '!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, is, isnot or '||' expected, got '"!#\$%&'*+-.^_`|~"' :: "!#\$%&'*+-.^_`|~".each |c| { chars[c] = true }
+30	0	1492	/Users/alper/fantom/fantom-1.0.84/src/domkit/fan/Table.fan | line 20: IDENTIFIER expected, got 'make' :: new make() : super("div")
+29	0	79	/Users/alper/fantom/fantom-1.0.84/src/build/fan/tasks/JdkTask.fan | line 23: 'make' unexpected :: new make(BuildScript script)
+29	0	407	/Users/alper/fantom/fantom-1.0.84/src/syntax/fan/SyntaxParser.fan | line 34: <bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'num' :: line := parseLine(num++, text)
+27	0	923	/Users/alper/fantom/fantom-1.0.84/src/concurrent/test/ActorTest.fan | line 61: '!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, is, isnot or '||' expected, got '100' :: 100.times |Int i| { futures.add(a.send(i)) }
+27	0	506	/Users/alper/fantom/fantom-1.0.84/src/testSys/fan/EnvTest.fan | line 360: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, '[', as, else, is, isnot, '{' or '||' expected, got ':=' :: etc :=  Env.cur.workDir + `etc/concurrent/locale/fr.props`
+26	0	234	/Users/alper/fantom/fantom-1.0.84/src/testSys/fan/MethodTest.fan | line 31: <formal full> or '|' expected, got '{' :: Func m := |->| {}
+24	0	627	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/File.fan | line 33: '{' expected, got 'new' :: static new make(Uri uri, Bool checkSlash := true)
+23	0	82	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/Month.fan | line 42: '(', ',' or ';' expected, got '@' :: @Operator Month increment()
+23	0	79	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/Weekday.fan | line 32: '(', ',' or ';' expected, got '@' :: @Operator Weekday increment()
+23	0	1812	/Users/alper/fantom/fantom-1.0.84/src/testSys/fan/ListTest.fan | line 99: <bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'Str' :: [Str:Int]? x := null
+23	0	1403	/Users/alper/fantom/fantom-1.0.84/src/testSys/fan/MapTest.fan | line 326: <bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'Int' :: for (Int i :=0;   i<10000; ++i) m[i] = i.toStr
+22	0	719	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/Buf.fan | line 48: '{' expected, got 'new' :: static new make(Int capacity := 1024)
+22	0	1209	/Users/alper/fantom/fantom-1.0.84/src/testSys/fan/SerializationTest.fan | line 126: IDENTIFIER expected, got 'Str' :: verifySer("using sys\n[Str:Int?][]#", [Str:Int?][]#)
+21	0	37	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/CompilerErr.fan | line 15: 'make' unexpected :: new make(Str msg, Loc? loc, Err? cause := null, LogLevel level := LogLevel.err)
+21	0	285	/Users/alper/fantom/fantom-1.0.84/src/compilerJava/fan/dasm/Dasm.fan | line 67: <bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'i' :: for (i:=1; i<count; ++i)
+21	0	160	/Users/alper/fantom/fantom-1.0.84/src/compilerJs/fan/CompileJsPlugin.fan | line 22: 'make' unexpected :: new make(Compiler c) : super(c)
+21	0	446	/Users/alper/fantom/fantom-1.0.84/src/cryptoJava/fan/JJwk.fan | line 198: '(', ',' or ';' expected, got 'static' :: static new fromParameters(Str:Obj key)
+21	0	313	/Users/alper/fantom/fantom-1.0.84/src/testSys/fan/StmtTest.fan | line 174: <bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'i' :: for (i := 0; i<5; ++i) x += i.toStr
+20	0	236	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/ast/MethodDef.fan | line 40: 'make' unexpected :: new make(Loc loc, TypeDef parent, Str name := "?", Int flags := 0)
+19	0	58	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/ast/EnumDef.fan | line 22: 'make' unexpected :: new make(Loc loc, DocDef? doc, FacetDef[]? facets, Str name, Int ordinal)
+19	0	174	/Users/alper/fantom/fantom-1.0.84/src/compilerDoc/fan/model/DocSlot.fan | line 83: 'new' unexpected :: internal new make(DocAttrs attrs, DocTypeRef parent, Str name,
+19	0	544	/Users/alper/fantom/fantom-1.0.84/src/compilerJs/fan/ast/JsType.fan | line 21: 'make' unexpected :: new make(CompileJsPlugin plugin, TypeDef def) : super(plugin, def)
+19	0	175	/Users/alper/fantom/fantom-1.0.84/src/concurrent/fan/Actor.fan | line 31: 'make' unexpected :: new make(ActorPool pool, |Obj? -> Obj?|? receive := null)
+19	0	678	/Users/alper/fantom/fantom-1.0.84/src/crypto/fan/Jwt.fan | line 483: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ':=', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, IDENTIFIER, '[', as, else, is, isnot, '{' or '||' expected, got '++' :: if (sig[rawLen - i] < 0) j++
+19	0	197	/Users/alper/fantom/fantom-1.0.84/src/graphics/fan/FontData.fan | line 100: <bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'i' :: for (i := 0; i<f.names.size; ++i)
+19	0	513	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/DateTime.fan | line 85: '{' expected, got 'new' :: static new make(Int year, Month month, Int day, Int hour, Int min, Int sec := 0,
+18	0	2492	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/parser/Parser.fan | line 26: 'make' unexpected :: new make(Compiler compiler, CompilationUnit unit, ClosureExpr[] closures)
+18	0	144	/Users/alper/fantom/fantom-1.0.84/src/markdown/fan/ext/xetodoc/XetodocChapter.fan | line 51: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, '[', as, else, is, isnot, '{' or '||' expected, got ':=' :: level := 0
+18	0	176	/Users/alper/fantom/fantom-1.0.84/src/markdown/fan/render/html/HtmlRenderer.fan | line 47: <method flag>, <protection>, <type>, abstract, const, new or static expected, got 'const' :: internal const |HtmlContext->NodeRenderer|[] nodeRendererFactories
+18	0	207	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/Range.fan | line 26: 'makeInclusive' unexpected :: new makeInclusive(Int start, Int end)
+18	0	856	/Users/alper/fantom/fantom-1.0.84/src/testSys/fan/FloatTest.fan | line 294: <bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'x' :: verifyEq(x++, 5.0f); verifyEq(x, 6.0f)
+18	0	474	/Users/alper/fantom/fantom-1.0.84/src/testSys/fan/ReflectionTest.fan | line 126: <bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'i' :: for (i:=0; i<10; ++i)
+17	0	108	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/ast/FieldDef.fan | line 20: 'make' unexpected :: new make(Loc loc, TypeDef parent, Str name := "?", Int flags := 0)
+17	0	116	/Users/alper/fantom/fantom-1.0.84/src/domkit/fan/Sheet.fan | line 18: IDENTIFIER expected, got 'make' :: new make() : super()
+17	0	620	/Users/alper/fantom/fantom-1.0.84/src/markdown/fan/ext/gfm-tables/TablesExt.fan | line 87: '(', ',' or ';' expected, got '}' :: enum class Alignment { unspecified, left, center, right }
+16	0	151	/Users/alper/fantom/fantom-1.0.84/src/markdown/fan/parser/block/FencedCodeParser.fan | line 50: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, '[', as, is, isnot, '{' or '||' expected, got '--' :: --i
+16	0	1443	/Users/alper/fantom/fantom-1.0.84/src/testCompiler/fan/ParserTest.fan | line 442: <bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'n' :: m := (MethodDef)t.slotDefs[n++]
+16	0	122	/Users/alper/fantom/fantom-1.0.84/src/testDomkit/fan/DialogTest.fan | line 30: '!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, is, isnot or '||' expected, got ',' :: Button { it.text="Title";       onAction { open("Title", ["Close"]) }},
+16	0	799	/Users/alper/fantom/fantom-1.0.84/src/web/fan/WebUtil.fan | line 50: <bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'i' :: for (i:=0; i<127; ++i) m.add(i > 0x20)
+15	0	238	/Users/alper/fantom/fantom-1.0.84/src/compilerJs/fan/ast/JsPod.fan | line 21: 'make' unexpected :: new make(CompileJsPlugin plugin) : super(plugin)
+15	0	82	/Users/alper/fantom/fantom-1.0.84/src/domkit/fan/Combo.fan | line 20: IDENTIFIER expected, got 'make' :: new make() : super("div")
+15	0	150	/Users/alper/fantom/fantom-1.0.84/src/domkit/fan/Popup.fan | line 20: IDENTIFIER expected, got 'make' :: new make() : super()
+15	0	563	/Users/alper/fantom/fantom-1.0.84/src/fandoc/fan/FandocParser.fan | line 182: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ':=', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, IDENTIFIER, '[', as, is, isnot, '{' or '||' expected, got '++' :: i := 0; while (cur[i] == ' ') i++;
+15	0	447	/Users/alper/fantom/fantom-1.0.84/src/fanr/fan/tool/Command.fan | line 208: <bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'i' :: for (i:=0; i<toks.size; ++i)
+15	0	210	/Users/alper/fantom/fantom-1.0.84/src/math/fan/BigInt.fan | line 23: '{' expected, got 'new' :: static new fromStr(Str s, Int radix := 10, Bool checked := true)
+15	0	237	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/Time.fan | line 37: '{' expected, got 'new' :: static new make(Int hour, Int min, Int sec := 0, Int ns := 0)
+15	0	118	/Users/alper/fantom/fantom-1.0.84/src/testDomkit/fan/MenuTest.fan | line 34: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ':=', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, IDENTIFIER, '[', as, is, isnot, '{' or '||' expected, got ',' :: simple, disabled, bigSync, bigAsync(false), bigAsync(true),
+15	0	286	/Users/alper/fantom/fantom-1.0.84/src/testSys/fan/ExprTest.fan | line 90: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ':=', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, IDENTIFIER, '[', as, is, isnot, '{' or '||' expected, got '++' :: for (i=0; i<100; x.add(null)) { i++ }
+14	0	62	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/ast/ParamDef.fan | line 19: 'make' unexpected :: new make(Loc loc, CType type, Str name, Expr? def := null)
+14	0	371	/Users/alper/fantom/fantom-1.0.84/src/compilerDoc/fan/model/DocTypeRef.fan | line 250: <bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'i' :: for (i:=pos+1; i<len; ++i)
+14	0	104	/Users/alper/fantom/fantom-1.0.84/src/concurrent/test/LockTest.fan | line 43: 'make' unexpected :: new make(ActorPool pool, Str name, Bool toggle, Lock lock) : super(pool)
+14	0	164	/Users/alper/fantom/fantom-1.0.84/src/domkit/fan/Button.fan | line 20: IDENTIFIER expected, got 'make' :: new make() : super()
+14	0	81	/Users/alper/fantom/fantom-1.0.84/src/markdown/fan/parser/block/ThematicBreakParser.fan | line 61: <bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'i' :: for (i := index; i < len; ++i)
+14	0	949	/Users/alper/fantom/fantom-1.0.84/src/markdown/fan/parser/inline/DefaultInlineParser.fan | line 779: <bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'i' :: for (i := 0; i < usedDelims; ++i)
+14	0	339	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/Date.fan | line 43: '{' expected, got 'new' :: static new make(Int year, Month month, Int day)
+14	0	1111	/Users/alper/fantom/fantom-1.0.84/src/testSys/fan/BufTest.fan | line 69: <bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'i' :: for (i := 0; i<a.size; ++i)
+14	0	212	/Users/alper/fantom/fantom-1.0.84/src/xml/test/WriteTest.fan | line 61: '!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, is, isnot or '||' expected, got ',' :: XText("the "),
+13	0	158	/Users/alper/fantom/fantom-1.0.84/src/build/fan/tasks/CompileJava.fan | line 24: 'make' unexpected :: new make(BuildScript script)
+13	0	77	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/ast/PodDef.fan | line 19: 'make' unexpected :: new make(CNamespace ns, Loc loc, Str name)
+13	0	95	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/steps/OrderByInheritance.fan | line 22: 'make' unexpected :: new make(Compiler compiler)
+13	0	336	/Users/alper/fantom/fantom-1.0.84/src/compilerJava/fan/JavaDasmLoader.fan | line 101: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, '[', as, else, is, isnot, '{' or '||' expected, got ':=' :: isCtor := java.name == "<init>"
+13	0	524	/Users/alper/fantom/fantom-1.0.84/src/cryptoJava/fan/JCertSigner.fan | line 253: 'makeSpec' unexpected :: new makeSpec(AsnOid extnId, AsnObj val, Bool critical := false)
+13	0	30	/Users/alper/fantom/fantom-1.0.84/src/fandoc/fan/FandocErr.fan | line 16: 'make' unexpected :: new make(Str msg, Str file, Int line, Err? cause := null)
+13	0	416	/Users/alper/fantom/fantom-1.0.84/src/graphics/fan/Font.fan | line 56: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ':=', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, IDENTIFIER, '[', as, else, is, isnot, '{' or '||' expected, got '++' :: if (style != null) toki++
+13	0	407	/Users/alper/fantom/fantom-1.0.84/src/graphics/fan/Geom.fan | line 364: <bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'i' :: for (i := 0; i<s.size; ++i)
+13	0	180	/Users/alper/fantom/fantom-1.0.84/src/graphicsJava/fan/java2D/Java2DGraphicsEnv.fan | line 89: <bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'i' :: for (i := 0; i<names.size; ++i)
+13	0	92	/Users/alper/fantom/fantom-1.0.84/src/markdown/fan/render/markdown/MarkdownRenderer.fan | line 35: <method flag>, <protection>, <type>, abstract, const, new or static expected, got 'const' :: internal const |MarkdownContext->NodeRenderer|[] nodeRendererFactories
+13	0	141	/Users/alper/fantom/fantom-1.0.84/src/math/test/MMatrixTest.fan | line 121: <bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'i' :: for (i:=0;i<numRows;++i)
+13	0	195	/Users/alper/fantom/fantom-1.0.84/src/util/fan/PathEnv.fan | line 22: IDENTIFIER expected, got 'make' :: new make() : super(Env.cur)
+13	0	54	/Users/alper/fantom/fantom-1.0.84/src/xml/fan/XErr.fan | line 20: 'make' unexpected :: new make(Str? message := null, Int line := 0, Int col := 0, Err? cause := null)
+12	0	87	/Users/alper/fantom/fantom-1.0.84/src/asn1/fan/builtin/AsnOid.fan | line 19: 'new' unexpected :: protected new make(AsnTag[] tags, Int[] val) : super(tags, val)
+12	0	54	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/ast/CompilationUnit.fan | line 20: 'make' unexpected :: new make(Loc loc, CPod pod)
+12	0	85	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/namespace/MockSlot.fan | line 37: 'make' unexpected :: new make(CType parent, Str name, Int flags, CType of)
+12	0	227	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/namespace/TypeParser.fan | line 88: <bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'i' :: for (i:=pos+1; i<len; ++i)
+12	0	135	/Users/alper/fantom/fantom-1.0.84/src/compilerJava/fan/JavaSlot.fan | line 50: 'make' unexpected :: new make(CType parent, Str name, Int flags, CType type)
+12	0	412	/Users/alper/fantom/fantom-1.0.84/src/domkit/fan/Tree.fan | line 121: IDENTIFIER expected, got 'make' :: new make() : super()
+12	0	504	/Users/alper/fantom/fantom-1.0.84/src/fanc/fan/java/JavaMethodPrinter.fan | line 16: 'make' unexpected :: new make(JavaPrinter base, MethodDef def) : super(base)
+12	0	175	/Users/alper/fantom/fantom-1.0.84/src/markdown/fan/parser/block/HtmlBlockParser.fan | line 24: <stmt> expected, got 'private' :: override HtmlBlock block := HtmlBlock() { private set }
+12	0	539	/Users/alper/fantom/fantom-1.0.84/src/markdown/fan/render/markdown/CoreMarkdownNodeRenderer.fan | line 179: '!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, is, isnot or '||' expected, got '++' :: list.number++
+12	0	191	/Users/alper/fantom/fantom-1.0.84/src/sql/fan/DeprecatedTokenizer.fan | line 61: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, '[', as, is, isnot, '{' or '||' expected, got '++' :: start := cur++
+12	0	273	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/Duration.fan | line 38: '{' expected, got 'new' :: static new make(Int ticks)
+12	0	110	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/Version.fan | line 27: '{' expected, got 'new' :: static new fromStr(Str version, Bool checked := true)
+12	0	1892	/Users/alper/fantom/fantom-1.0.84/src/testSys/fan/DateTimeTest.fan | line 244: '!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, is, isnot or '||' expected, got '10' :: 10.times |->|
+12	0	321	/Users/alper/fantom/fantom-1.0.84/src/util/fan/TestRunner.fan | line 29: <bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'i' :: for (i:=0; i<args.size; ++i)
+11	0	118	/Users/alper/fantom/fantom-1.0.84/src/build/fan/tasks/CompileCs.fan | line 24: 'make' unexpected :: new make(BuildScript script)
+11	0	51	/Users/alper/fantom/fantom-1.0.84/src/build/fan/tasks/Exec.fan | line 15: 'make' unexpected :: new make(BuildScript script, Str[] cmd, File? dir := null)
+11	0	59	/Users/alper/fantom/fantom-1.0.84/src/build/fan/tasks/FanScript.fan | line 21: 'make' unexpected :: new make(BuildScript script, File file, Obj[]? args := null)
+11	0	1808	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/steps/CheckErrors.fan | line 34: 'make' unexpected :: new make(Compiler compiler)
+11	0	67	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/steps/CompileJs.fan | line 16: 'make' unexpected :: new make(Compiler compiler) : super(compiler)
+11	0	218	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/steps/InitInput.fan | line 27: 'make' unexpected :: new make(Compiler compiler)
+11	0	178	/Users/alper/fantom/fantom-1.0.84/src/compilerDoc/fan/renderers/DocChapterRenderer.fan | line 43: 'make' unexpected :: new make(DocEnv env, WebOutStream out, DocChapter doc)
+11	0	190	/Users/alper/fantom/fantom-1.0.84/src/compilerDoc/fan/renderers/DocPodIndexRenderer.fan | line 38: 'make' unexpected :: new make(DocEnv env, WebOutStream out, DocPodIndex doc)
+11	0	50	/Users/alper/fantom/fantom-1.0.84/src/compilerDoc/fan/renderers/DocSrcRenderer.fan | line 21: 'make' unexpected :: new make(DocEnv env, WebOutStream out, DocSrc doc)
+11	0	89	/Users/alper/fantom/fantom-1.0.84/src/compilerDoc/fan/renderers/DocTopIndexRenderer.fan | line 16: 'make' unexpected :: new make(DocEnv env, WebOutStream out, DocTopIndex doc)
+11	0	355	/Users/alper/fantom/fantom-1.0.84/src/compilerDoc/fan/renderers/DocTypeRenderer.fan | line 55: 'make' unexpected :: new make(DocEnv env, WebOutStream out, DocType doc)
+11	0	159	/Users/alper/fantom/fantom-1.0.84/src/concurrent/fan/Future.fan | line 27: 'NoDoc' unexpected :: @NoDoc protected new make(Future wrap)
+11	0	121	/Users/alper/fantom/fantom-1.0.84/src/cryptoJava/fan/JKeyStore.fan | line 96: 'make' unexpected :: new make(PrivKey priv, Cert[] chain, Str:Str attrs := [:]) : super(attrs)
+11	0	89	/Users/alper/fantom/fantom-1.0.84/src/cryptoJava/fan/pkcs/Pkcs1.fan | line 63: 'makeSpec' unexpected :: new makeSpec(AsnOid algorithm, AsnObj? parameters := Asn.Null)
+11	0	150	/Users/alper/fantom/fantom-1.0.84/src/domkit/fan/Dialog.fan | line 19: IDENTIFIER expected, got 'make' :: new make() : super()
+11	0	66	/Users/alper/fantom/fantom-1.0.84/src/domkit/fan/FlipBox.fan | line 17: IDENTIFIER expected, got 'make' :: new make() : super()
+11	0	617	/Users/alper/fantom/fantom-1.0.84/src/fandoc/fan/DocModel.fan | line 30: '(', ',' or ';' expected, got '}' :: hr
+11	0	326	/Users/alper/fantom/fantom-1.0.84/src/markdown/fan/parser/block/ListBlockParser.fan | line 117: <bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'i' :: for (i := indexAfterMarker; i < len; ++i)
+11	0	196	/Users/alper/fantom/fantom-1.0.84/src/markdown/fan/render/markdown/MarkdownWriter.fan | line 24: <stmt> expected, got 'private' :: Int lastChar := 0 { private set }
+11	0	172	/Users/alper/fantom/fantom-1.0.84/src/sql/fan/Tokenizer.fan | line 44: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, '[', as, is, isnot, '{' or '||' expected, got '++' :: start := cur++
+11	0	100	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/Uuid.fan | line 44: <field flag>, <method flag>, <type>, new or '{' expected, got 'new' :: static new make()
+11	0	410	/Users/alper/fantom/fantom-1.0.84/src/testSys/fan/FieldTest.fan | line 26: '&' unexpected :: &count = 3
+11	0	1289	/Users/alper/fantom/fantom-1.0.84/src/testSys/fan/StreamTest.fan | line 105: '!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, is, isnot or '||' expected, got '5' :: 5.times |Int i|
+11	0	25	/Users/alper/fantom/fantom-1.0.84/src/xml/fan/XIncompleteErr.fan | line 19: 'make' unexpected :: new make(Str? message := null, Int line := 0, Int col := 0, Err? cause := null)
+10	0	121	/Users/alper/fantom/fantom-1.0.84/src/build/fan/BuildGroup.fan | line 117: 'make' unexpected :: new make(BuildGroup s, Str n) : super(s, BuildGroup#runOnChildren) { name = n }
+10	0	99	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/assembler/AttrAsm.fan | line 21: 'make' unexpected :: new make(Compiler compiler, FPod fpod)
+10	0	530	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/namespace/GenericTypes.fan | line 137: 'make' unexpected :: new make(CType v)
+10	0	116	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/parser/TokenVal.fan | line 15: 'make' unexpected :: new make(Token kind, Obj? val := null)
+10	0	57	/Users/alper/fantom/fantom-1.0.84/src/compilerDoc/fan/env/DocErrHandler.fan | line 17: 'make' unexpected :: new make(Str msg, DocLoc loc, Err? cause := null)
+10	0	229	/Users/alper/fantom/fantom-1.0.84/src/compilerDoc/fan/model/DocMisc.fan | line 177: <bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'i' :: for (i:=0; i<text.size; i++)
+10	0	149	/Users/alper/fantom/fantom-1.0.84/src/crypto/fan/San.fan | line 132: ',' or ';' expected, got 'private' :: private new make(Int tagId, Str text)
+10	0	56	/Users/alper/fantom/fantom-1.0.84/src/domkit/fan/Checkbox.fan | line 18: IDENTIFIER expected, got 'make' :: new make() : super("input")
+10	0	65	/Users/alper/fantom/fantom-1.0.84/src/domkit/fan/FilePicker.fan | line 18: IDENTIFIER expected, got 'make' :: new make() : super("input")
+10	0	75	/Users/alper/fantom/fantom-1.0.84/src/domkit/fan/ProgressBar.fan | line 18: 'make' unexpected :: new make(|This|? f := null) : super("div")
+10	0	62	/Users/alper/fantom/fantom-1.0.84/src/domkit/fan/RadioButton.fan | line 20: IDENTIFIER expected, got 'make' :: new make() : super("input")
+10	0	27	/Users/alper/fantom/fantom-1.0.84/src/domkit/fan/ScrollBox.fan | line 16: IDENTIFIER expected, got 'make' :: new make() : super()
+10	0	37	/Users/alper/fantom/fantom-1.0.84/src/email/fan/SmtpErr.fan | line 18: 'make' unexpected :: new make(Int code, Str? msg, Err? cause := null)
+10	0	238	/Users/alper/fantom/fantom-1.0.84/src/fanr/fan/web/WebRepo.fan | line 73: <bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'Str' :: [Str:Str][] jsonPods := jsonRes["pods"] ?: throw Err("Missing 'pods' in JSON res
+10	0	74	/Users/alper/fantom/fantom-1.0.84/src/markdown/fan/parser/block/IndentedCodeParser.fan | line 19: <stmt> expected, got 'private' :: override IndentedCode block := IndentedCode() { private set }
+10	0	112	/Users/alper/fantom/fantom-1.0.84/src/markdown/fan/render/text/TextRenderer.fan | line 36: <method flag>, <protection>, <type>, abstract, const, new or static expected, got 'const' :: internal const |TextContext->NodeRenderer|[] nodeRendererFactories
+10	0	145	/Users/alper/fantom/fantom-1.0.84/src/markdown/fan/util/Esc.fan | line 29: '!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, is, isnot, '{' or '||' expected, got ';' :: Regex("(%[a-fA-F0-9]{0,2}|[^:/?#@!\$&'()*+,;=a-zA-Z0-9\\-._~])");
+10	0	169	/Users/alper/fantom/fantom-1.0.84/src/util/fan/FileLoc.fan | line 153: 'make' unexpected :: new make(Str msg, FileLoc loc, Err? cause := null) : super(msg, cause)
+10	0	63	/Users/alper/fantom/fantom-1.0.84/src/util/fan/LockFile.fan | line 21: 'make' unexpected :: new make(File file)
+10	0	308	/Users/alper/fantom/fantom-1.0.84/src/web/fan/WebSocket.fan | line 183: <bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'masked' :: if (masked)
+9	0	100	/Users/alper/fantom/fantom-1.0.84/src/asn1/fan/builtin/AsnBin.fan | line 19: 'make' unexpected :: new make(AsnTag[] tags, Buf buf) : super(tags, Unsafe(buf.dup))
+9	0	197	/Users/alper/fantom/fantom-1.0.84/src/asn1/fan/builtin/AsnColl.fan | line 19: 'new' unexpected :: protected new make(AsnTag[] tags, Obj val) : super(tags, toItems(val))
+9	0	95	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/fcode/FOp.fan | line 71: ',' or ';' expected, got 'private' :: private new make(FOpArg arg := FOpArg.None) { this.arg = arg }
+9	0	551	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/namespace/CType.fan | line 262: <bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'i' :: for (i:=0; i<mixins.size; ++i)
+9	0	114	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/steps/ResolveDepends.fan | line 25: 'make' unexpected :: new make(Compiler compiler)
+9	0	307	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/steps/ResolveImports.fan | line 28: 'make' unexpected :: new make(Compiler compiler)
+9	0	92	/Users/alper/fantom/fantom-1.0.84/src/domkit/fan/AccordionBox.fan | line 20: IDENTIFIER expected, got 'make' :: new make() : super()
+9	0	132	/Users/alper/fantom/fantom-1.0.84/src/domkit/fan/ListButton.fan | line 21: IDENTIFIER expected, got 'make' :: new make() : super()
+9	0	304	/Users/alper/fantom/fantom-1.0.84/src/domkit/fan/SashBox.fan | line 20: IDENTIFIER expected, got 'make' :: new make() : super()
+9	0	67	/Users/alper/fantom/fantom-1.0.84/src/domkit/fan/TextArea.fan | line 18: IDENTIFIER expected, got 'make' :: new make() : super("textarea")
+9	0	103	/Users/alper/fantom/fantom-1.0.84/src/domkit/fan/TextField.fan | line 18: IDENTIFIER expected, got 'make' :: new make() : super("input")
+9	0	94	/Users/alper/fantom/fantom-1.0.84/src/email/test/EmailTest.fan | line 58: <formal full> or '|' expected, got '{' :: {
+9	0	271	/Users/alper/fantom/fantom-1.0.84/src/fanr/fan/file/FileRepoDb.fan | line 73: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, '[', as, else, is, isnot, '{' or '||' expected, got ':=' :: ver := Version.fromStr(n[dash+1..-5], false)
+9	0	469	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/Int.fan | line 26: '{' expected, got 'new' :: static new fromStr(Str s, Int radix := 10, Bool checked := true)
+9	0	378	/Users/alper/fantom/fantom-1.0.84/src/testSys/fan/ErrTest.fan | line 26: <bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'line' :: verifyTrace(line++) |->| { throw Err.make("foo") }
+9	0	356	/Users/alper/fantom/fantom-1.0.84/src/testSys/fan/FuncTest.fan | line 66: <formal full> or '|' expected, got '{' :: invoke |->| { x++ }; verifyEq(x, 1)
+8	0	333	/Users/alper/fantom/fantom-1.0.84/src/asn1/fan/ber/BerWriter.fan | line 198: '#', '(', '.', ':', '::', <bool>, <map type>, <map>, <prefix expr>, <str>, '?', DECIMAL_LITERAL, DSL_STRING, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '{' expected, got 'buf' :: return allZero ? buf : buf.writeBuf(raw)
+8	0	603	/Users/alper/fantom/fantom-1.0.84/src/build/fan/BuildPod.fan | line 170: ':=' or ';' expected, got '.' :: log.info("compile [$podName]")
+8	0	37	/Users/alper/fantom/fantom-1.0.84/src/build/fan/tasks/CreateDir.fan | line 15: 'make' unexpected :: new make(BuildScript script, File dir)
+8	0	112	/Users/alper/fantom/fantom-1.0.84/src/build/fan/tasks/CreateZip.fan | line 15: 'make' unexpected :: new make(BuildScript script)
+8	0	36	/Users/alper/fantom/fantom-1.0.84/src/build/fan/tasks/Delete.fan | line 15: 'make' unexpected :: new make(BuildScript script, File file)
+8	0	1782	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/ast/Expr.fan | line 19: 'make' unexpected :: new make(Loc loc, ExprId id)
+8	0	94	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/ast/FacetDef.fan | line 19: 'make' unexpected :: new make(Loc loc, CType type)
+8	0	52	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/ast/SlotDef.fan | line 19: 'make' unexpected :: new make(Loc loc, TypeDef parentDef)
+8	0	689	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/ast/Stmt.fan | line 19: 'make' unexpected :: new make(Loc loc, StmtId id)
+8	0	86	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/ast/TypeRef.fan | line 21: 'make' unexpected :: new make(Loc loc, CType t)
+8	0	229	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/fcode/Fanp.fan | line 160: <bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'i' :: for (i:=0; i<args.size; ++i)
+8	0	448	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/namespace/CNamespace.fan | line 300: '(', ':=' or '{' expected, got '[' :: [Str:CDepend]? depends
+8	0	996	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/steps/ResolveExpr.fan | line 25: 'make' unexpected :: new make(Compiler compiler)
+8	0	78	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/steps/Tokenize.fan | line 21: 'make' unexpected :: new make(Compiler compiler)
+8	0	80	/Users/alper/fantom/fantom-1.0.84/src/dom/fan/CssDim.fan | line 35: <bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'i' :: for (i:=0; i<s.size; i++)
+8	0	191	/Users/alper/fantom/fantom-1.0.84/src/domkit/fan/Menu.fan | line 19: IDENTIFIER expected, got 'make' :: new make() : super()
+8	0	97	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/Bool.fan | line 25: '{' expected, got 'new' :: static new fromStr(Str s, Bool checked := true)
+8	0	85	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/Charset.fan | line 26: '{' expected, got 'new' :: static new fromStr(Str name, Bool checked := true)
+8	0	174	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/Decimal.fan | line 26: '{' expected, got 'new' :: static new fromStr(Str s, Bool checked := true)
+8	0	151	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/Depend.fan | line 59: '{' expected, got 'new' :: static new fromStr(Str s, Bool checked := true)
+8	0	413	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/Env.fan | line 29: 'new' unexpected :: protected new make(Env parent := Env.cur)
+8	0	38	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/FileStore.fan | line 16: IDENTIFIER expected, got 'NoDoc' :: @NoDoc protected new makeNew()
+8	0	410	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/Float.fan | line 42: '{' expected, got 'new' :: static new fromStr(Str s, Bool checked := true)
+8	0	96	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/Locale.fan | line 31: '{' expected, got 'new' :: static new fromStr(Str s, Bool checked := true)
+8	0	128	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/MimeType.fan | line 26: '{' expected, got 'new' :: static new fromStr(Str s, Bool checked := true)
+8	0	110	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/Regex.fan | line 29: '{' expected, got 'new' :: static new fromStr(Str pattern, Str flags := "")
+8	0	143	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/TimeZone.fan | line 62: '{' expected, got 'new' :: static new fromStr(Str name, Bool checked := true)
+8	0	709	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/Uri.fan | line 84: '{' expected, got 'new' :: static new fromStr(Str s, Bool checked := true)
+8	0	60	/Users/alper/fantom/fantom-1.0.84/src/testDomkit/fan/LabelTest.fan | line 35: '!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, is, isnot or '||' expected, got ',' :: Label { it.text="Lorem Ipsom" },
+8	0	207	/Users/alper/fantom/fantom-1.0.84/src/testSys/fan/RangeTest.fan | line 99: '(' unexpected :: (2..4).each |Int i| { list.add(i) }
+8	0	173	/Users/alper/fantom/fantom-1.0.84/src/util/test/CsvTest.fan | line 143: <bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'row' :: verifyEq(row, expected[i++])
+8	0	658	/Users/alper/fantom/fantom-1.0.84/src/web/fan/WebClient.fan | line 65: '!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, else, is, isnot or '||' expected, got '&' :: &reqUri = it
+8	0	258	/Users/alper/fantom/fantom-1.0.84/src/wisp/fan/WispActor.fan | line 23: 'make' unexpected :: new make(WispService service)
+7	0	16	/Users/alper/fantom/fantom-1.0.84/src/asn1/fan/AsnErr.fan | line 14: 'make' unexpected :: new make(Str msg := "", Err? cause := null) : super(msg, cause) { }
+7	0	231	/Users/alper/fantom/fantom-1.0.84/src/asn1/fan/AsnTag.fan | line 149: ',' or ';' expected, got 'private' :: private new make(Int mask) { this.mask = mask }
+7	0	19	/Users/alper/fantom/fantom-1.0.84/src/build/fan/FatalBuildErr.fan | line 15: 'make' unexpected :: new make(Str msg := "", Err? cause := null)
+7	0	118	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/ast/Block.fan | line 19: 'make' unexpected :: new make(Loc loc)
+7	0	157	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/fcode/FTable.fan | line 155: '(', ':=' or '{' expected, got '|' :: |OutStream out, Obj obj| writer
+7	0	517	/Users/alper/fantom/fantom-1.0.84/src/compilerDoc/fan/model/DocPod.fan | line 498: '(', ':=' or '{' expected, got '|' :: |DocErr| onErr                // ctor
+7	0	59	/Users/alper/fantom/fantom-1.0.84/src/compilerDoc/fan/util/DefaultDocEnv.fan | line 40: 'make' unexpected :: new make(DefaultDocEnv env) : super(ActorPool()) { this.env = env }
+7	0	840	/Users/alper/fantom/fantom-1.0.84/src/compilerJava/fan/JavaBridge.fan | line 25: 'make' unexpected :: new make(Compiler c)
+7	0	250	/Users/alper/fantom/fantom-1.0.84/src/compilerJava/fan/cp/ClassPathModel.fan | line 48: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, '[', as, else, is, isnot, '{' or '||' expected, got ':=' :: packageName := uri.path[0..-2].join(".")
+7	0	131	/Users/alper/fantom/fantom-1.0.84/src/compilerJs/fan/JsWriter.fan | line 29: <stmt> expected, got 'private' :: Int line := 0 { private set }
+7	0	822	/Users/alper/fantom/fantom-1.0.84/src/compilerJs/fan/ast/JsExpr.fan | line 16: 'make' unexpected :: new make(CompileJsPlugin plugin, Expr expr) : super(plugin, expr)
+7	0	246	/Users/alper/fantom/fantom-1.0.84/src/compilerJs/fan/ast/JsStmt.fan | line 16: 'make' unexpected :: new make(CompileJsPlugin plugin, Stmt stmt) : super(plugin, stmt)
+7	0	212	/Users/alper/fantom/fantom-1.0.84/src/compilerJs/fan/util/TzTool.fan | line 119: IDENTIFIER expected, got 'Str' :: rules := ([Str:Obj][])tz->rules
+7	0	37	/Users/alper/fantom/fantom-1.0.84/src/concurrent/fan/ActorContext.fan | line 34: 'make' unexpected :: new make(Str msg := "", Err? cause := null) : super(msg, cause) {}
+7	0	28	/Users/alper/fantom/fantom-1.0.84/src/concurrent/fan/Errs.fan | line 16: 'make' unexpected :: new make(Str msg := "", Err? cause := null) : super(msg, cause) {}
+7	0	234	/Users/alper/fantom/fantom-1.0.84/src/cryptoJava/fan/JCsr.fan | line 178: <bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'i' :: for (i := 0; i < attrs.size; ++i)
+7	0	232	/Users/alper/fantom/fantom-1.0.84/src/cryptoJava/fan/pkcs/Pem.fan | line 35: ',' or ';' expected, got 'private' :: private new make(Str text)
+7	0	227	/Users/alper/fantom/fantom-1.0.84/src/dom/fan/Svg.fan | line 143: <bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'i' :: for (i:=0; i<s.size; ++i)
+7	0	108	/Users/alper/fantom/fantom-1.0.84/src/domkit/fan/Tooltip.fan | line 20: IDENTIFIER expected, got 'make' :: new make() : super()
+7	0	273	/Users/alper/fantom/fantom-1.0.84/src/fandoc/fan/FandocDocWriter.fan | line 23: '|' unexpected :: |Link link|? onLink := null
+7	0	331	/Users/alper/fantom/fantom-1.0.84/src/fanr/test/WebRepoTest.fan | line 315: 'make' unexpected :: new make(Str u, Str p) : super(u, p) {}
+7	0	222	/Users/alper/fantom/fantom-1.0.84/src/fansh/fan/Shell.fan | line 28: ':=' or ';' expected, got '.' :: out.printLine("Fantom Shell v${Pod.of(this).version} ('?' for help)")
+7	0	20	/Users/alper/fantom/fantom-1.0.84/src/inet/fan/UnknownHostErr.fan | line 15: 'make' unexpected :: new make(Str msg, Err? cause := null)
+7	0	119	/Users/alper/fantom/fantom-1.0.84/src/markdown/fan/ast/Link.fan | line 58: 'make' unexpected :: new make(Str destination, Str? title := null) : super(destination, title)
+7	0	389	/Users/alper/fantom/fantom-1.0.84/src/markdown/fan/ext/xetodoc/Xetodoc.fan | line 50: '|' unexpected :: |Node node, Str msg|? onWarnCb { protected set }
+7	0	332	/Users/alper/fantom/fantom-1.0.84/src/markdown/fan/parser/Scanner.fan | line 195: ';' or else expected, got '++' :: ++count
+7	0	21	/Users/alper/fantom/fantom-1.0.84/src/sql/fan/SqlErr.fan | line 15: 'make' unexpected :: new make(Str? msg, Err? cause := null)
+7	0	79	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/Enum.fan | line 34: 'NoDoc' unexpected :: @NoDoc
+7	0	857	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/List.fan | line 25: 'make' unexpected :: new make(Type of, Int capacity := 0)
+7	0	154	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/Log.fan | line 48: 'make' unexpected :: new make(Str name, Bool register)
+7	0	57	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/LogRec.fan | line 19: 'make' unexpected :: new make(DateTime time, LogLevel level, Str logName, Str message, Err? err := nu
+7	0	178	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/Test.fan | line 24: <field flag>, <method flag>, <type>, new or static expected, got 'new' :: protected new make()
+7	0	60	/Users/alper/fantom/fantom-1.0.84/src/util/fan/BoolArray.fan | line 22: '{' expected, got 'new' :: static new make(Int size)
+7	0	116	/Users/alper/fantom/fantom-1.0.84/src/wisp/fan/MemWispSessionStore.fan | line 17: 'make' unexpected :: new make(WispService service) : super(ActorPool { it.name = "WispServiceSessions
+6	0	343	/Users/alper/fantom/fantom-1.0.84/src/build/fan/BuildScript.fan | line 138: <bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'i' :: for (i:=0; i<s.size-3; ++i)
+6	0	331	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/fcode/FPod.fan | line 266: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, '[', as, else, is, isnot, '{' or '||' expected, got ':=' :: out := out(uri)
+6	0	140	/Users/alper/fantom/fantom-1.0.84/src/compilerDoc/fan/model/DocFlags.fan | line 111: <bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'b' :: for (b:=1; b<=Virtual; b=b.shiftl(1))
+6	0	287	/Users/alper/fantom/fantom-1.0.84/src/compilerJs/fan/ast/JsNode.fan | line 28: '!=', '!==', '&&', ':', '::', ';', <assign op>, '==', '===', '?', '?:', '[' or '||' expected, got '(' :: static Loc? toLoc(Obj obj) { obj is Node ? ((Node)obj).loc : null }
+6	0	39	/Users/alper/fantom/fantom-1.0.84/src/domkit/fan/Link.fan | line 16: IDENTIFIER expected, got 'make' :: new make() : super("a")
+6	0	345	/Users/alper/fantom/fantom-1.0.84/src/fanc/fan/java/JavaTypePrinter.fan | line 16: 'make' unexpected :: new make(OutStream out) : super.makeTop(out) {}
+6	0	238	/Users/alper/fantom/fantom-1.0.84/src/graphicsJava/fan/server/PngDecoder.fan | line 178: 'make' unexpected :: new make(|This| f) : super(f) { }
+6	0	225	/Users/alper/fantom/fantom-1.0.84/src/markdown/fan/parser/Parser.fan | line 63: <map type>, IDENTIFIER, '[' or '|' expected, got 'PostProcessor' :: internal |->PostProcessor|[] postProcessorFactories() { postProcessorFactoriesRe
+6	0	63	/Users/alper/fantom/fantom-1.0.84/src/sql/fan/BatchExecutor.fan | line 59: IDENTIFIER expected, got 'Str' :: private [Str:Obj][] queued := [Str:Obj][,]
+6	0	272	/Users/alper/fantom/fantom-1.0.84/src/syntax/test/SyntaxTest.fan | line 258: <bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'i' :: for (i:=0; i<styling.size; i+=2)
+6	0	75	/Users/alper/fantom/fantom-1.0.84/src/testDomkit/fan/CheckboxTest.fan | line 60: '!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, is, isnot, '|' or '||' expected, got ',' :: Checkbox {}.wrap("Checkbox"),
+6	0	94	/Users/alper/fantom/fantom-1.0.84/src/testDomkit/fan/RadioButtonTest.fan | line 79: '!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, is, isnot, '|' or '||' expected, got ',' :: RadioButton {}.wrap("RadioButton"),
+6	0	155	/Users/alper/fantom/fantom-1.0.84/src/testGraphics/fan/MainDom.fan | line 106: <formal full> or '|' expected, got '?' :: |->|? repaint := null
+6	0	802	/Users/alper/fantom/fantom-1.0.84/src/testSys/fan/FileTest.fan | line 275: '(' unexpected :: (dirX + `a1`).out.print("foo").close;
+6	0	180	/Users/alper/fantom/fantom-1.0.84/src/util/fan/FileLogger.fan | line 30: 'make' unexpected :: new make(|This|? f := null) : super(f) {}
+6	0	123	/Users/alper/fantom/fantom-1.0.84/src/util/fan/Macro.fan | line 84: <bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'pattern' :: resBuf.addChar(pattern[pos++])
+6	0	70	/Users/alper/fantom/fantom-1.0.84/src/util/fan/SyntheticFile.fan | line 15: 'make' unexpected :: new make(Uri uri) : super.makeNew(uri) {}
+6	0	271	/Users/alper/fantom/fantom-1.0.84/src/wisp/fan/WispRes.fan | line 50: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ':=', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, IDENTIFIER, '[', as, is, isnot, '{' or '||' expected, got '&' :: &statusCode = it
+6	0	327	/Users/alper/fantom/fantom-1.0.84/src/xml/test/PullTest.fan | line 198: '!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, is, isnot, '|' or '||' expected, got ',' :: root := XElem("root", def) { XAttr.makeNs(def), XAttr.makeNs(q), }
+5	0	42	/Users/alper/fantom/fantom-1.0.84/src/asn1/test/ber/BerTest.fan | line 36: <bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'i' :: for (i := 0; i < a.size; ++i)
+5	0	22	/Users/alper/fantom/fantom-1.0.84/src/build/fan/BuildLog.fan | line 17: 'make' unexpected :: new make(OutStream out := Env.cur.out)
+5	0	92	/Users/alper/fantom/fantom-1.0.84/src/build/fan/tasks/CompileJni.fan | line 15: 'make' unexpected :: new make(BuildScript script) : super(script) {}
+5	0	340	/Users/alper/fantom/fantom-1.0.84/src/build/fan/tasks/JarDist.fan | line 22: 'make' unexpected :: new make(BuildScript script)
+5	0	119	/Users/alper/fantom/fantom-1.0.84/src/build/fan/tasks/PodRewrite.fan | line 25: 'make' unexpected :: new make(BuildScript script)
+5	0	85	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/CompilerStep.fan | line 24: 'make' unexpected :: new make(Compiler compiler)
+5	0	184	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/assembler/Assembler.fan | line 19: 'make' unexpected :: new make(Compiler compiler)
+5	0	136	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/ast/DefNode.fan | line 22: 'make' unexpected :: new make(Loc loc)
+5	0	56	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/ast/Using.fan | line 21: 'make' unexpected :: new make(Loc loc)
+5	0	226	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/ast/Visitor.fan | line 174: '(', ',' or ';' expected, got '}' :: enum class VisitDepth { typeDef, slotDef, stmt, expr }
+5	0	136	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/dsl/DslPlugin.fan | line 70: 'make' unexpected :: new make(Compiler c) : super(c) {}
+5	0	40	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/dsl/RegexDslPlugin.fan | line 22: 'make' unexpected :: new make(Compiler c) : super(c) {}
+5	0	37	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/dsl/StrDslPlugin.fan | line 22: 'make' unexpected :: new make(Compiler c) : super(c) {}
+5	0	74	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/fcode/FField.fan | line 20: 'make' unexpected :: new make(FType fparent)
+5	0	174	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/fcode/FMethod.fan | line 20: 'make' unexpected :: new make(FType fparent)
+5	0	110	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/namespace/CBridge.fan | line 26: 'make' unexpected :: new make(Compiler c) : super(c) {}
+5	0	47	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/steps/Assemble.fan | line 24: 'make' unexpected :: new make(Compiler compiler)
+5	0	117	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/steps/CheckInheritance.fan | line 20: 'make' unexpected :: new make(Compiler compiler)
+5	0	88	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/steps/CheckParamDefs.fan | line 19: 'make' unexpected :: new make(Compiler compiler)
+5	0	218	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/steps/ClosureToImmutable.fan | line 36: 'make' unexpected :: new make(Compiler compiler) : super(compiler) {}
+5	0	509	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/steps/ClosureVars.fan | line 74: 'make' unexpected :: new make(Compiler compiler) : super(compiler) {}
+5	0	190	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/steps/ConstChecks.fan | line 43: 'make' unexpected :: new make(Compiler compiler)
+5	0	68	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/steps/DefaultCtor.fan | line 17: 'make' unexpected :: new make(Compiler compiler)
+5	0	60	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/steps/GenerateOutput.fan | line 23: 'make' unexpected :: new make(Compiler compiler)
+5	0	382	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/steps/Inherit.fan | line 22: 'make' unexpected :: new make(Compiler compiler)
+5	0	243	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/steps/InitClosures.fan | line 23: 'make' unexpected :: new make(Compiler compiler)
+5	0	227	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/steps/InitEnum.fan | line 22: 'make' unexpected :: new make(Compiler compiler)
+5	0	121	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/steps/InitFacet.fan | line 20: 'make' unexpected :: new make(Compiler compiler)
+5	0	56	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/steps/LoadPod.fan | line 24: 'make' unexpected :: new make(Compiler compiler)
+5	0	86	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/steps/LocaleProps.fan | line 20: 'make' unexpected :: new make(Compiler compiler)
+5	0	357	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/steps/Normalize.fan | line 28: 'make' unexpected :: new make(Compiler compiler)
+5	0	56	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/steps/Parse.fan | line 25: 'make' unexpected :: new make(Compiler compiler)
+5	0	203	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/steps/ScanForUsingsAndTypes.fan | line 26: 'make' unexpected :: new make(Compiler compiler)
+5	0	239	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/steps/WritePod.fan | line 20: 'make' unexpected :: new make(Compiler compiler)
+5	0	208	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/util/Coercer.fan | line 17: 'make' unexpected :: new make(Compiler c) : super(c) {}
+5	0	108	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/util/ConstantFolder.fan | line 24: 'make' unexpected :: new make(Compiler compiler)
+5	0	202	/Users/alper/fantom/fantom-1.0.84/src/compilerJava/fan/dasm/DasmModel.fan | line 156: <bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'i' :: for (i:=0; sig[i] == '['; ++i) rank++
+5	0	126	/Users/alper/fantom/fantom-1.0.84/src/compilerJs/fan/ModuleSystem.fan | line 57: 'make' unexpected :: new make(File nodeDir) : super(nodeDir)
+5	0	106	/Users/alper/fantom/fantom-1.0.84/src/compilerJs/fan/ast/JsClosure.fan | line 16: 'make' unexpected :: new make(CompilerSupport s) : super(s)
+5	0	246	/Users/alper/fantom/fantom-1.0.84/src/concurrent/test/FutureTest.fan | line 242: 'make' unexpected :: new make(Future wrap) : super(wrap) {}
+5	0	27	/Users/alper/fantom/fantom-1.0.84/src/domkit/fan/Box.fan | line 22: IDENTIFIER expected, got 'make' :: new make() : super("div")
+5	0	122	/Users/alper/fantom/fantom-1.0.84/src/domkit/fan/CardBox.fan | line 19: IDENTIFIER expected, got 'make' :: new make() : super()
+5	0	111	/Users/alper/fantom/fantom-1.0.84/src/domkit/fan/FlexBox.fan | line 20: IDENTIFIER expected, got 'make' :: new make() : super()
+5	0	77	/Users/alper/fantom/fantom-1.0.84/src/domkit/fan/FlowBox.fan | line 18: IDENTIFIER expected, got 'make' :: new make() : super()
+5	0	23	/Users/alper/fantom/fantom-1.0.84/src/domkit/fan/Label.fan | line 18: IDENTIFIER expected, got 'make' :: new make() : super("span")
+5	0	75	/Users/alper/fantom/fantom-1.0.84/src/domkit/fan/ToggleButton.fan | line 18: IDENTIFIER expected, got 'make' :: new make() : super()
+5	0	49	/Users/alper/fantom/fantom-1.0.84/src/domkit/fan/WellBox.fan | line 16: IDENTIFIER expected, got 'make' :: new make() : super()
+5	0	595	/Users/alper/fantom/fantom-1.0.84/src/fanc/fan/java/JavaExprPrinter.fan | line 16: 'make' unexpected :: new make(JavaPrinter parent) : super(parent) {}
+5	0	272	/Users/alper/fantom/fantom-1.0.84/src/fanc/fan/java/JavaPrinter.fan | line 251: '(', ',' or ';' expected, got 'Bool' :: yes
+5	0	321	/Users/alper/fantom/fantom-1.0.84/src/fanc/fan/java/JavaStmtPrinter.fan | line 16: 'make' unexpected :: new make(JavaPrinter parent) : super(parent) {}
+5	0	188	/Users/alper/fantom/fantom-1.0.84/src/fandoc/fan/HtmlDocWriter.fan | line 33: '|' unexpected :: |Link link|? onLink := null
+5	0	213	/Users/alper/fantom/fantom-1.0.84/src/fandoc/fan/MarkdownDocWriter.fan | line 28: '|' unexpected :: |Link link|? onLink := null
+5	0	208	/Users/alper/fantom/fantom-1.0.84/src/fanr/fan/tool/InstallCmd.fan | line 61: ':=' or ';' expected, got '(' :: printInstallPlan(items)
+5	0	64	/Users/alper/fantom/fantom-1.0.84/src/fanr/fan/web/WebRepoMain.fan | line 26: IDENTIFIER expected, got 'Opt' :: @Opt { help = "username to use for authentication"; aliases=["u"] }
+5	0	56	/Users/alper/fantom/fantom-1.0.84/src/inet/fan/MulticastSocket.fan | line 19: 'make' unexpected :: new make(SocketConfig config := SocketConfig.cur) : super(config) {}
+5	0	423	/Users/alper/fantom/fantom-1.0.84/src/markdown/fan/ast/Node.fan | line 55: <stmt> expected, got 'private' :: SourceSpan[] sourceSpans := SourceSpan[,] { private set }
+5	0	192	/Users/alper/fantom/fantom-1.0.84/src/markdown/fan/util/Chars.fan | line 21: <bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'i' :: for (i := startIndex; i < len; ++i)
+5	0	100	/Users/alper/fantom/fantom-1.0.84/src/nodeJs/fan/NodeJsCmd.fan | line 53: IDENTIFIER expected, got 'Opt' :: @Opt { help="Verbose debug output"; aliases=["v"] }
+5	0	56	/Users/alper/fantom/fantom-1.0.84/src/nodeJs/fan/cmd/InitCmd.fan | line 18: IDENTIFIER expected, got 'Opt' :: @Opt { help = "Root directory for staging Node.js environment"; aliases = ["-d"]
+5	0	443	/Users/alper/fantom/fantom-1.0.84/src/nodeJs/fan/ts/GenTsDecl.fan | line 83: ':=', ';' or else expected, got '.' :: out.writeChar('\n')
+5	0	103	/Users/alper/fantom/fantom-1.0.84/src/syntax/fan/SyntaxModel.fan | line 39: <bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'x' :: for (x := lines; x != null; x = x.next) f(x)
+5	0	253	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/Unit.fan | line 93: '{' expected, got 'new' :: static new fromStr(Str s, Bool checked := true)
+5	0	197	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/Zip.fan | line 73: 'new' unexpected :: private new init(Uri uri)
+5	0	88	/Users/alper/fantom/fantom-1.0.84/src/testCompiler/fan/CompilerTest.fan | line 44: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ':=', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, IDENTIFIER, '[', as, is, isnot, '{' or '||' expected, got '++' :: podNameSuffix++
+5	0	104	/Users/alper/fantom/fantom-1.0.84/src/testSys/fan/CharsetTest.fan | line 103: 'make' unexpected :: new make(InStream in) : super(in) {}
+5	0	426	/Users/alper/fantom/fantom-1.0.84/src/testSys/fan/ClosureTest.fan | line 43: <formal full> or '|' expected, got '{' :: verifyAlwaysImmutable |->| { echo("foo") }
+5	0	256	/Users/alper/fantom/fantom-1.0.84/src/testSys/fan/EnumTest.fan | line 225: '(', ',' or ';' expected, got 'Int' :: A, B, C
+5	0	434	/Users/alper/fantom/fantom-1.0.84/src/testSys/fan/StrBufTest.fan | line 431: 'make' unexpected :: new make(OutStream out) : super(out) {}
+5	0	482	/Users/alper/fantom/fantom-1.0.84/src/util/fan/AbstractMain.fan | line 88: IDENTIFIER expected, got 'Opt' :: @Opt { help = "Print usage help"; aliases = ["?"] }
+5	0	176	/Users/alper/fantom/fantom-1.0.84/src/util/fan/CsvInStream.fan | line 30: 'make' unexpected :: new make(InStream in) : super(in) {}
+5	0	78	/Users/alper/fantom/fantom-1.0.84/src/util/fan/CsvOutStream.fan | line 26: 'make' unexpected :: new make(OutStream out) : super(out) {}
+5	0	297	/Users/alper/fantom/fantom-1.0.84/src/util/fan/JsonInStream.fan | line 22: 'make' unexpected :: new make(InStream in) : super(in) {}
+5	0	223	/Users/alper/fantom/fantom-1.0.84/src/util/fan/JsonOutStream.fan | line 42: 'make' unexpected :: new make(OutStream out) : super(out) {}
+5	0	865	/Users/alper/fantom/fantom-1.0.84/src/web/fan/WebOutStream.fan | line 23: 'make' unexpected :: new make(OutStream out)
+4	0	116	/Users/alper/fantom/fantom-1.0.84/src/concurrent/fan/ActorPool.fan | line 21: 'make' unexpected :: new make(|This|? f := null)
+4	0	268	/Users/alper/fantom/fantom-1.0.84/src/fanr/fan/query/Tokenizer.fan | line 63: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ':=', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, IDENTIFIER, '[', as, else, is, isnot, '{' or '||' expected, got '++' :: if (cur == '*') stars++
+4	0	475	/Users/alper/fantom/fantom-1.0.84/src/markdown/fan/parser/LinkReferenceDefinitionParser.fan | line 24: <stmt> expected, got 'private' :: LinkRefState state := LinkRefState.start_definition { private set }
+4	0	131	/Users/alper/fantom/fantom-1.0.84/src/markdown/fan/render/text/TextWriter.fan | line 84: ':=' or ';' expected, got '(' :: appendChar(ch)
+4	0	94	/Users/alper/fantom/fantom-1.0.84/src/math/fan/Matrix.fan | line 64: 'make' unexpected :: new make(Int numRows, Int numCols)
+4	0	59	/Users/alper/fantom/fantom-1.0.84/src/nodeJs/fan/cmd/HelpCmd.fan | line 30: ':=' or ';' expected, got '(' :: printLine(cmd.summary)
+4	0	158	/Users/alper/fantom/fantom-1.0.84/src/sql/fan/Statement.fan | line 93: IDENTIFIER expected, got 'Str' :: native BatchResult executeBatch([Str:Obj]?[] paramsList)
+4	0	20	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/ArgErr.fan | line 18: 'make' unexpected :: new make(Str msg := "", Err? cause := null)
+4	0	22	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/CancelledErr.fan | line 19: 'make' unexpected :: new make(Str msg := "", Err? cause := null)
+4	0	20	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/CastErr.fan | line 18: 'make' unexpected :: new make(Str msg := "", Err? cause := null)
+4	0	21	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/ConstErr.fan | line 19: 'make' unexpected :: new make(Str msg := "", Err? cause := null)
+4	0	63	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/Err.fan | line 22: 'make' unexpected :: new make(Str msg := "", Err? cause := null)
+4	0	21	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/FieldNotSetErr.fan | line 19: 'make' unexpected :: new make(Str msg := "", Err? cause := null)
+4	0	21	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/IOErr.fan | line 19: 'make' unexpected :: new make(Str msg := "", Err? cause := null)
+4	0	430	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/InStream.fan | line 31: 'new' unexpected :: protected new make(InStream? in)
+4	0	20	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/IndexErr.fan | line 18: 'make' unexpected :: new make(Str msg := "", Err? cause := null)
+4	0	21	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/InterruptedErr.fan | line 19: 'make' unexpected :: new make(Str msg := "", Err? cause := null)
+4	0	22	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/NameErr.fan | line 19: 'make' unexpected :: new make(Str msg := "", Err? cause := null)
+4	0	21	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/NotImmutableErr.fan | line 19: 'make' unexpected :: new make(Str msg := "", Err? cause := null)
+4	0	23	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/NullErr.fan | line 21: 'make' unexpected :: new make(Str msg := "", Err? cause := null)
+4	0	246	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/OutStream.fan | line 29: 'new' unexpected :: protected new make(OutStream? out)
+4	0	22	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/ParseErr.fan | line 19: 'make' unexpected :: new make(Str msg := "", Err? cause := null)
+4	0	103	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/Process.fan | line 25: 'make' unexpected :: new make(Str[] cmd := Str[,], File? dir := null)
+4	0	21	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/ReadonlyErr.fan | line 19: 'make' unexpected :: new make(Str msg := "", Err? cause := null)
+4	0	21	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/TimeoutErr.fan | line 19: 'make' unexpected :: new make(Str msg := "", Err? cause := null)
+4	0	22	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/UnknownFacetErr.fan | line 19: 'make' unexpected :: new make(Str msg := "", Err? cause := null)
+4	0	21	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/UnknownKeyErr.fan | line 18: 'make' unexpected :: new make(Str msg := "", Err? cause := null)
+4	0	20	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/UnknownPodErr.fan | line 18: 'make' unexpected :: new make(Str msg := "", Err? cause := null)
+4	0	23	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/UnknownServiceErr.fan | line 20: 'make' unexpected :: new make(Str msg := "", Err? cause := null)
+4	0	20	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/UnknownSlotErr.fan | line 18: 'make' unexpected :: new make(Str msg := "", Err? cause := null)
+4	0	20	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/UnknownTypeErr.fan | line 18: 'make' unexpected :: new make(Str msg := "", Err? cause := null)
+4	0	20	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/UnresolvedErr.fan | line 18: 'make' unexpected :: new make(Str msg := "", Err? cause := null)
+4	0	20	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/UnsupportedErr.fan | line 18: 'make' unexpected :: new make(Str msg := "", Err? cause := null)
+4	0	99	/Users/alper/fantom/fantom-1.0.84/src/testDomkit/fan/DomkitTest.fan | line 76: '!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, is, isnot or '||' expected, got ',' :: },
+4	0	83	/Users/alper/fantom/fantom-1.0.84/src/testDomkit/fan/GridBoxTest.fan | line 21: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ':=', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, IDENTIFIER, '[', as, is, isnot, '{' or '||' expected, got ',' :: example,
+4	0	147	/Users/alper/fantom/fantom-1.0.84/src/testDomkit/fan/TableTest.fan | line 31: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ':=', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, IDENTIFIER, '[', as, is, isnot, '{' or '||' expected, got ',' :: table,
+4	0	258	/Users/alper/fantom/fantom-1.0.84/src/testSys/fan/DecimalTest.fan | line 150: <bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'x' :: verifyEq(x++, 5.0d); verifyEq(x, 6.0d)
+4	0	201	/Users/alper/fantom/fantom-1.0.84/src/testSys/fan/FacetsTest.fan | line 76: <bool>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'facets' :: verifyEq(facets.size, t is Type ? 4: 3)
+4	0	68	/Users/alper/fantom/fantom-1.0.84/src/util/test/RandomTest.fan | line 34: '!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, is, isnot or '||' expected, got '10' :: 10.times { acc.add(r.next) }
+4	0	277	/Users/alper/fantom/fantom-1.0.84/src/xml/test/DomTest.fan | line 173: '!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, is, isnot or '||' expected, got ',' :: XElem("b") { XText("text"), },
+3	0	164	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/CompilerLog.fan | line 46: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ':=', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, IDENTIFIER, '[', as, is, isnot, '{' or '||' expected, got '++' :: indentation++
+3	0	164	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/CompilerSupport.fan | line 161: IDENTIFIER expected, got 'make' :: new make() : super("", null) {}
+3	0	277	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/namespace/CSlot.fan | line 226: <bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'i' :: for (i:=0; i<a.size; ++i)
+3	0	214	/Users/alper/fantom/fantom-1.0.84/src/compilerDoc/fan/env/DocEnv.fan | line 155: <bool>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'chapterName' :: doc := (chapterName.isEmpty ? from : space.doc(chapterName, false))
+3	0	247	/Users/alper/fantom/fantom-1.0.84/src/compilerDoc/fan/renderers/DocRenderer.fan | line 70: ':=' or ';' expected, got '.' :: theme.writeEnd(this)
+3	0	402	/Users/alper/fantom/fantom-1.0.84/src/compilerJava/fan/JavaReflect.fan | line 122: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, '[', as, else, is, isnot, '{' or '||' expected, got ':=' :: key := jmethodKey(j)
+3	0	77	/Users/alper/fantom/fantom-1.0.84/src/concurrent/fan/ConcurrentMap.fan | line 19: 'make' unexpected :: new make(Int initialCapacity := 256)
+3	0	39	/Users/alper/fantom/fantom-1.0.84/src/concurrent/fan/Lock.fan | line 19: <field flag>, <method flag>, <type>, new or static expected, got 'new' :: private new make()
+3	0	32	/Users/alper/fantom/fantom-1.0.84/src/cryptoJava/fan/JDigest.fan | line 13: 'make' unexpected :: new make(Str algorithm)
+3	0	46	/Users/alper/fantom/fantom-1.0.84/src/dom/fan/HttpSocket.fan | line 21: <field flag>, <method flag>, <type>, new or static expected, got 'new' :: private new make()
+3	0	193	/Users/alper/fantom/fantom-1.0.84/src/domkit/fan/Dnd.fan | line 35: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, '[', as, else, is, isnot, '{' or '||' expected, got ':=' :: data := cbDrag.call(elem)
+3	0	112	/Users/alper/fantom/fantom-1.0.84/src/fanr/fan/PodSpec.fan | line 36: <bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'File' :: for (File? f; (f = zip.readNext) != null; )
+3	0	177	/Users/alper/fantom/fantom-1.0.84/src/fanr/fan/query/Parser.fan | line 39: ':=' or ';' expected, got '.' :: parts.add(part)
+3	0	218	/Users/alper/fantom/fantom-1.0.84/src/fanr/fan/query/Query.fan | line 147: '!=', '!==', '&&', ':', '::', ';', <assign op>, '==', '===', '?', '?:', '[' or '||' expected, got '(' :: valStr := val is Str ? ((Str)val).toCode : val.toStr
+3	0	206	/Users/alper/fantom/fantom-1.0.84/src/graphics/fan/Stroke.fan | line 60: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, '[', as, else, is, isnot, '{' or '||' expected, got ':=' :: char := tok[0]
+3	0	163	/Users/alper/fantom/fantom-1.0.84/src/markdown/fan/parser/BlockParser.fan | line 92: <stmt> expected, got 'private' :: Int newIndex := -1 { private set }
+3	0	90	/Users/alper/fantom/fantom-1.0.84/src/markdown/fan/parser/inline/BackticksInlineParser.fan | line 74: IDENTIFIER expected, got 'make' :: new make() : super('`') { }
+3	0	126	/Users/alper/fantom/fantom-1.0.84/src/markdown/fan/parser/inline/DelimiterProcessor.fan | line 114: IDENTIFIER expected, got 'make' :: new make() : super('*') { }
+3	0	107	/Users/alper/fantom/fantom-1.0.84/src/markdown/fan/render/html/HtmlContext.fan | line 52: ':=' or ';' expected, got '.' :: percentEncodeUrls ? Esc.percentEncodeUrl(url) : url
+3	0	142	/Users/alper/fantom/fantom-1.0.84/src/sql/fan/SqlConnImpl.fan | line 125: '&' unexpected :: set { ops.add("autoCommit($it)"); &autoCommit = it }
+3	0	69	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/Field.fan | line 38: <field flag>, <method flag>, <type>, new or static expected, got 'new' :: private new privateMake()
+3	0	136	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/Func.fan | line 46: <field flag>, <method flag>, <type>, new or static expected, got 'new' :: private new make()
+3	0	426	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/Map.fan | line 25: 'make' unexpected :: new make(Type type)
+3	0	70	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/Method.fan | line 23: <field flag>, <method flag>, <type>, new or static expected, got 'new' :: private new privateMake()
+3	0	85	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/Num.fan | line 22: <field flag>, <method flag>, <type>, new or static expected, got 'new' :: internal new make()
+3	0	147	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/Obj.fan | line 22: <field flag>, <method flag>, <type>, new or static expected, got 'new' :: protected new make()
+3	0	49	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/Param.fan | line 22: <field flag>, <method flag>, <type>, new or static expected, got 'new' :: private new make()
+3	0	183	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/Pod.fan | line 55: <field flag>, <method flag>, <type>, new or static expected, got 'new' :: private new make()
+3	0	95	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/RegexMatcher.fan | line 23: <field flag>, <method flag>, <type>, new or static expected, got 'new' :: private new make()
+3	0	203	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/Slot.fan | line 48: <field flag>, <method flag>, <type>, new or static expected, got 'new' :: internal new make()
+3	0	728	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/Str.fan | line 22: <field flag>, <method flag>, <type>, new or static expected, got 'new' :: private new privateMake()
+3	0	188	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/StrBuf.fan | line 22: 'make' unexpected :: new make(Int capacity := 16)
+3	0	22	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/This.fan | line 19: <field flag>, <method flag>, <type>, new or static expected, got 'new' :: private new make()
+3	0	437	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/Type.fan | line 24: <field flag>, <method flag>, <type>, new or static expected, got 'new' :: private new privateMake()
+3	0	25	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/Unsafe.fan | line 18: 'make' unexpected :: new make(Obj? val)
+3	0	20	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/Void.fan | line 18: <field flag>, <method flag>, <type>, new or static expected, got 'new' :: private new make()
+3	0	68	/Users/alper/fantom/fantom-1.0.84/src/testGraphics/fan/FontMetricsTest.fan | line 17: '!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, is, isnot, '|' or '||' expected, got '26' :: 26.times |i| { buf.addChar('A'+i) }
+3	0	179	/Users/alper/fantom/fantom-1.0.84/src/testNative/fan/NativeTest.fan | line 173: IDENTIFIER expected, got 'make' :: new make() : super() {}
+3	0	293	/Users/alper/fantom/fantom-1.0.84/src/testSys/fan/CtorTest.fan | line 219: IDENTIFIER expected, got 'make' :: new make() : super("foo") {}
+3	0	1294	/Users/alper/fantom/fantom-1.0.84/src/testSys/fan/UriTest.fan | line 80: '[' unexpected :: [u1, u2].each |Uri u|
+3	0	65	/Users/alper/fantom/fantom-1.0.84/src/util/fan/FloatArray.fan | line 28: <field flag>, <method flag>, <type>, new or static expected, got 'new' :: internal new make()
+3	0	80	/Users/alper/fantom/fantom-1.0.84/src/util/fan/IntArray.fan | line 43: <field flag>, <method flag>, <type>, new or static expected, got 'new' :: internal new make()
+3	0	82	/Users/alper/fantom/fantom-1.0.84/src/xml/fan/XNode.fan | line 28: <bool>, <id expr>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super, this or '|' expected, got 'XNode' :: for (XNode? x := this; x != null; x = x.parent)
+2	0	119	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/ast/AstWriter.fan | line 62: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ':=', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, IDENTIFIER, '[', as, is, isnot, '{' or '||' expected, got '++' :: indentation++
+2	0	112	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/fcode/FCodePrinter.fan | line 86: ':=' or ';' expected, got '(' :: print("          " + i + " -> " + buf.readU2)
+2	0	279	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/fcode/FPrinter.fan | line 87: ':=' or ';' expected, got '.' :: t.ffields.each |FField f| { field(f) }
+2	0	265	/Users/alper/fantom/fantom-1.0.84/src/compilerDoc/fan/util/ApiDocParser.fan | line 193: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, '[', as, else, is, isnot, '{' or '||' expected, got ':=' :: acc := [facet]
+2	0	331	/Users/alper/fantom/fantom-1.0.84/src/compilerJava/fan/JavaType.fan | line 80: '!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, is, isnot or '||' expected, got 'private' :: override Str:CSlot slots := [:] { get { load; return &slots } private set }
+2	0	316	/Users/alper/fantom/fantom-1.0.84/src/compilerJs/fan/util/SourceMap.fan | line 104: '!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, is, isnot, '|' or '||' expected, got '++' :: ++prevGenLine
+2	0	257	/Users/alper/fantom/fantom-1.0.84/src/cryptoJava/fan/pkcs/DnParser.fan | line 240: '!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, else, is, isnot or '||' expected, got '++' :: ++pos
+2	0	470	/Users/alper/fantom/fantom-1.0.84/src/dom/test/DomTest.fan | line 436: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ':=', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, IDENTIFIER, '[', as, else, is, isnot, '{' or '||' expected, got '++' :: if (v) verifies++
+2	0	218	/Users/alper/fantom/fantom-1.0.84/src/dom/test/JavaTest.fan | line 167: '!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, is, isnot or '||' expected, got ',' :: a = Elem { it.setAttr("foo", "bar") },
+2	0	191	/Users/alper/fantom/fantom-1.0.84/src/domkit/fan/DomListener.fan | line 67: <formal full> or '|' expected, got '{' :: Win.cur.reqAnimationFrame |->| { onCheck }
+2	0	159	/Users/alper/fantom/fantom-1.0.84/src/domkit/fan/Selection.fan | line 89: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, '[', as, else, is, isnot, '{' or '||' expected, got ':=' :: oldIndexes := &indexes
+2	0	79	/Users/alper/fantom/fantom-1.0.84/src/fanc/fan/util/CodePrinter.fan | line 25: '!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, is, isnot or '||' expected, got '++' :: m.indentation++
+2	0	119	/Users/alper/fantom/fantom-1.0.84/src/fanc/fan/util/MiscCmds.fan | line 48: ':=' or ';' expected, got '(' :: printLine("Fantom Compiler Tools:")
+2	0	322	/Users/alper/fantom/fantom-1.0.84/src/fandoc/fan/InlineParser.fan | line 192: ':=' or ';' expected, got '=' :: body = image
+2	0	210	/Users/alper/fantom/fantom-1.0.84/src/inet/fan/SocketOptions.fan | line 68: <formal full> or '|' expected, got '{' :: set { newVal := it; wrap |->| { socket->setInBufferSize(newVal) } }
+2	0	317	/Users/alper/fantom/fantom-1.0.84/src/markdown/fan/ast/Block.fan | line 116: '!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, is, isnot, '|' or '||' expected, got '&' :: &openingFenceLen = it
+2	0	147	/Users/alper/fantom/fantom-1.0.84/src/markdown/fan/parser/SourceSpan.fan | line 104: '(', ',' or ';' expected, got '}' :: blocks_and_inlines
+2	0	271	/Users/alper/fantom/fantom-1.0.84/src/markdown/fan/render/text/CoreTextNodeRenderer.fan | line 155: '!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, is, isnot or '||' expected, got '++' :: listHolder.counter++
+2	0	155	/Users/alper/fantom/fantom-1.0.84/src/markdown/fan/util/LineReader.fan | line 54: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ':=', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, IDENTIFIER, '[', as, is, isnot, '{' or '||' expected, got '++' :: pos++
+2	0	1196	/Users/alper/fantom/fantom-1.0.84/src/testCompiler/fan/MiscTest.fan | line 722: '!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', ']', as, is, isnot or '||' expected, got ',' :: [0, 1, 2].each |Int i| { x += "," + i }
+2	0	76	/Users/alper/fantom/fantom-1.0.84/src/testDomkit/fan/AccordionBoxTest.fan | line 45: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ':=', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, IDENTIFIER, '[', as, is, isnot, '{' or '||' expected, got ',' :: acc,
+2	0	88	/Users/alper/fantom/fantom-1.0.84/src/testDomkit/fan/FilePickerTest.fan | line 50: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ':=', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, IDENTIFIER, '[', as, is, isnot, '{' or '||' expected, got ',' :: picker,
+2	0	67	/Users/alper/fantom/fantom-1.0.84/src/testDomkit/fan/PopupTest.fan | line 32: '!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, is, isnot or '||' expected, got ',' :: Button { it.text="Open"; onAction |b| { open(b) }},
+2	0	94	/Users/alper/fantom/fantom-1.0.84/src/testDomkit/fan/SashBoxTest.fan | line 37: '!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, is, isnot or '||' expected, got ',' :: Button { it.text="Update"; onAction { dlg.close; update }},
+2	0	118	/Users/alper/fantom/fantom-1.0.84/src/testDomkit/fan/TextFieldTest.fan | line 33: '!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, is, isnot or '||' expected, got ',' :: Label { it.text="Username:" },
+2	0	53	/Users/alper/fantom/fantom-1.0.84/src/testDomkit/fan/WellBoxTest.fan | line 22: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ':=', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, IDENTIFIER, '[', as, is, isnot, '{' or '||' expected, got ',' :: docDomkit1,
+2	0	36	/Users/alper/fantom/fantom-1.0.84/src/testGraphics/fan/Main.fan | line 18: ':=' or ';' expected, got '(' :: launchJava(args.first)
+2	0	20	/Users/alper/fantom/fantom-1.0.84/src/testNative/fan/NativeClass.fan | line 15: IDENTIFIER expected, got 'make' :: new make()
+2	0	253	/Users/alper/fantom/fantom-1.0.84/src/testSys/fan/TryTest.fan | line 85: <formal full> or '|' expected, got '{' :: {
+2	0	118	/Users/alper/fantom/fantom-1.0.84/src/testSys/fan/UuidTest.fan | line 21: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, '[', as, else, is, isnot, '{' or '||' expected, got ':=' :: a := Uuid.makeBits(0xaabb_ccdd_0022_0345, 0x0123_ff00eecc5577)
+2	0	253	/Users/alper/fantom/fantom-1.0.84/src/testSys/fan/ZipTest.fan | line 194: '!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, is, isnot, '|' or '||' expected, got '100' :: 100.times { s.add("hello world!\n") }
+2	0	210	/Users/alper/fantom/fantom-1.0.84/src/web/fan/FileWeblet.fan | line 96: '[' unexpected :: [Str:Str]? extraResHeaders
+2	0	258	/Users/alper/fantom/fantom-1.0.84/src/web/fan/WebReq.fan | line 109: else expected, got '&' :: &modBase = it
+2	0	65	/Users/alper/fantom/fantom-1.0.84/src/wisp/fan/WispSession.fan | line 43: ':=' or ';' expected, got '[' :: map[name] = val
+2	0	359	/Users/alper/fantom/fantom-1.0.84/src/xml/fan/XElem.fan | line 326: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ':=', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, IDENTIFIER, '[', as, is, isnot, '{' or '||' expected, got '++' :: indent++
+1	0	41	/Users/alper/fantom/fantom-1.0.84/src/asn1/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	275	/Users/alper/fantom/fantom-1.0.84/src/asn1/fan/ber/BerReader.fan | line 67: '!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, is, isnot, '|' or '||' expected, got '--' :: --numOctets
+1	0	35	/Users/alper/fantom/fantom-1.0.84/src/build/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fans...' :: #! /usr/bin/env fansubstitute
+1	0	145	/Users/alper/fantom/fantom-1.0.84/src/build/fan/BuildCs.fan | line 101: ':=' or ';' expected, got '.' :: log.info("compile [${scriptDir.name}]")
+1	0	192	/Users/alper/fantom/fantom-1.0.84/src/build/fan/BuildJava.fan | line 91: ':=' or ';' expected, got '.' :: log.info("compile [${scriptDir.name}]")
+1	0	22	/Users/alper/fantom/fantom-1.0.84/src/build/fan/Facets.fan | line 13: <type def>, FANDOC_LINE_COMMENT or using expected, got 'facet' :: facet class Target
+1	0	183	/Users/alper/fantom/fantom-1.0.84/src/build/fan/Main.fan | line 50: ':=' or ';' expected, got '(' :: echo("INIT SUCCESS!")
+1	0	286	/Users/alper/fantom/fantom-1.0.84/src/buildall.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fans...' :: #! /usr/bin/env fansubstitute
+1	0	40	/Users/alper/fantom/fantom-1.0.84/src/buildboot.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fans...' :: #! /usr/bin/env fansubstitute
+1	0	66	/Users/alper/fantom/fantom-1.0.84/src/buildpods.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	49	/Users/alper/fantom/fantom-1.0.84/src/compiler/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fans...' :: #! /usr/bin/env fansubstitute
+1	0	162	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/Compiler.fan | line 76: ':=' or ';' expected, got '.' :: log.unindent
+1	0	259	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/CompilerInput.fan | line 256: '(', ',' or ';' expected, got '}' :: str
+1	0	58	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/CompilerOutput.fan | line 55: '(', ',' or ';' expected, got '}' :: js
+1	0	231	/Users/alper/fantom/fantom-1.0.84/src/compiler/fan/fcode/FType.fan | line 104: ':=' or ';' expected, got '=' :: slotsCached = Str:CSlot[:]
+1	0	42	/Users/alper/fantom/fantom-1.0.84/src/compilerDoc/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	252	/Users/alper/fantom/fantom-1.0.84/src/compilerDoc/fan/model/DocChapter.fan | line 98: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, '[', as, else, is, isnot, '{' or '||' expected, got ':=' :: headings := DocHeading[,]
+1	0	38	/Users/alper/fantom/fantom-1.0.84/src/compilerJava/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fans...' :: #! /usr/bin/env fansubstitute
+1	0	36	/Users/alper/fantom/fantom-1.0.84/src/compilerJs/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	164	/Users/alper/fantom/fantom-1.0.84/src/compilerJs/fan/util/Base64VLQ.fan | line 65: <type def> or FANDOC_LINE_COMMENT expected, got 'package' :: package com.google.debugging.sourcemap;
+1	0	72	/Users/alper/fantom/fantom-1.0.84/src/compilerJs/fan/util/JsUnitDatabase.fan | line 17: '(', ':=' or '{' expected, got ';' :: private ModuleSystem ms;
+1	0	35	/Users/alper/fantom/fantom-1.0.84/src/concurrent/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	38	/Users/alper/fantom/fantom-1.0.84/src/crypto/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	66	/Users/alper/fantom/fantom-1.0.84/src/crypto/test/DigestTest.fan | line 29: '!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, is, isnot, '|' or '||' expected, got '1_000_000' :: 1_000_000.times { buf.addChar('a') }
+1	0	46	/Users/alper/fantom/fantom-1.0.84/src/cryptoJava/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	28	/Users/alper/fantom/fantom-1.0.84/src/doc/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	30	/Users/alper/fantom/fantom-1.0.84/src/doc/docDomkit/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	30	/Users/alper/fantom/fantom-1.0.84/src/doc/docFanr/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	30	/Users/alper/fantom/fantom-1.0.84/src/doc/docIntro/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	30	/Users/alper/fantom/fantom-1.0.84/src/doc/docLang/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	30	/Users/alper/fantom/fantom-1.0.84/src/doc/docTools/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	38	/Users/alper/fantom/fantom-1.0.84/src/dom/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	83	/Users/alper/fantom/fantom-1.0.84/src/dom/fan/KeyFrame.fan | line 27: '!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', ']', as, is, isnot or '||' expected, got ',' :: ["-webkit-", "-moz-", ""].each |prefix|
+1	0	241	/Users/alper/fantom/fantom-1.0.84/src/dom/fan/Style.fan | line 151: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, '[', as, else, is, isnot, '{' or '||' expected, got ':=' :: i := s.index(":")
+1	0	74	/Users/alper/fantom/fantom-1.0.84/src/dom/test.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	87	/Users/alper/fantom/fantom-1.0.84/src/domkit/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	24	/Users/alper/fantom/fantom-1.0.84/src/domkit/fan/Align.fan | line 21: '(', ',' or ';' expected, got '}' :: fill
+1	0	22	/Users/alper/fantom/fantom-1.0.84/src/domkit/fan/Dir.fan | line 19: '(', ',' or ';' expected, got '}' :: right
+1	0	33	/Users/alper/fantom/fantom-1.0.84/src/email/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	37	/Users/alper/fantom/fantom-1.0.84/src/fanc/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	283	/Users/alper/fantom/fantom-1.0.84/src/fanc/fan/util/ExprPrinter.fan | line 218: ':=' or ';' expected, got '.' :: operands.each |x, i|
+1	0	33	/Users/alper/fantom/fantom-1.0.84/src/fandoc/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	40	/Users/alper/fantom/fantom-1.0.84/src/fanr/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	92	/Users/alper/fantom/fantom-1.0.84/src/fanr/fan/tool/Main.fan | line 61: '!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, is, isnot or '||' expected, got ':' :: dis := e is CommandErr ? e.msg : e.toStr
+1	0	368	/Users/alper/fantom/fantom-1.0.84/src/fanr/fan/web/WebRepoMod.fan | line 68: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, '[', as, else, is, isnot, '{' or '||' expected, got ':=' :: path := req.modRel.path
+1	0	26	/Users/alper/fantom/fantom-1.0.84/src/fansc/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	33	/Users/alper/fantom/fantom-1.0.84/src/fansh/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	33	/Users/alper/fantom/fantom-1.0.84/src/graphics/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	160	/Users/alper/fantom/fantom-1.0.84/src/graphics/fan/Transform.fan | line 39: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, '[', as, else, is, isnot, '{' or '||' expected, got ':=' :: r := parseFunc(func)
+1	0	35	/Users/alper/fantom/fantom-1.0.84/src/graphicsJava/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	41	/Users/alper/fantom/fantom-1.0.84/src/inet/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	121	/Users/alper/fantom/fantom-1.0.84/src/inet/test/IpAddrTest.fan | line 85: '!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, is, isnot, '|' or '||' expected, got '2' :: 2.times
+1	0	288	/Users/alper/fantom/fantom-1.0.84/src/inet/test/UdpSocketTest.fan | line 119: '!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, is, isnot or '||' expected, got '3' :: 3.times { buf.read }
+1	0	104	/Users/alper/fantom/fantom-1.0.84/src/markdown/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	208	/Users/alper/fantom/fantom-1.0.84/src/markdown/fan/ext/image-attributes/ImgAttrsExt.fan | line 204: '!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, is, isnot, '|' or '||' expected, got '++' :: ++i
+1	0	103	/Users/alper/fantom/fantom-1.0.84/src/markdown/fan/parser/SourceLine.fan | line 75: <stmt> expected, got 'private' :: SourceLine[] lines := [,] { private set }
+1	0	66	/Users/alper/fantom/fantom-1.0.84/src/markdown/fan/parser/block/BlockQuoteParser.fan | line 19: <stmt> expected, got 'private' :: override BlockQuote block := BlockQuote() { private set }
+1	0	31	/Users/alper/fantom/fantom-1.0.84/src/markdown/fan/parser/block/DocumentBlockParser.fan | line 18: <stmt> expected, got 'private' :: override Document block := Document() { private set }
+1	0	71	/Users/alper/fantom/fantom-1.0.84/src/markdown/fan/parser/block/ParagraphParser.fan | line 23: <stmt> expected, got 'private' :: override Paragraph block := Paragraph() { private set }
+1	0	131	/Users/alper/fantom/fantom-1.0.84/src/markdown/fan/parser/inline/LinkProcessor.fan | line 62: <bool>, <map type>, <map>, <prefix expr>, <str>, DECIMAL_LITERAL, DURATION_LITERAL, FLOAT_LITERAL, IDENTIFIER, INT_LITERAL, URI_LITERAL, '[', it, null, super or this expected, got 'label' :: ref := label != null && !label.isEmpty ? label : info.text
+1	0	322	/Users/alper/fantom/fantom-1.0.84/src/markdown/fan/render/html/CoreHtmlNodeRenderer.fan | line 299: '[' unexpected :: [Str:Str] attrs(Node node, Str tagName, [Str:Str] defAttrs := newAttrs)
+1	0	49	/Users/alper/fantom/fantom-1.0.84/src/markdown/test/BlockParserFactoryTest.fan | line 35: <stmt> expected, got 'private' :: override TestDashBlock block := TestDashBlock() { private set }
+1	0	155	/Users/alper/fantom/fantom-1.0.84/src/markdown/test/CommonMarkSpecTest.fan | line 39: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, '[', as, else, is, isnot, '{' or '||' expected, got ':=' :: results := ExampleRes[,]
+1	0	36	/Users/alper/fantom/fantom-1.0.84/src/math/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	53	/Users/alper/fantom/fantom-1.0.84/src/nodeJs/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	207	/Users/alper/fantom/fantom-1.0.84/src/nodeJs/fan/EmitUtil.fan | line 134: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, '[', as, else, is, isnot, '{' or '||' expected, got ':=' :: out := ms.file(scriptJs.basename).out
+1	0	35	/Users/alper/fantom/fantom-1.0.84/src/sql/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	205	/Users/alper/fantom/fantom-1.0.84/src/sql/fan/SqlConnPool.fan | line 160: ':=' or ';' expected, got '.' :: houseKeepingActorPool.kill
+1	0	33	/Users/alper/fantom/fantom-1.0.84/src/syntax/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	40	/Users/alper/fantom/fantom-1.0.84/src/sys/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fans...' :: #! /usr/bin/env fansubstitute
+1	0	38	/Users/alper/fantom/fantom-1.0.84/src/sys/dotnet/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fans...' :: #! /usr/bin/env fansubstitute
+1	0	22	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/Endian.fan | line 18: '(', ',' or ';' expected, got '}' :: little
+1	0	140	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/Facets.fan | line 22: <type flag>, '@', class, enum, facet or mixin expected, got 'facet' :: facet class Serializable
+1	0	21	/Users/alper/fantom/fantom-1.0.84/src/sys/fan/LogLevel.fan | line 19: '(', ',' or ';' expected, got '}' :: silent
+1	0	36	/Users/alper/fantom/fantom-1.0.84/src/sys/java/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fans...' :: #! /usr/bin/env fansubstitute
+1	0	452	/Users/alper/fantom/fantom-1.0.84/src/sys/js/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fans...' :: #! /usr/bin/env fansubstitute
+1	0	32	/Users/alper/fantom/fantom-1.0.84/src/testCompiler/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	1316	/Users/alper/fantom/fantom-1.0.84/src/testCompiler/fan/InheritTest.fan | line 1108: '[' unexpected :: ["f", "g", "h"].each |Str mn|
+1	0	43	/Users/alper/fantom/fantom-1.0.84/src/testDomkit/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	82	/Users/alper/fantom/fantom-1.0.84/src/testDomkit/fan/DndTest.fan | line 79: '!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, is, isnot or '||' expected, got ',' :: TextField { it.val="Z-order Test" },
+1	0	102	/Users/alper/fantom/fantom-1.0.84/src/testDomkit/fan/FormTest.fan | line 95: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, '[', as, else, is, isnot, '{' or '||' expected, got ':=' :: n := f.attr("name")
+1	0	45	/Users/alper/fantom/fantom-1.0.84/src/testDomkit/fan/KeyTest.fan | line 42: '!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, is, isnot or '||' expected, got ',' :: },
+1	0	77	/Users/alper/fantom/fantom-1.0.84/src/testDomkit/fan/TreeTest.fan | line 30: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ':=', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, IDENTIFIER, '[', as, is, isnot, '{' or '||' expected, got ',' :: tree,
+1	0	40	/Users/alper/fantom/fantom-1.0.84/src/testGraphics/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	35	/Users/alper/fantom/fantom-1.0.84/src/testJava/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	36	/Users/alper/fantom/fantom-1.0.84/src/testNative/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	39	/Users/alper/fantom/fantom-1.0.84/src/testSys/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	323	/Users/alper/fantom/fantom-1.0.84/src/testSys/fan/BufCryptoTest.fan | line 36: '!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, is, isnot or '||' expected, got '300' :: 300.times |Int i| { buf.write(i) }
+1	0	166	/Users/alper/fantom/fantom-1.0.84/src/testSys/fan/CallTest.fan | line 134: '(', ':=' or '{' expected, got ';' :: Str? val;
+1	0	26	/Users/alper/fantom/fantom-1.0.84/src/testSys/fan/Facets.fan | line 9: '::', <type flag>, '?', '@', class, enum, facet, mixin or '{' expected, got 'facet' :: @Js facet class FacetM1 {}
+1	0	115	/Users/alper/fantom/fantom-1.0.84/src/testSys/fan/LocaleTest.fan | line 98: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, '[', as, else, is, isnot, '{' or '||' expected, got ':=' :: actor := Actor(ActorPool()) |Obj msg->Obj|
+1	0	574	/Users/alper/fantom/fantom-1.0.84/src/testSys/fan/MixinTest.fan | line 496: '!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, is, isnot, '{' or '||' expected, got ';' :: Str _r := "";
+1	0	71	/Users/alper/fantom/fantom-1.0.84/src/testSys/fan/ParamTest.fan | line 60: '{' expected, got ';' :: abstract Str:Str map();
+1	0	302	/Users/alper/fantom/fantom-1.0.84/src/testSys/fan/PodTest.fan | line 208: '!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, is, isnot or '||' expected, got '10' :: 10.times { verifyOrderByDepends(big.dup.shuffle, big) }
+1	0	338	/Users/alper/fantom/fantom-1.0.84/src/testSys/fan/SwitchTest.fan | line 335: '(', ',' or ';' expected, got '}' :: four
+1	0	335	/Users/alper/fantom/fantom-1.0.84/src/testSys/fan/UnitTest.fan | line 134: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ':=', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, IDENTIFIER, '[', as, else, is, isnot, '{' or '||' expected, got '++' :: all.each |u| { if (u === m) n++ }
+1	0	38	/Users/alper/fantom/fantom-1.0.84/src/util/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	85	/Users/alper/fantom/fantom-1.0.84/src/util/test/BoolArrayTest.fan | line 58: '!=', '!==', '%', '&&', '*', '+', '-', '..', '..<', '/', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', as, is, isnot or '||' expected, got '100' :: 100.times |i|
+1	0	33	/Users/alper/fantom/fantom-1.0.84/src/web/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	342	/Users/alper/fantom/fantom-1.0.84/src/web/fan/FilePack.fan | line 152: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, '[', as, else, is, isnot, '{' or '||' expected, got ':=' :: buf := Buf(chunkSize)
+1	0	36	/Users/alper/fantom/fantom-1.0.84/src/webmod/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	34	/Users/alper/fantom/fantom-1.0.84/src/wisp/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	77	/Users/alper/fantom/fantom-1.0.84/src/wisp/fan/WispReq.fan | line 26: <stmt> expected, got 'private' :: override Str method := "" { private set }
+1	0	35	/Users/alper/fantom/fantom-1.0.84/src/xml/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	48	/Users/alper/fantom/fantom-1.0.84/src/yaml/build.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	368	/Users/alper/fantom/fantom-1.0.84/src/yaml/fan/YamlObj.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	1340	/Users/alper/fantom/fantom-1.0.84/src/yaml/fan/YamlParser.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	43	/Users/alper/fantom/fantom-1.0.84/src/yaml/fan/YamlReader.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	516	/Users/alper/fantom/fantom-1.0.84/src/yaml/fan/YamlSchema.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	782	/Users/alper/fantom/fantom-1.0.84/src/yaml/fan/YamlTokenizer.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	171	/Users/alper/fantom/fantom-1.0.84/src/yaml/fan/YamlWriter.fan | line 51: '!=', '!==', '#', '%', '&&', '(', '*', '+', '-', '.', '..', '..<', '/', ':', '::', ':=', ';', <, <=, <=>, <assign op>, <term chain>, '==', '===', '>', '>=', '?', '?:', DSL_STRING, IDENTIFIER, '[', as, is, isnot, '{' or '||' expected, got '++' :: n++
+1	0	886	/Users/alper/fantom/fantom-1.0.84/src/yaml/test/BasicYamlTest.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	63	/Users/alper/fantom/fantom-1.0.84/src/yaml/test/PrepTest.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	265	/Users/alper/fantom/fantom-1.0.84/src/yaml/test/YamlTestSuite.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
+1	0	203	/Users/alper/fantom/fantom-1.0.84/src/yaml/test/YamlTokenTest.fan | line 1: <type def>, FANDOC_LINE_COMMENT or using expected, got '#! /usr/bin/env fan' :: #! /usr/bin/env fan
