@@ -122,6 +122,8 @@ tasks {
         // The corpus parses with zero errors since wave 2, so a regression now fails the test.
         systemProperty("fantom.corpus.failOnErrors", System.getenv("FANTOM_CORPUS_FAIL") ?: "true")
         systemProperty("fantom.snippets", System.getenv("FANTOM_SNIPPETS") ?: "")
+        // Library tests read the real Fantom install outside the test project root.
+        systemProperty("NO_FS_ROOTS_ACCESS_CHECK", "true")
         testLogging {
             showStandardStreams = true
             events("passed", "failed", "skipped")

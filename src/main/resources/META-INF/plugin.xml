@@ -29,6 +29,8 @@
         <lang.namesValidator language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.refactoring.FantomNamesValidator"/>
 
         <fileBasedIndex implementation="co.anbora.labs.fantom.lang.index.FantomDeclarationIndex"/>
+        <!-- Fantom install sources as a library, so sys names resolve from any project -->
+        <additionalLibraryRootsProvider implementation="co.anbora.labs.fantom.lang.library.FantomLibraryRootsProvider"/>
         <gotoClassContributor implementation="co.anbora.labs.fantom.ide.navigation.FantomGotoClassContributor"/>
         <gotoSymbolContributor implementation="co.anbora.labs.fantom.ide.navigation.FantomGotoSymbolContributor"/>
 
