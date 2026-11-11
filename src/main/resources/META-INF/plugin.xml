@@ -28,6 +28,8 @@
         <lang.refactoringSupport language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.refactoring.FantomRefactoringSupportProvider"/>
         <lang.namesValidator language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.refactoring.FantomNamesValidator"/>
 
+        <fileBasedIndex implementation="co.anbora.labs.fantom.lang.index.FantomDeclarationIndex"/>
+
         <annotator language="fantom_lang"
                    implementationClass="co.anbora.labs.fantom.ide.annotator.HighlightingAnnotator"/>
     </extensions>
