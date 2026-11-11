@@ -1,0 +1,5 @@
+files=6035 lines=1214537 errors=0 badChars=0 filesWithErrors=0
+
+# top error messages
+
+# per file: errors badChars lines path | first error

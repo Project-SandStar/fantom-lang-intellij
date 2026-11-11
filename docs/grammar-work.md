@@ -25,7 +25,7 @@ Use 1.0.84 as the main target. It is the newest and `fantom-1.0.84/bin/fan` runs
 - `src/test/kotlin/co/anbora/labs/fantom/FantomCorpusParsingTest.kt`: parses every `.fan` under `FANTOM_CORPUS` (colon separated folders). Writes `build/reports/fantom-corpus.txt` with totals, the 25 most common error messages, and one line per failing file with its first error. Passes unless `FANTOM_CORPUS_FAIL=true`.
 - `src/test/kotlin/co/anbora/labs/fantom/FantomSnippetDumpTest.kt`: parses every `.fan` in `FANTOM_SNIPPETS`, writes `<name>.tree.txt` next to each, prints `SNIPPET <name>: errors=N` plus the first three errors. Never fails.
 - `src/test/testData/snippets/`: 42 small `.fan` files, one construct each. `s01` to `s30` are one-liners. `01_ctor` to `12_misc_native_dsl` are longer.
-- `docs/corpus-baseline-1.0.84.txt`: the baseline report, copied from `build/reports`.
+- `docs/corpus-baseline.txt`: the baseline report, copied from `build/reports`.
 
 Generated sources in `src/main/gen/` are git-ignored. Gradle regenerates them from the `.flex` and `.bnf` on every build.
 
@@ -73,7 +73,7 @@ Snippet results (16 of 30 one-liners fail):
 | s28 `abstract Void f();` | `;` | `abstractMethodDef` has no `[";"]` |
 | s30 `mixin M { abstract Void f(); }` | `;` | same |
 
-Corpus top error families (from `docs/corpus-baseline-1.0.84.txt`):
+Corpus top error families (from `docs/corpus-baseline.txt`):
 
 | Count | Message | Same cause as |
 |---|---|---|
@@ -128,7 +128,8 @@ Do it in this order. Run the snippet test after each step and the corpus test af
    - Results: snippets unchanged, 16 of 30 `sNN` still fail (same set). New `s31_wave1` covers the new tokens. Corpus: `files=869 lines=182562 errors=4581 badChars=0 filesWithErrors=556` (was 4590 / 560, no file got worse).
 
    **Fix batch done** (commit `d4b0ce4` on `grammar/fantom-corpus`): ctorChain parentheses, postfix before term with `<<sameLine>>`, forInit order, `[";"]` on field/abstract method/ctor, body-less ctor, enum list ends at last value, `|->|` with no return type, `return` takes an expr only on the same line, bare `Type name` local needs `<<eos>>`, itAdd as a suffix of exprStmt, `<<notAccessorBlock>>` guard on itBlock, SHABENG is a comment token, `generateParser` purges old files. Corpus: 4590 errors / 560 files to **588 / 132**. Baseline report replaced.
-   **Wave 2 merged so far** (on `grammar/fantom-corpus`): `grammar/w2-types` merged as `4f5743c`, `grammar/w2-slots` merged as `a684803` (one BNF conflict: kept the slots `slotDef_item` with the types `class_item_recover` that also stops on `[` and `|`). Corpus after both: **176 errors in 59 files**, 0 files worse. Baseline file replaced (`0fa601c`). `grammar/w2-exprs` is still running in its worktree and was told to rebase onto `a684803` before committing. After merging it: rerun the corpus, replace the baseline, delete the three `w2-*` branches and the worktree. Remaining top families before exprs: prefix `++`/`--` as a statement (15), `&field` storage operator as a statement start (11), closures after literal or paren targets.
+   **Wave 2 merged** (all on `grammar/fantom-corpus`): `grammar/w2-types` as `4f5743c` (588 to 189 errors), `grammar/w2-slots` as `a684803` (189 to 176; one BNF conflict: kept the slots `slotDef_item` with the types `class_item_recover` that also stops on `[` and `|`), `grammar/w2-exprs` as `5f3b4e6` (176 to **0**). Final check over all seven distributions: **6,035 files, 1,214,537 lines, 0 errors, 0 bad characters**. `./gradlew buildPlugin` passes. The three `w2-*` branches and their worktrees are deleted. `docs/corpus-baseline.txt` now holds the all-versions zero report, and the corpus test fails on any error by default (`FANTOM_CORPUS_FAIL=false` to only measure). Snippet `.tree.txt` dumps are no longer tracked in git.
+   One known accept-too-much spot: `h := |Str s->Void|? x` (snippet 06_closure) is invalid Fantom but parses; harmless for an IDE.
    Gotcha: after any BNF merge delete `src/main/gen` and run Gradle with `--rerun-tasks generateLexer generateParser`, or stale generated PSI classes break `compileJava`.
 
    **Wave 2 slots done** (branch `grammar/w2-slots`, off `bc6157a`): slot, facet, switch, using and compilation-unit rules.

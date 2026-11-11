@@ -77,7 +77,7 @@ Corpus is the seven Fantom distributions in `/Users/alper/fantom` (1.0.78 to 1.0
 
 ### Task 2.2: Fix the top grammar gaps
 **Priority:** P1
-**Status:** In Progress (plan in [grammar-work.md](grammar-work.md) section 6, no grammar edits made yet)
+**Status:** Done (2026-11-11). Lexer and parser rewritten in three waves on branch `grammar/fantom-corpus`. All 6,035 `.fan` files across Fantom 1.0.78 to 1.0.84 parse with zero errors. Details and how to rerun in [grammar-work.md](grammar-work.md) section 6.
 
 From the corpus, rank error causes. Known suspects from `Fantom.flex` and `Fantom.bnf`: DSL strings (`DSL_STRING` is commented out in `FantomParserDefinition.kt:43`), nested block comments, `using [java]` FFI imports, map type shorthand `Str:Int`, closures vs function types, `it`-blocks, facets with arguments. Fix one gap per PR with a corpus file that proves it.
 

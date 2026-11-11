@@ -119,7 +119,8 @@ tasks {
         // Corpus of real .fan files to parse. Colon-separated list of folders.
         // Example: FANTOM_CORPUS=/Users/me/fantom/fantom-1.0.84/src ./gradlew test
         systemProperty("fantom.corpus", System.getenv("FANTOM_CORPUS") ?: "")
-        systemProperty("fantom.corpus.failOnErrors", System.getenv("FANTOM_CORPUS_FAIL") ?: "false")
+        // The corpus parses with zero errors since wave 2, so a regression now fails the test.
+        systemProperty("fantom.corpus.failOnErrors", System.getenv("FANTOM_CORPUS_FAIL") ?: "true")
         systemProperty("fantom.snippets", System.getenv("FANTOM_SNIPPETS") ?: "")
         testLogging {
             showStandardStreams = true
