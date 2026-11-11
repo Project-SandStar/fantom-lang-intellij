@@ -76,6 +76,16 @@ class FantomLibraryTest : BasePlatformTestCase() {
         assertEquals("Env.fan", targets.single().containingFile.name)
     }
 
+    fun testBareEchoResolvesToObjThroughImplicitSupertype() {
+        if (skip()) return
+        myFixture.configureByText("A.fan", "class A { Void f() { ec<caret>ho(\"x\") } }")
+        val ref = myFixture.file.findReferenceAt(myFixture.caretOffset) as FantomReference
+        val targets = ref.resolveAll()
+        assertEquals(1, targets.size)
+        assertTrue(targets.single() is FantomMethodDef)
+        assertEquals("Obj.fan", targets.single().containingFile.name)
+    }
+
     fun testNoHomeMeansNoLibrary() {
         if (skip()) return
         FantomSettings.getInstance(project).homePath = null

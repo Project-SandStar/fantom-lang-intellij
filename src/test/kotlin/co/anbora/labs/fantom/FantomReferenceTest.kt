@@ -75,6 +75,17 @@ class FantomReferenceTest : BasePlatformTestCase() {
         assertEquals("B", co.anbora.labs.fantom.lang.index.FantomDeclarationIndex.enclosingTypeName(targets[0]))
     }
 
+    fun testThisDotNarrowsToEnclosingType() {
+        myFixture.addFileToProject("B.fan", "class B { Int cur := 0 }")
+        myFixture.configureByText("A.fan", """
+            class A { Int cur := 1; Void f() { this.c<caret>ur = 2 } }
+        """.trimIndent())
+        val ref = myFixture.file.findReferenceAt(myFixture.caretOffset) as FantomReference
+        val targets = ref.resolveAll()
+        assertEquals(1, targets.size)
+        assertEquals("A.fan", targets.single().containingFile.name)
+    }
+
     fun testDeclarationNameHasNoReference() {
         myFixture.configureByText("A.fan", "class A { Int fo<caret>o := 1 }")
         assertNull(myFixture.file.findReferenceAt(myFixture.caretOffset))

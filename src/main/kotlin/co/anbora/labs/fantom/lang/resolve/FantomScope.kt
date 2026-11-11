@@ -82,6 +82,13 @@ object FantomScope {
         }
     }
 
+    /** Roots the compiler adds without them being written: `Enum`/`Facet` first, then `Obj`. */
+    fun implicitSuperTypeNames(type: FantomNamedElement): List<String> = when (type) {
+        is FantomEnumDef -> listOf("Enum", "Obj")
+        is FantomFacetDef -> listOf("Facet", "Obj")
+        else -> listOf("Obj")
+    }
+
     fun isTypeDef(e: PsiElement): Boolean =
         e is FantomClassDef || e is FantomMixinDef || e is FantomEnumDef || e is FantomFacetDef
 

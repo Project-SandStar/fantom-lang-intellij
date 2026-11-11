@@ -28,6 +28,8 @@ class FantomReference(
     element: PsiElement,
     val kind: Kind,
     private val ownerName: String? = null,
+    /** True for `this.x` and `super.x`: the receiver is the enclosing type, so search its chain. */
+    private val thisReceiver: Boolean = false,
 ) : PsiPolyVariantReferenceBase<PsiElement>(element, TextRange(0, element.textLength)) {
 
     enum class Kind { BARE, SLOT, TYPE }
@@ -48,6 +50,7 @@ class FantomReference(
                 }
             }
             Kind.SLOT -> {
+                if (thisReceiver) return slotsInEnclosingTypeChain(name, scope)
                 val all = FantomDeclarationIndex.findDeclarations(name, project, scope) { !it.isType }
                 if (ownerName != null) all.filter { FantomDeclarationIndex.enclosingTypeName(it) == ownerName }.ifEmpty { all }
                 else all
@@ -59,13 +62,26 @@ class FantomReference(
     private fun types(name: String, project: com.intellij.openapi.project.Project, scope: GlobalSearchScope) =
         FantomDeclarationIndex.findDeclarations(name, project, scope) { it.isType }
 
-    /** Slots named [name] on the enclosing type, then on each declared supertype, breadth first. */
+    /**
+     * Slots named [name] on the enclosing type, then on each declared supertype, breadth
+     * first, and last on the implicit roots every Fantom type has: `Enum` for enums,
+     * `Facet` for facets, and `Obj` for everything (where `echo`, `toStr`, `equals` live).
+     */
     private fun slotsInEnclosingTypeChain(name: String, scope: GlobalSearchScope): List<FantomNamedElement> {
         val start = FantomScope.enclosingType(element) ?: return emptyList()
         val project = element.project
         val seen = HashSet<String>()
         val queue = ArrayDeque<FantomNamedElement>().apply { add(start) }
-        while (queue.isNotEmpty()) {
+        var implicitDone = false
+        while (true) {
+            if (queue.isEmpty()) {
+                if (implicitDone) return emptyList()
+                implicitDone = true
+                for (root in FantomScope.implicitSuperTypeNames(start)) {
+                    if (root !in seen) queue += FantomDeclarationIndex.findDeclarations(root, project, scope) { it.isType }
+                }
+                if (queue.isEmpty()) return emptyList()
+            }
             val type = queue.removeFirst()
             val typeName = type.name ?: continue
             if (!seen.add(typeName)) continue
@@ -75,7 +91,6 @@ class FantomReference(
                 queue += FantomDeclarationIndex.findDeclarations(superName, project, scope) { it.isType }
             }
         }
-        return emptyList()
     }
 
     override fun handleElementRename(newElementName: String): PsiElement {

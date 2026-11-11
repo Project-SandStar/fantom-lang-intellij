@@ -13,7 +13,10 @@ import co.anbora.labs.fantom.lang.core.psi.FantomSafeDynCallStm
 import co.anbora.labs.fantom.lang.core.psi.FantomSimpleType
 import co.anbora.labs.fantom.lang.core.psi.FantomSlotExpr
 import co.anbora.labs.fantom.lang.core.psi.FantomStaticCall
+import co.anbora.labs.fantom.lang.core.psi.FantomTermChain
+import co.anbora.labs.fantom.lang.core.psi.FantomTermExpr
 import co.anbora.labs.fantom.lang.core.psi.FantomTypeLiteral
+import co.anbora.labs.fantom.lang.core.psi.FantomTypes
 import co.anbora.labs.fantom.lang.core.psi.FantomUsingPod
 import co.anbora.labs.fantom.lang.resolve.FantomReference
 import com.intellij.lang.ASTNode
@@ -46,9 +49,19 @@ abstract class FantomIdMixin(node: ASTNode) : FantomElementImpl(node) {
         return when (val chain = slotExpr.parent) {
             is FantomStaticCall -> FantomReference(this, FantomReference.Kind.SLOT, chain.type.simpleType?.idList?.lastOrNull()?.text)
             is FantomDotCall, is FantomDynCallStm, is FantomSafeDotCallStm, is FantomSafeDynCallStm ->
-                FantomReference(this, FantomReference.Kind.SLOT)
+                FantomReference(this, FantomReference.Kind.SLOT, thisReceiver = hasThisOrSuperReceiver(chain))
             else -> FantomReference(this, FantomReference.Kind.BARE)
         }
+    }
+
+    // `this.x` / `super.x`: the chain op is the first one on a term whose base is the this/super literal.
+    private fun hasThisOrSuperReceiver(chainOp: com.intellij.psi.PsiElement): Boolean {
+        val termChain = chainOp.parent as? FantomTermChain ?: return false
+        val termExpr = termChain.parent as? FantomTermExpr ?: return false
+        if (termExpr.termChainList.firstOrNull() != termChain) return false
+        val literal = termExpr.termBase?.literal ?: return false
+        return literal.node.findChildByType(FantomTypes.THIS) != null ||
+            literal.node.findChildByType(FantomTypes.SUPER) != null
     }
 
     // `Foo` or `pod::Foo`: only the last id is the type name; the pod id has no target yet.

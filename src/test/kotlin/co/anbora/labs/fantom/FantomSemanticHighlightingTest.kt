@@ -64,7 +64,7 @@ class FantomSemanticHighlightingTest : BasePlatformTestCase() {
         assertEquals(setOf(key(FantomColors.FUNCTION_CALL)), keysAt(infos, "go", 0))
     }
 
-    fun testUnresolvedLibraryNamesStayNeutral() {
+    fun testLibraryNamesNeverWarnAndColourOnlyWhenResolved() {
         val infos = highlight("""
             class A {
               Str name := "x"
@@ -73,11 +73,18 @@ class FantomSemanticHighlightingTest : BasePlatformTestCase() {
         """)
         val bad = infos.filter { it.severity >= HighlightSeverity.WARNING }
         assertTrue("unexpected: " + bad.joinToString { "${it.severity} '${it.text}' ${it.description}" }, bad.isEmpty())
-        assertEquals(emptySet<String>(), keysAt(infos, "echo"))
-        // `Str` #1 is the tail of `toStr`; the type in `Str.defVal` is #2.
-        assertEquals(emptySet<String>(), keysAt(infos, "Str", 2))
-        // Unresolved `recv.name` keeps the old method call colour.
-        assertEquals(setOf(key(FantomColors.METHOD_CALL)), keysAt(infos, "toStr"))
-        assertEquals(setOf(key(FantomColors.METHOD_CALL)), keysAt(infos, "defVal"))
+        // With a Fantom install on the machine the library resolves sys names; without one they stay neutral.
+        val hasSys = co.anbora.labs.fantom.lang.library.FantomSettings.getInstance(project).effectiveHome() != null
+        if (hasSys) {
+            assertEquals(setOf(key(FantomColors.FUNCTION_CALL)), keysAt(infos, "echo"))
+            // `Str` #1 is the tail of `toStr`; the type in `Str.defVal` is #2.
+            assertEquals(setOf(key(FantomColors.TYPES)), keysAt(infos, "Str", 2))
+        } else {
+            assertEquals(emptySet<String>(), keysAt(infos, "echo"))
+            assertEquals(emptySet<String>(), keysAt(infos, "Str", 2))
+            // Unresolved `recv.name` keeps the old method call colour.
+            assertEquals(setOf(key(FantomColors.METHOD_CALL)), keysAt(infos, "toStr"))
+            assertEquals(setOf(key(FantomColors.METHOD_CALL)), keysAt(infos, "defVal"))
+        }
     }
 }
