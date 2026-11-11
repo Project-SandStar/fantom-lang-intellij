@@ -21,6 +21,8 @@ class FantomSettings : SimplePersistentStateComponent<FantomSettings.State>(Stat
 
     class State : BaseState() {
         var homePath by string()
+        /** True once the "no Fantom installation" balloon was shown for this project. */
+        var noHomeNoticeShown by property(false)
     }
 
     var homePath: String?

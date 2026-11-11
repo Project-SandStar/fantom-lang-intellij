@@ -31,6 +31,11 @@
         <fileBasedIndex implementation="co.anbora.labs.fantom.lang.index.FantomDeclarationIndex"/>
         <!-- Fantom install sources as a library, so sys names resolve from any project -->
         <additionalLibraryRootsProvider implementation="co.anbora.labs.fantom.lang.library.FantomLibraryRootsProvider"/>
+        <!-- Settings | Languages & Frameworks | Fantom: pick the Fantom home -->
+        <projectConfigurable parentId="language" instance="co.anbora.labs.fantom.ide.settings.FantomConfigurable"
+                             id="co.anbora.labs.fantom.settings" displayName="Fantom" nonDefaultProject="true"/>
+        <postStartupActivity implementation="co.anbora.labs.fantom.ide.settings.FantomHomeStartupActivity"/>
+        <notificationGroup id="Fantom" displayType="BALLOON"/>
         <gotoClassContributor implementation="co.anbora.labs.fantom.ide.navigation.FantomGotoClassContributor"/>
         <gotoSymbolContributor implementation="co.anbora.labs.fantom.ide.navigation.FantomGotoSymbolContributor"/>
 
