@@ -99,7 +99,7 @@ layers; each needs the one before it.
 
 ### Task 3.1: Layer 1, named elements, structure view, rename
 **Priority:** P1
-**Status:** In Progress (2026-11-11). Base commit `a2229b8`: `FantomNamedElement` mixin on classDef, mixinDef, facetDef, enumDef, enumValDef, fieldDef, methodDef, ctorDef, param, localDef, closureParam, catchDef. Three agents in parallel on branches `layer1/structure` (structure view), `layer1/usages` (find usages provider, refactoring support, names validator) and `layer1/psitests` (tests for every named class plus a sys-pod check). Merge order: psitests, usages, structure.
+**Status:** Done (2026-11-11). Base commit `a2229b8`: `FantomNamedElement` mixin on classDef, mixinDef, facetDef, enumDef, enumValDef, fieldDef, methodDef, ctorDef, param, localDef, closureParam, catchDef. Merged from three parallel agent branches: named-element tests (22 tests, plus a check over 20 `sys` pod files), Structure View (`ide/structure`, Cmd+7, types then enum values, fields, ctors, methods), find usages, in-place rename and names validator (`ide/usages`, `ide/refactoring`). Known limit: there are no references yet, so rename changes the declaration only; that is layer 3. A type-only closure param like `|Int|` has a null name by design.
 
 ### Task 3.2: Layer 2, stubs and index
 **Priority:** P2
