@@ -28,13 +28,13 @@ Once 0.1 is answered: install the Marketplace build on the named IDE, open the n
 
 ### Task 1.1: New colour settings extension point
 **Priority:** P1
-**Status:** Not Started
+**Status:** Done (2026-11-11). `plugin.xml` now uses `<colorSettings ... displayName="Fantom"/>`. Old entry removed because sinceBuild is 263.
 
 `com.intellij.colorSettingsPage` is deprecated since 2026.3. In `src/main/resources/META-INF/plugin.xml:15` register the same class with `<colorSettings implementation="co.anbora.labs.fantom.ide.color.FantomColorSettingPage" displayName="Fantom"/>`. Since `sinceBuild` is 263, the old entry can go. If Task 0.1 asks for older IDE support, keep both entries (JetBrains docs say 2026.3+ ignores the old one and older IDEs ignore the new one).
 
 ### Task 1.2: Gradle plugin and platform version
 **Priority:** P2
-**Status:** Not Started
+**Status:** Done (2026-11-11). Both Gradle plugins 2.20.1, `platformVersion` 263.7307.200.
 
 - `build.gradle.kts:9-10`: `org.jetbrains.intellij.platform` and `...grammarkit` 2.18.1 to 2.20.1.
 - `gradle.properties:15`: `platformVersion` 263.3889.65 to 263.7307.200.
@@ -42,28 +42,21 @@ Once 0.1 is answered: install the Marketplace build on the named IDE, open the n
 
 ### Task 1.3: CI Java line
 **Priority:** P3
-**Status:** Not Started
+**Status:** Done (2026-11-11). Temurin 25. A `verifyPlugin` step now runs before `publishPlugin`.
 
 `.github/workflows/gradle.yml:10-14`: step says "Set up JDK 25" but installs `21`. Set `java-version: '25'` and `distribution: 'temurin'`. Keep the rest.
 
 ### Task 1.4: Lexer output path
 **Priority:** P3
-**Status:** Not Started
-
-`build.gradle.kts:112-117`: `generateLexer` writes to `src/main/gen/co/anbora/labs/fantom/lang/co/anbora/labs/fantom/lang/FanLexer.java` and warns that `pathToClass` is not set. Set `targetRootOutputDir` to `src/main/gen` and `targetClass` to `co.anbora.labs.fantom.lang.FanLexer`, or whatever the 2.20 task API expects. Check the generated path and that `purgeOldFiles` works.
+**Status:** Done (2026-11-11). `generateLexer` now has `targetRootOutputDir = src/main/gen` and `pathToClass = co/anbora/labs/fantom/lang/FanLexer.java`, so JFlex writes the file once and `purgeOldFiles` removes only that file. The root is shared with `generateParser`, whose purge emptied the whole root and deleted the lexer on the first try; it now has `pathToParser` and `pathToPsiRoot` set so it purges only its own folders. There is no `targetClass` property in the 2.20 task API.
 
 ### Task 1.5: Change notes and README
 **Priority:** P3
-**Status:** Partly done (2026-11-11: docs links added to README)
-
-- Fix the out-of-order dates in `src/main/html/change-notes.html` (1.5.2 and 1.5.3).
-- Add a 1.8.1 line when Phase 1 ships.
+**Status:** Done (2026-11-11). Dates for 1.5.2 and 1.5.3 put in order, 1.8.1 line added, `pluginVersion` is 1.8.1.
 
 ### Task 1.6: Open `until-build`
 **Priority:** P2
-**Status:** Not Started
-
-Decide whether to drop `pluginUntilBuild` (`gradle.properties:12`) so each new IDE major does not need a new release. Risk: a real API break then shows as a runtime error instead of "not compatible". The verifier `recommended()` run in CI lowers that risk. Add `verifyPlugin` to the workflow before `publishPlugin` if we go this way.
+**Status:** Decided: keep `263.*` for now (2026-11-11). The verifier can only check IDE builds that exist, so an open range would be a guess. The CI step `verifyPlugin` with `recommended()` is in place; when the 2027.1 EAP (271) is public, run the verifier against it and widen the range in that release.
 
 ---
 

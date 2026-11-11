@@ -11,7 +11,9 @@
     <extensions defaultExtensionNs="com.intellij">
         <fileType name="Fantom" implementationClass="co.anbora.labs.fantom.lang.FantomFileType"
                   fieldName="INSTANCE" language="fantom_lang" extensions="fan"/>
-        <colorSettingsPage implementation="co.anbora.labs.fantom.ide.color.FantomColorSettingPage"/>
+        <!-- 2026.3+: declarative registration; com.intellij.colorSettingsPage is deprecated since 263 -->
+        <colorSettings implementation="co.anbora.labs.fantom.ide.color.FantomColorSettingPage"
+                       displayName="Fantom"/>
 
         <lang.parserDefinition language="fantom_lang"
                                implementationClass="co.anbora.labs.fantom.lang.FantomParserDefinition"/>

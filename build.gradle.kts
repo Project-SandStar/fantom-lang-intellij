@@ -7,8 +7,8 @@ fun environment(key: String) = providers.environmentVariable(key)
 plugins {
     id("java")
     id("org.jetbrains.kotlin.jvm") version "2.3.20"
-    id("org.jetbrains.intellij.platform") version "2.18.1"
-    id("org.jetbrains.intellij.platform.grammarkit") version "2.18.1"
+    id("org.jetbrains.intellij.platform") version "2.20.1"
+    id("org.jetbrains.intellij.platform.grammarkit") version "2.20.1"
 }
 
 group = properties("pluginGroup").get()
@@ -130,14 +130,21 @@ tasks {
 
     generateLexer {
         sourceFile.set(file("src/main/grammar/Fantom.flex"))
-        targetRootOutputDir.set(file("src/main/gen/co/anbora/labs/fantom/lang/"))
-        // targetClass.set("FanLexer")
+        // JFlex appends the package from the `package` line in Fantom.flex,
+        // so the root is src/main/gen, not the package folder.
+        targetRootOutputDir.set(file("src/main/gen"))
+        // The root is shared with generateParser; with pathToClass set, purge removes only this file.
+        pathToClass.set("co/anbora/labs/fantom/lang/FanLexer.java")
         purgeOldFiles.set(true)
     }
 
     generateParser {
         sourceFile.set(file("src/main/grammar/Fantom.bnf"))
         targetRootOutputDir.set(file("src/main/gen"))
+        // Scope the purge to the parser and PSI folders. Without these two paths the task
+        // empties the whole shared root and deletes FanLexer.java written by generateLexer.
+        pathToParser.set("co/anbora/labs/fantom/lang/core/parser/FantomParser.java")
+        pathToPsiRoot.set("co/anbora/labs/fantom/lang/core/psi")
         // Removing a BNF rule must also remove its generated PSI class, or compileJava breaks.
         purgeOldFiles.set(true)
     }
