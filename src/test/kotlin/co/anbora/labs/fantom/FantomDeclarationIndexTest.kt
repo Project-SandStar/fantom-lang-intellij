@@ -4,6 +4,7 @@ import co.anbora.labs.fantom.lang.index.FantomDeclarationIndex
 import co.anbora.labs.fantom.lang.index.FantomDeclarationKind
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.util.indexing.FileBasedIndex
 
 class FantomDeclarationIndexTest : BasePlatformTestCase() {
 
@@ -42,9 +43,11 @@ class FantomDeclarationIndexTest : BasePlatformTestCase() {
         myFixture.configureByText("A.fan", source)
         val scope = GlobalSearchScope.projectScope(project)
         assertEmpty(FantomDeclarationIndex.entries("a", project, scope))
-        val names = FantomDeclarationIndex.allNames(project)
+        val names = FantomDeclarationIndex.allNames(project, scope)
         assertTrue(names.containsAll(listOf("Foo", "name", "run", "make", "Walk", "go", "Color", "red", "green")))
-        assertFalse(names.contains("a"))
+        // Key lists are global to the index (a Fantom library on the machine may declare an `a`),
+        // so prove the project itself holds no `a` through the containing-files lookup.
+        assertTrue(FileBasedIndex.getInstance().getContainingFiles(FantomDeclarationIndex.NAME, "a", scope).isEmpty())
     }
 
     fun testFindDeclarationsReturnsPsi() {

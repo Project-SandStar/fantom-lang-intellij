@@ -3,6 +3,7 @@ package co.anbora.labs.fantom.lang.resolve
 import co.anbora.labs.fantom.lang.core.psi.FantomNamedElement
 import co.anbora.labs.fantom.lang.index.FantomDeclarationIndex
 import co.anbora.labs.fantom.lang.index.FantomDeclarationKind
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiPolyVariantReferenceBase
@@ -39,7 +40,24 @@ class FantomReference(
     override fun multiResolve(incompleteCode: Boolean): Array<ResolveResult> =
         resolveAll().map { PsiElementResolveResult(it) }.toTypedArray()
 
-    fun resolveAll(): List<FantomNamedElement> {
+    fun resolveAll(): List<FantomNamedElement> = preferProject(resolveRaw())
+
+    /**
+     * When a name is declared both in the project and in the Fantom library (for
+     * example the install itself opened as a project, or a pod copied into a project),
+     * the project copy wins. Library-only results are returned as they are.
+     */
+    private fun preferProject(targets: List<FantomNamedElement>): List<FantomNamedElement> {
+        if (targets.size < 2) return targets
+        val index = ProjectFileIndex.getInstance(element.project)
+        val inProject = targets.filter { t ->
+            val vf = t.containingFile?.virtualFile ?: return@filter false
+            index.isInContent(vf) && !index.isInLibrary(vf)
+        }
+        return inProject.ifEmpty { targets }
+    }
+
+    private fun resolveRaw(): List<FantomNamedElement> {
         val name = name
         val project = element.project
         val scope = GlobalSearchScope.allScope(project)

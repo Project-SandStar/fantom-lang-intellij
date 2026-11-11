@@ -91,9 +91,17 @@ class FantomDeclarationIndex : FileBasedIndexExtension<String, List<FantomDeclar
             return null
         }
 
-        /** All indexed names in scope. Used by Go to Class / Symbol to list candidates. */
-        fun allNames(project: Project): Collection<String> =
-            FileBasedIndex.getInstance().getAllKeys(NAME, project)
+        /**
+         * All indexed names, limited to [scope] when given (project files only, say).
+         * Without a scope this lists every key the index has seen, libraries included.
+         */
+        fun allNames(project: Project, scope: GlobalSearchScope? = null): Collection<String> {
+            val index = FileBasedIndex.getInstance()
+            if (scope == null) return index.getAllKeys(NAME, project)
+            val out = LinkedHashSet<String>()
+            index.processAllKeys(NAME, { key -> out.add(key); true }, scope, null)
+            return out
+        }
 
         /** Index entries for one name without opening any PSI. */
         fun entries(name: String, project: Project, scope: GlobalSearchScope): List<Entry> =
