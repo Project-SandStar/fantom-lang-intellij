@@ -10,8 +10,8 @@ import com.intellij.lang.LanguageRefactoringSupport
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
 /**
- * Rename on declarations. There are no references yet, so only the
- * declaration itself changes.
+ * Rename on a declaration with no uses, plus the extension registrations.
+ * Cross-file rename lives in [FantomRenameAcrossFilesTest].
  */
 class FantomRenameTest : BasePlatformTestCase() {
 

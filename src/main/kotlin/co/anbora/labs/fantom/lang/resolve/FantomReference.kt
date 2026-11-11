@@ -85,8 +85,26 @@ class FantomReference(
         return element
     }
 
-    override fun isReferenceTo(target: PsiElement): Boolean =
-        target is FantomNamedElement && target.name == name && resolveAll().any { it.isEquivalentTo(target) }
+    /**
+     * Called once per word-index hit during find usages and rename, so it gates
+     * before it resolves: the target must have the same name and a kind this
+     * reference can point at. A BARE name aimed at a local never touches the index.
+     */
+    override fun isReferenceTo(target: PsiElement): Boolean {
+        if (target !is FantomNamedElement || target.name != name) return false
+        fun resolvesTo() = resolveAll().any { it.isEquivalentTo(target) }
+        return when (kind) {
+            Kind.TYPE -> FantomScope.isTypeDef(target) && resolvesTo()
+            Kind.SLOT -> FantomScope.isSlot(target) && resolvesTo()
+            Kind.BARE -> when {
+                FantomScope.isLocalLike(target) ->
+                    target.containingFile == element.containingFile &&
+                        FantomScope.localsVisibleAt(element).firstOrNull { it.name == name }?.isEquivalentTo(target) == true
+                FantomScope.isSlot(target) || FantomScope.isTypeDef(target) -> resolvesTo()
+                else -> false
+            }
+        }
+    }
 
     override fun getVariants(): Array<Any> = emptyArray()
 }
