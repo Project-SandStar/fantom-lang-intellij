@@ -22,6 +22,8 @@
                                        implementationClass="co.anbora.labs.fantom.ide.highlight.FantomSyntaxHighlighterFactory"/>
         <lang.braceMatcher language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.typing.FantomBraceMatcher"/>
         <lang.foldingBuilder language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.folding.FantomFoldingBuilder"/>
+        <lang.psiStructureViewFactory language="fantom_lang"
+                                      implementationClass="co.anbora.labs.fantom.ide.structure.FantomStructureViewFactory"/>
 
         <annotator language="fantom_lang"
                    implementationClass="co.anbora.labs.fantom.ide.annotator.HighlightingAnnotator"/>
