@@ -98,12 +98,16 @@
 
 }
 
-compilationUnit ::=  usingDef* typeDef* doc*
+// SHABENG and FANDOC_LINE_COMMENT are comment tokens, so the parser skips them
+// anywhere. `doc` stays for the day doc comments become real PSI.
+compilationUnit ::=  usingDef* (typeDef | doc)*
 usingDef          ::=  usingPod //| usingType | usingAs
-usingPod        ::=  using podSpec ['::' id [as id]]
+// Compiler skipUsing: using (str | [ffi] id (. id)*) [:: id ($ [id])* [as id]] eos.
+// `$` is a Java identifier char, so `Line2D$Double` is one IDENTIFIER token.
+usingPod        ::=  using podSpec ['::' id [as id]] [";"] {pin=1}
 //usingType       ::=  using podSpec '::' id
 //usingAs         ::=  using podSpec '::' id as id
-podSpec         ::=  id | str | ffiPodSpec
+podSpec         ::=  id ("." id)* | str | ffiPodSpec
 ffiPodSpec      ::= "[" id "]" id ("." id)*
 doc             ::= FANDOC_LINE_COMMENT
 //------------
@@ -141,26 +145,22 @@ slotDef        ::=  !('}' | <<eof>>) slotDef_item {
 }
 private class_item_first ::= methodFlag | typeFlag | protection
 private class_item_recover ::= !('}' | <<eof>> | "@" | class_item_first | new | IDENTIFIER)
-private slotDef_item ::= methodDef
-                        | fieldDef
+// Compiler slotDef: `static {` is a static init; then facets and flags; a `new`
+// flag means ctor; else `type id` and `(` means method, else field.
+private slotDef_item ::= staticInit
                         | ctorDef
-                        | staticInit
+                        | methodDef
+                        | fieldDef
 
-/*private fieldDec  ::=  facets (methodFlag | fieldFlags) type (methodComp | fieldComp)
-private fieldComp   ::= id [":=" expr] [ fieldDefBlock ]
-private methodComp  ::= id itemParameterList [codeBlock]
-
-fieldDef         ::= fieldDec*/
-
-/*fieldDef       ::=  facets fieldFlags type id ":=" expr fieldDefBlock
-                  | facets fieldFlags type id ":=" expr
-                  | facets fieldFlags type id fieldDefBlock
-                  | facets fieldFlags type id*/
+// Compiler fieldDef: facets flags type id [":=" expr]
+//   ["{" getOrSet getOrSet "}"] eos.
+// Abstract, static and const fields in mixins have no init: `abstract Bool i`.
 fieldDef       ::=  facets fieldFlags type id [":=" expr]
                      [ fieldDefBlock ] [";"]
 
-fieldDefBlock  ::=  "{" fieldDef_item "}" {pin=1}
-private fieldDef_item     ::= !("}" | <<eof>>) [fieldGetter] [fieldSetter] {
+// getOrSet: `[flags] (get | set) (block | eos)`, at most once each, any order.
+fieldDefBlock  ::=  "{" fieldAccessor* "}" {pin=1}
+private fieldAccessor ::= !("}" | <<eof>>) (fieldGetter | fieldSetter) {
     pin=1
     recoverWhile=field_item_recover
 }
@@ -169,12 +169,12 @@ private field_item_recover ::= !("}" | <<eof>> | get | set | fieldFlag)
 fieldFlags     ::=  fieldFlag*
 fieldFlag      ::=  protection | abstract | const | final | native |
                      override | readonly | static | virtual
-fieldGetter    ::=  [protection] get [";" | block]
-fieldSetter    ::=  [protection] set [";" | block]
+fieldGetter    ::=  fieldFlags get [statementBlock | ";"] {pin=2}
+fieldSetter    ::=  fieldFlags set [statementBlock | ";"] {pin=2}
 
-methodDef ::= methodImplDef | abstractMethodDef
-abstractMethodDef ::= facets methodFlags type id itemParameterList [";"]
-methodImplDef      ::=  facets methodFlags type id itemParameterList statementBlock
+// Compiler methodDef: abstract and native methods have no body and end with
+// eos; `once Str bar() { "a" }` and `virtual Void g() {}` have a block.
+methodDef          ::=  facets methodFlags type id itemParameterList [statementBlock] [";"] {pin=5}
 itemParameterList  ::=  "(" params* ")" {pin=1}
 
 methodFlags    ::=  methodFlag*
@@ -204,10 +204,17 @@ staticInit     ::=  static statementBlock
 
 //--------------
 
+// Compiler facets: `"@" ctype ["{" (id "=" expr eos)* "}"]`. Values are
+// separated by `;` or a newline. Keep `simpleType` here: the annotator colors
+// a FantomSimpleType under FantomFacetItems as an annotation.
 facets        ::= facetItems*
 facetItems    ::= "@" simpleType [facetVals] {pin=1}
-facetVals     ::= "{" facetVal+ "}" {pin=1}
-facetVal      ::= id "=" expr
+facetVals     ::= "{" facetVal* "}" {pin=1}
+facetVal      ::= !("}" | <<eof>>) id "=" expr [";"] {
+    pin=2
+    recoverWhile=facetVal_recover
+}
+private facetVal_recover ::= !("}" | <<eof>> | IDENTIFIER)
 
 //-------------
 
@@ -226,7 +233,7 @@ private stmt_item_recover ::= !('}' | <<eof>> | "@" | break
                                     | IDENTIFIER)
 
 stmt             ::=  breakStm | continueStm | forStm | ifStm | returnStm | switchStm |
-                     throwStm | whileStm | tryStm | exprStmt | caseStm | defaultStm
+                     throwStm | whileStm | tryStm | exprStmt
 breakStm         ::=  break [";"]
 continueStm      ::=  continue [";"]
 forStm           ::=  for "(" [forInit] ";" [expr] ";" [expr] ")" block
@@ -246,11 +253,30 @@ catchStm         ::=  catch [catchDef] block
 catchDef       ::=  "(" type id ")"
 finallyStm       ::=  finally block
 
+// Compiler switchStmt: `{ (("case" expr ":")+ stmts | "default" ":" stmts)* }`.
+// Several `case` labels in a row share one block. `case`/`default` are not
+// statements, so `stmts` stops at them through stmt_item_recover.
 switchStm        ::=  switch "(" expr ")" switchStmBlock
-switchStmBlock   ::=  "{" caseStm* [defaultStm] "}" { pin=1 }
+switchStmBlock   ::=  "{" switchEntry* "}" { pin=1 }
+private switchEntry ::= !("}" | <<eof>>) (caseBlock | defaultBlock) {
+    pin=1
+    recoverWhile=switchEntry_recover
+}
+private switchEntry_recover ::= !("}" | <<eof>> | case | default)
 
-caseStm          ::=  case expr ":" stmts
-defaultStm       ::=  default ":" stmts
+caseBlock        ::=  caseLabel+ switchStmts
+// `case opPing: pong()` must not read `opPing: pong` as a map type, so a bare
+// `id :` label is taken before the general expr form.
+caseLabel        ::=  case (caseIdLabel | expr ":") {pin=1}
+private caseIdLabel ::= &(IDENTIFIER ":") local ":"
+defaultBlock     ::=  default ":" switchStmts {pin=1}
+// Like `stmts`, but a `case` or `default` label ends the list without an error.
+private switchStmts   ::=  switchStmtDef*
+private switchStmtDef ::=  !('}' | <<eof>> | case | default) stmt
+{
+    pin=1
+    recoverWhile=stmt_item_recover
+}
 
 //------------
 
