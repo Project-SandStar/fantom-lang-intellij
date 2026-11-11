@@ -20,10 +20,9 @@ Fantom file
                 FantomMethodFlagsImpl(METHOD_FLAGS)
                   <empty list>
                 FantomTypeImpl(TYPE)
-                  FantomNonNullTypeImpl(NON_NULL_TYPE)
-                    FantomSimpleTypeImpl(SIMPLE_TYPE)
-                      FantomIdImpl(ID)
-                        PsiElement(IDENTIFIER)('Void')
+                  FantomSimpleTypeImpl(SIMPLE_TYPE)
+                    FantomIdImpl(ID)
+                      PsiElement(IDENTIFIER)('Void')
                 FantomIdImpl(ID)
                   PsiElement(IDENTIFIER)('f')
                 FantomItemParameterListImpl(ITEM_PARAMETER_LIST)

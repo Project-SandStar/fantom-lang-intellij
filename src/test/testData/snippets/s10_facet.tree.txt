@@ -72,10 +72,9 @@ Fantom file
               FantomFieldFlagsImpl(FIELD_FLAGS)
                 <empty list>
               FantomTypeImpl(TYPE)
-                FantomNonNullTypeImpl(NON_NULL_TYPE)
-                  FantomSimpleTypeImpl(SIMPLE_TYPE)
-                    FantomIdImpl(ID)
-                      PsiElement(IDENTIFIER)('Str')
+                FantomSimpleTypeImpl(SIMPLE_TYPE)
+                  FantomIdImpl(ID)
+                    PsiElement(IDENTIFIER)('Str')
               FantomIdImpl(ID)
                 PsiElement(IDENTIFIER)('x')
               PsiElement(:=)(':=')
