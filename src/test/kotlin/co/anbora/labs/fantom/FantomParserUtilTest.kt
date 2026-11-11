@@ -85,6 +85,20 @@ class FantomParserUtilTest : ParsingTestCase("", "fan", FantomParserDefinition()
         assertTrue(FantomParserUtil.noSpaceBefore(builder("?"), 0))
     }
 
+    fun testTypeName() {
+        assertTrue(FantomParserUtil.typeName(builder("Str x"), 0))
+        assertTrue(FantomParserUtil.typeName(builder("_Foo x"), 0))
+        assertTrue(FantomParserUtil.typeName(builder("sys::Str x"), 0))
+        assertFalse(FantomParserUtil.typeName(builder("foo x"), 0))
+        assertFalse(FantomParserUtil.typeName(builder("foo.Bar"), 0))
+        assertFalse(FantomParserUtil.typeName(builder("123"), 0))
+        assertFalse(FantomParserUtil.typeName(builder("it"), 0))
+        // consumes nothing
+        val b = builder("Str x")
+        FantomParserUtil.typeName(b, 0)
+        assertEquals("Str", b.tokenText)
+    }
+
     fun testLexerTokens() {
         fun kinds(text: String): List<String> {
             val b = builder(text)

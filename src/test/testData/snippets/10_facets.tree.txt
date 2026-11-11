@@ -20,25 +20,22 @@ Fantom file
           FantomSlotDefImpl(SLOT_DEF)
             <empty list>
           PsiElement(IDENTIFIER)('Opt')
-          PsiErrorElement:':', '::', '?', IDENTIFIER or '[' expected, got '{'
+          PsiErrorElement:':', '::', IDENTIFIER or '[' expected, got '{'
             PsiElement({)('{')
           FantomSlotDefImpl(SLOT_DEF)
-            <empty list>
-          PsiElement(IDENTIFIER)('help')
-          PsiErrorElement:':', '::', '?', IDENTIFIER or '[' expected, got '='
-            PsiElement(=)('=')
-          PsiElement(STRING_LITERAL)('"username to use"')
-          PsiElement(;)(';')
-          FantomSlotDefImpl(SLOT_DEF)
-            <empty list>
-          PsiElement(IDENTIFIER)('aliases')
-          PsiErrorElement:':', '::', '?', IDENTIFIER or '[' expected, got '='
-            PsiElement(=)('=')
-          PsiElement([)('[')
-          PsiElement(STRING_LITERAL)('"u"')
-          PsiElement(])(']')
-        PsiElement(})('}')
-  PsiErrorElement:<type def> or FANDOC_LINE_COMMENT expected, got 'Str'
+            PsiErrorElement:<ctor def>, <field def>, <method def> or static expected, got 'help'
+              <empty list>
+  PsiElement(IDENTIFIER)('help')
+  PsiElement(DUMMY_BLOCK)
+    PsiElement(=)('=')
+    PsiElement(STRING_LITERAL)('"username to use"')
+    PsiElement(;)(';')
+    PsiElement(IDENTIFIER)('aliases')
+    PsiElement(=)('=')
+    PsiElement([)('[')
+    PsiElement(STRING_LITERAL)('"u"')
+    PsiElement(])(']')
+    PsiElement(})('}')
     PsiElement(IDENTIFIER)('Str')
   PsiElement(DUMMY_BLOCK)
     PsiElement(?)('?')

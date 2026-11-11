@@ -140,7 +140,8 @@ slotDef        ::=  !('}' | <<eof>>) slotDef_item {
     recoverWhile=class_item_recover
 }
 private class_item_first ::= methodFlag | typeFlag | protection
-private class_item_recover ::= !('}' | <<eof>> | "@" | class_item_first | new | IDENTIFIER)
+// `[` and `|` start map and func types, so they can start a slot.
+private class_item_recover ::= !('}' | <<eof>> | "@" | class_item_first | new | IDENTIFIER | "[" | "|")
 private slotDef_item ::= methodDef
                         | fieldDef
                         | ctorDef
@@ -223,7 +224,7 @@ private stmt_item_recover ::= !('}' | <<eof>> | "@" | break
                                     | throw | while | try | catch
                                     | finally | switch | case
                                     | default | this | super | it
-                                    | IDENTIFIER)
+                                    | IDENTIFIER | "[" | "|" | "(")
 
 stmt             ::=  breakStm | continueStm | forStm | ifStm | returnStm | switchStm |
                      throwStm | whileStm | tryStm | exprStmt | caseStm | defaultStm
@@ -284,12 +285,13 @@ termExpr       ::=  termBase termChain*
 termBase       ::=  literal | typeBase | idExpr
 typeBase       ::=  typeLiteral | namedSuper | staticCall |
                      dsl | closure | simple | ctorBlock
-typeLiteral    ::=   [type] "#" id | type "#"
+typeLiteral    ::=   type "#" [<<sameLine>> id] | "#" id
 //slotLiteral    ::=  [type] "#" id
 namedSuper     ::=  type "." super
 staticCall     ::=  type "." slotExpr
 dsl            ::=  type DSL_STRING
-simple         ::=  type "(" expr ")"
+// Parser.typeBaseExpr: `Type(args)` is a construction call; no newline check, any args.
+simple         ::=  type "(" args ")" [closure]
 ctorBlock      ::=  type itBlock
 termChain      ::=  dotCall | dynCallStm | safeDotCallStm | safeDynCallStm |
                      indexExpr | callOp | itBlock
@@ -302,10 +304,11 @@ idExpr         ::=  local | slotExpr
 slotExpr       ::=  field | call
 local          ::=  id
 field          ::=  ["&"] id
-call           ::=  id ["(" args ")"] [closure]
+call           ::=  id [<<sameLine>> "(" args ")"] [closure]
 args           ::=  [expr ("," expr)*]
-indexExpr      ::=  "[" expr "]"
-callOp         ::=  "(" args ")" [closure] | closure
+// Parser: isIndexOpenBracket / isCallOpenParen require no newline before `[` / `(`.
+indexExpr      ::=  <<sameLine>> "[" expr "]"
+callOp         ::=  <<sameLine>> "(" args ")" [closure] | closure
 
 literal        ::=  null | this | super | it |
                      bool | INT_LITERAL | FLOAT_LITERAL | DECIMAL_LITERAL | str |
@@ -314,7 +317,7 @@ bool           ::=  TRUE | FALSE
 str            ::=  TRIPLE_STRING_LITERAL | STRING_LITERAL | CHAR_LITERAL
 list           ::=  [type] "[" listItems "]"
 listItems      ::=  "," | (expr ("," expr)*) [","]
-map            ::=  [mapType] "[" mapItems [","] "]"
+map            ::=  [type] "[" mapItems [","] "]"
 mapItems       ::=  ":" | (mapPair ("," mapPair)*)
 mapPair        ::=  expr ":" expr
 
@@ -325,24 +328,25 @@ closureParam   ::=  formal | id
 
 //--------------------
 
-type           ::=  nullType | nonNullType
-nullType       ::=  nonNullType "?"
-nonNullType    ::=  listType | mapType | funcType | simpleType
+// Mirrors Parser.ctype: base, then `?` (no space before it), then any number of
+// `[]` each with optional `?`, then `: type` for a map. Only the bracket form
+// `[K:V]` is a base; `|...|` is a function type. See docs/grammar-work.md 5.
+type           ::=  nonMapType [mapSuffix]
+private nonMapType ::= baseType (nullSuffix | listSuffix)*
+private baseType   ::= simpleType | mapType | funcType
+private nullSuffix ::= <<noSpaceBefore>> "?"
+private listSuffix ::= "[" "]"
+private mapSuffix  ::= ":" type
+mapType        ::=  "[" nonMapType ":" type "]"
 typeList       ::=  type ("," type)*
-simpleType     ::=  nullableType ["::" nullableType]
-//listType       ::=  type "[" "]"
-//mapType        ::=  ["["] type ":" type ["]"]
-private nullableType  ::= id ["?"]
-listType       ::=  simpleType "[" "]" "[" "]" | simpleType "[" "]"
-mapType        ::=  ["["] simpleType ":" type ["]"]
+// `<<typeName>>`: first char uppercase or `_`, or any id followed by `::`.
+simpleType     ::=  <<typeName>> id ["::" id]
 // `|Obj?->Obj?|` lexes as `Obj` `?->` `Obj`; the compiler (Parser.funcType) accepts
-// safeArrow here too and makes the last param nullable.
+// safeArrow here too and makes the last param nullable. `|->|` has no params and no return.
 funcType       ::=  "|" [formals] [(dynCall | safeDynCall) [type]] "|"
-formals        ::=  [formal ("," formal)*]
+formals        ::=  formal ("," formal)*
 formal         ::=  formalFull
 formalFull     ::=  type [id] | id
-//formalInferred ::=  id
-//formalTypeOnly ::=  type
 
 //-------------------
 
