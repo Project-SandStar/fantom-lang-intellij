@@ -32,6 +32,11 @@ enum class FantomColors(humanName: String, default: TextAttributesKey) {
             TextAttributes(Color.decode("#507874"), null, null, null, Font.PLAIN)
         )
     ),
+    // Semantic colours: set by the annotator from what an identifier resolves to.
+    LOCAL_VARIABLE("Identifiers//Local variable", DefaultLanguageHighlighterColors.LOCAL_VARIABLE),
+    PARAMETER("Identifiers//Parameter", DefaultLanguageHighlighterColors.PARAMETER),
+    INSTANCE_FIELD("Identifiers//Field", DefaultLanguageHighlighterColors.INSTANCE_FIELD),
+    FUNCTION_CALL("Identifiers//Method call", DefaultLanguageHighlighterColors.FUNCTION_CALL),
     STRINGS("Literals//Strings", DefaultLanguageHighlighterColors.STRING),
     NUMBERS("Literals//Numbers", DefaultLanguageHighlighterColors.NUMBER),
     COMMENTS("Comments//Line Comment", DefaultLanguageHighlighterColors.LINE_COMMENT),
