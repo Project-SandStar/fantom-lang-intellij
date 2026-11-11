@@ -37,6 +37,13 @@ git clone https://github.com/anboralabs/fantom-lang-intellij
 
   [Plugin Download](https://plugins.jetbrains.com/plugin/20289-fantom-lang)
 
+## Docs
+
+- [State report](docs/report.md)
+- [Tasks](docs/tasks.md)
+- [Tree-sitter study](docs/tree-sitter.md)
+- [Agent guide](AGENTS.md)
+
 ## License
 
 [GNU General Public License v3.0](https://github.com/anboralabs/fantom-lang-intellij/blob/master/LICENSE)
