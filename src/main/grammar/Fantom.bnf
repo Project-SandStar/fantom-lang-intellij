@@ -25,6 +25,9 @@
         "co.anbora.labs.fantom.lang.core.psi.FantomNamedElement"
     ]
 
+    // Identifier uses carry a PsiReference (declaration names do not, see FantomIdMixin).
+    mixin("id")="co.anbora.labs.fantom.lang.core.psi.impl.FantomIdMixin"
+
     tokens = [
 
         GET                 = 'get_kw'
