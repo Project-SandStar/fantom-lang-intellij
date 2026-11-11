@@ -101,11 +101,9 @@ layers; each needs the one before it.
 **Priority:** P1
 **Status:** Done (2026-11-11). Base commit `a2229b8`: `FantomNamedElement` mixin on classDef, mixinDef, facetDef, enumDef, enumValDef, fieldDef, methodDef, ctorDef, param, localDef, closureParam, catchDef. Merged from three parallel agent branches: named-element tests (22 tests, plus a check over 20 `sys` pod files), Structure View (`ide/structure`, Cmd+7, types then enum values, fields, ctors, methods), find usages, in-place rename and names validator (`ide/usages`, `ide/refactoring`). Known limit: there are no references yet, so rename changes the declaration only; that is layer 3. A type-only closure param like `|Int|` has a null name by design.
 
-### Task 3.2: Layer 2, stubs and index
+### Task 3.2: Layer 2, index and navigation
 **Priority:** P2
-**Status:** Not Started
-
-Stub element types for type and slot declarations, `StubIndex` keyed by short name, `ChooseByNameContributor` for go to class and go to symbol. Same-project files only at first.
+**Status:** In Progress (2026-11-11). Design choice: a `FileBasedIndex` (`lang/index/FantomDeclarationIndex`) instead of stub trees. It maps a short name to `(kind, ownerType)` per file and re-parses only matching files on lookup. This keeps the grammar free of stub plumbing and is enough for navigation and for the layer 3 resolver; stubs can come later if memory or speed demands it. Base commit with 3 tests merged. Agents in parallel: `layer2/goto` (Go to Class and Go to Symbol contributors, shared presentation helper) and `layer2/scale` (index test over the real `sys` pod with timing, plus `FantomHome` detection of a Fantom install for a later library root).
 
 ### Task 3.2b: Layer 3, references
 **Priority:** P2
