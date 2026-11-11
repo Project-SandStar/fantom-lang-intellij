@@ -1,0 +1,67 @@
+Fantom file
+  FantomTypeDefImpl(TYPE_DEF)
+    FantomClassDefImpl(CLASS_DEF)
+      FantomTypeHeaderImpl(TYPE_HEADER)
+        FantomFacetsImpl(FACETS)
+          <empty list>
+        FantomTypeFlagsImpl(TYPE_FLAGS)
+          <empty list>
+      PsiElement(class)('class')
+      FantomIdImpl(ID)
+        PsiElement(IDENTIFIER)('Foo')
+      FantomHighOrderBlockImpl(HIGH_ORDER_BLOCK)
+        PsiElement({)('{')
+        FantomSlotDefsImpl(SLOT_DEFS)
+          FantomSlotDefImpl(SLOT_DEF)
+            <empty list>
+          PsiElement(@)('@')
+          PsiErrorElement:IDENTIFIER expected, got 'Opt'
+            <empty list>
+          FantomSlotDefImpl(SLOT_DEF)
+            <empty list>
+          PsiElement(IDENTIFIER)('Opt')
+          PsiErrorElement:':', '::', '?', IDENTIFIER or '[' expected, got '{'
+            PsiElement({)('{')
+          FantomSlotDefImpl(SLOT_DEF)
+            <empty list>
+          PsiElement(IDENTIFIER)('help')
+          PsiErrorElement:':', '::', '?', IDENTIFIER or '[' expected, got '='
+            PsiElement(=)('=')
+          PsiElement(STRING_LITERAL)('"username to use"')
+          PsiElement(;)(';')
+          FantomSlotDefImpl(SLOT_DEF)
+            <empty list>
+          PsiElement(IDENTIFIER)('aliases')
+          PsiErrorElement:':', '::', '?', IDENTIFIER or '[' expected, got '='
+            PsiElement(=)('=')
+          PsiElement([)('[')
+          PsiElement(STRING_LITERAL)('"u"')
+          PsiElement(])(']')
+        PsiElement(})('}')
+  PsiErrorElement:<type def> or FANDOC_LINE_COMMENT expected, got 'Str'
+    PsiElement(IDENTIFIER)('Str')
+  PsiElement(DUMMY_BLOCK)
+    PsiElement(?)('?')
+    PsiElement(IDENTIFIER)('user')
+    PsiElement(@)('@')
+    PsiElement(IDENTIFIER)('NoDoc')
+    PsiElement(protected)('protected')
+    PsiElement(new)('new')
+    PsiElement(IDENTIFIER)('make')
+    PsiElement(()('(')
+    PsiElement(IDENTIFIER)('Future')
+    PsiElement(IDENTIFIER)('wrap')
+  PsiElement(DUMMY_BLOCK)
+    PsiElement())(')')
+    PsiElement({)('{')
+    PsiElement(})('}')
+    PsiElement(@)('@')
+    PsiElement(IDENTIFIER)('Arg')
+    PsiElement({)('{')
+    PsiElement(IDENTIFIER)('help')
+    PsiElement(=)('=')
+    PsiElement(STRING_LITERAL)('"Verbose"')
+    PsiElement(})('}')
+  PsiElement(IDENTIFIER)('Bool')
+  PsiElement(IDENTIFIER)('verbose')
+  PsiElement(})('}')

@@ -129,13 +129,9 @@ inheritance    ::=  ":" typeList
 //enumValDefs    ::=  enumValDef ("," enumValDef)* [";"]
 //enumValDef     ::=  facets id ["(" args ")"]
 
-enumValDefs    ::=  enumValDef+ [";"]
-enumValDef     ::=  !("}" | <<eof>> | ';') enumValDef_item (',' | &';') {
-    pin=1
-    recoverWhile=enumValDef_item_recover
-}
-private enumValDef_item_recover ::= !("}" | <<eof>> | ';' | IDENTIFIER)
-enumValDef_item ::= facets id ["(" args ")"]
+// Compiler: enumDef ("," enumDef)* endOfStmt. Only a comma continues the list.
+enumValDefs    ::=  enumValDef (',' enumValDef)* [";"]
+enumValDef     ::=  facets id ["(" args ")"]
 
 
 slotDefs       ::=  slotDef*
@@ -161,7 +157,7 @@ fieldDef         ::= fieldDec*/
                   | facets fieldFlags type id fieldDefBlock
                   | facets fieldFlags type id*/
 fieldDef       ::=  facets fieldFlags type id [":=" expr]
-                     [ fieldDefBlock ]
+                     [ fieldDefBlock ] [";"]
 
 fieldDefBlock  ::=  "{" fieldDef_item "}" {pin=1}
 private fieldDef_item     ::= !("}" | <<eof>>) [fieldGetter] [fieldSetter] {
@@ -177,7 +173,7 @@ fieldGetter    ::=  [protection] get [";" | block]
 fieldSetter    ::=  [protection] set [";" | block]
 
 methodDef ::= methodImplDef | abstractMethodDef
-abstractMethodDef ::= facets methodFlags type id itemParameterList
+abstractMethodDef ::= facets methodFlags type id itemParameterList [";"]
 methodImplDef      ::=  facets methodFlags type id itemParameterList statementBlock
 itemParameterList  ::=  "(" params* ")" {pin=1}
 
@@ -197,9 +193,10 @@ statementBlock      ::=  "{" stmts "}"
     pin=1
 }
 
-ctorDef        ::=  facets ctorFlags [static] new id itemParameterList [ctorChain] statementBlock
+// Body is optional: sys pod ctors are implicitly native (`protected new make()`).
+ctorDef        ::=  facets ctorFlags [static] new id itemParameterList [ctorChain] [statementBlock] [";"]
 ctorFlags      ::=  [protection]
-ctorChain      ::=  ":" ctorChainThis | ctorChainSuper
+ctorChain      ::=  ":" (ctorChainThis | ctorChainSuper)
 ctorChainThis  ::=  this "." id "(" args ")"
 ctorChainSuper ::=  super ["." id] "(" args ")"
 
@@ -229,19 +226,20 @@ private stmt_item_recover ::= !('}' | <<eof>> | "@" | break
                                     | IDENTIFIER)
 
 stmt             ::=  breakStm | continueStm | forStm | ifStm | returnStm | switchStm |
-                     throwStm | whileStm | tryStm | exprStmt | itAdd | caseStm | defaultStm
+                     throwStm | whileStm | tryStm | exprStmt | caseStm | defaultStm
 breakStm         ::=  break [";"]
 continueStm      ::=  continue [";"]
 forStm           ::=  for "(" [forInit] ";" [expr] ";" [expr] ")" block
-forInit        ::=  expr | localDef
+forInit        ::=  localDef | expr
 ifStm            ::=  if "(" expr ")" block [ else block ]
-returnStm        ::=  return [expr] [";"]
+returnStm        ::=  return [<<sameLine>> expr] [";"]
 throwStm         ::=  throw expr [";"]
 whileStm         ::=  while "(" expr ")" block
-exprStmt       ::=  localDef | expr [";"]
-localDef       ::=  localDefBlock [";"]
-private localDefBlock ::= type id ":=" expr | id ":=" expr | type id
-itAdd          ::=  expr ("," expr)* [","] [";"]
+exprStmt       ::=  localDef [";"] | expr [itAdd] [";"]
+localDef       ::=  localDefBlock
+private localDefBlock ::= type id ":=" expr | id ":=" expr | type id &<<eos>>
+// it.add sugar: `a, b, c` inside an it-block. Also a lone trailing comma.
+itAdd          ::=  ("," expr)+ [","] | ","
 
 tryStm           ::=  try block catchStm* [finallyStm]
 catchStm         ::=  catch [catchDef] block
@@ -278,9 +276,9 @@ multExpr         ::=  parenExpr (("*" | "/" | "%") parenExpr)*
 parenExpr        ::=  unaryExpr | castExpr | groupedExpr
 castExpr       ::=  "(" type ")" parenExpr
 groupedExpr    ::=  "(" expr ")" termChain*
-unaryExpr      ::=  prefixExpr | termExpr | postfixExpr
+unaryExpr      ::=  prefixExpr | postfixExpr | termExpr
 prefixExpr     ::=  ("!" | "+" | "-" | "++" | "--") parenExpr
-postfixExpr    ::=  termExpr ("++" | "--")
+postfixExpr    ::=  termExpr <<sameLine>> ("++" | "--")
 
 termExpr       ::=  termBase termChain*
 termBase       ::=  literal | typeBase | idExpr
@@ -295,7 +293,7 @@ simple         ::=  type "(" expr ")"
 ctorBlock      ::=  type itBlock
 termChain      ::=  dotCall | dynCallStm | safeDotCallStm | safeDynCallStm |
                      indexExpr | callOp | itBlock
-itBlock        ::=  statementBlock
+itBlock        ::=  <<notAccessorBlock>> statementBlock
 dotCall        ::=  "." slotExpr
 dynCallStm       ::=  dynCall slotExpr
 safeDotCallStm   ::=  "?." slotExpr
@@ -321,7 +319,7 @@ mapItems       ::=  ":" | (mapPair ("," mapPair)*)
 mapPair        ::=  expr ":" expr
 
 closure        ::=  closureSig statementBlock
-closureSig     ::=  "|" closureParams [dynCall type] "|"
+closureSig     ::=  "|" closureParams [(dynCall | safeDynCall) [type]] "|"
 closureParams  ::=  [closureParam ("," closureParam)*]
 closureParam   ::=  formal | id
 
@@ -339,7 +337,7 @@ listType       ::=  simpleType "[" "]" "[" "]" | simpleType "[" "]"
 mapType        ::=  ["["] simpleType ":" type ["]"]
 // `|Obj?->Obj?|` lexes as `Obj` `?->` `Obj`; the compiler (Parser.funcType) accepts
 // safeArrow here too and makes the last param nullable.
-funcType       ::=  "|" [formals] [(dynCall | safeDynCall) type] "|"
+funcType       ::=  "|" [formals] [(dynCall | safeDynCall) [type]] "|"
 formals        ::=  [formal ("," formal)*]
 formal         ::=  formalFull
 formalFull     ::=  type [id] | id

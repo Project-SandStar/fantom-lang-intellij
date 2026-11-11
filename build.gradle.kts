@@ -137,7 +137,8 @@ tasks {
     generateParser {
         sourceFile.set(file("src/main/grammar/Fantom.bnf"))
         targetRootOutputDir.set(file("src/main/gen"))
-        purgeOldFiles.set(false)
+        // Removing a BNF rule must also remove its generated PSI class, or compileJava breaks.
+        purgeOldFiles.set(true)
     }
 
     withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {

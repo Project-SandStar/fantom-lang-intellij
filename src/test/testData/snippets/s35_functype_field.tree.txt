@@ -1,0 +1,131 @@
+Fantom file
+  FantomTypeDefImpl(TYPE_DEF)
+    FantomClassDefImpl(CLASS_DEF)
+      FantomTypeHeaderImpl(TYPE_HEADER)
+        FantomFacetsImpl(FACETS)
+          <empty list>
+        FantomTypeFlagsImpl(TYPE_FLAGS)
+          <empty list>
+      PsiElement(class)('class')
+      FantomIdImpl(ID)
+        PsiElement(IDENTIFIER)('A')
+      FantomHighOrderBlockImpl(HIGH_ORDER_BLOCK)
+        PsiElement({)('{')
+        FantomSlotDefsImpl(SLOT_DEFS)
+          FantomSlotDefImpl(SLOT_DEF)
+            FantomFieldDefImpl(FIELD_DEF)
+              FantomFacetsImpl(FACETS)
+                <empty list>
+              FantomFieldFlagsImpl(FIELD_FLAGS)
+                <empty list>
+              FantomTypeImpl(TYPE)
+                FantomNonNullTypeImpl(NON_NULL_TYPE)
+                  FantomMapTypeImpl(MAP_TYPE)
+                    FantomSimpleTypeImpl(SIMPLE_TYPE)
+                      FantomIdImpl(ID)
+                        PsiElement(IDENTIFIER)('Obj')
+                    PsiElement(:)(':')
+                    FantomTypeImpl(TYPE)
+                      FantomNonNullTypeImpl(NON_NULL_TYPE)
+                        FantomSimpleTypeImpl(SIMPLE_TYPE)
+                          FantomIdImpl(ID)
+                            PsiElement(IDENTIFIER)('Int')
+              FantomIdImpl(ID)
+                PsiElement(IDENTIFIER)('reverse')
+            PsiErrorElement:'(', ':=', ';' or '{' expected, got '|'
+              PsiElement(|)('|')
+          FantomSlotDefImpl(SLOT_DEF)
+            FantomFieldDefImpl(FIELD_DEF)
+              FantomFacetsImpl(FACETS)
+                <empty list>
+              FantomFieldFlagsImpl(FIELD_FLAGS)
+                <empty list>
+              FantomTypeImpl(TYPE)
+                FantomNonNullTypeImpl(NON_NULL_TYPE)
+                  FantomSimpleTypeImpl(SIMPLE_TYPE)
+                    FantomIdImpl(ID)
+                      PsiElement(IDENTIFIER)('OutStream')
+              FantomIdImpl(ID)
+                PsiElement(IDENTIFIER)('out')
+            PsiErrorElement:'(', ':=', ';' or '{' expected, got ','
+              PsiElement(,)(',')
+          FantomSlotDefImpl(SLOT_DEF)
+            FantomFieldDefImpl(FIELD_DEF)
+              FantomFacetsImpl(FACETS)
+                <empty list>
+              FantomFieldFlagsImpl(FIELD_FLAGS)
+                <empty list>
+              FantomTypeImpl(TYPE)
+                FantomNonNullTypeImpl(NON_NULL_TYPE)
+                  FantomSimpleTypeImpl(SIMPLE_TYPE)
+                    FantomIdImpl(ID)
+                      PsiElement(IDENTIFIER)('Obj')
+              FantomIdImpl(ID)
+                PsiElement(IDENTIFIER)('obj')
+            PsiErrorElement:'(', ':=', ';' or '{' expected, got '|'
+              PsiElement(|)('|')
+          FantomSlotDefImpl(SLOT_DEF)
+            <empty list>
+          PsiElement(IDENTIFIER)('writer')
+          PsiErrorElement:':', '::', '?', IDENTIFIER or '[' expected, got '|'
+            PsiElement(|)('|')
+          FantomSlotDefImpl(SLOT_DEF)
+            FantomFieldDefImpl(FIELD_DEF)
+              FantomFacetsImpl(FACETS)
+                <empty list>
+              FantomFieldFlagsImpl(FIELD_FLAGS)
+                <empty list>
+              FantomTypeImpl(TYPE)
+                FantomNonNullTypeImpl(NON_NULL_TYPE)
+                  FantomSimpleTypeImpl(SIMPLE_TYPE)
+                    FantomIdImpl(ID)
+                      PsiElement(IDENTIFIER)('InStream')
+              FantomIdImpl(ID)
+                PsiElement(IDENTIFIER)('in')
+            PsiErrorElement:'(', ':=', ';' or '{' expected, got '->'
+              PsiElement(->)('->')
+          FantomSlotDefImpl(SLOT_DEF)
+            <empty list>
+          PsiElement(IDENTIFIER)('Obj')
+          PsiErrorElement:':', '::', '?', IDENTIFIER or '[' expected, got '|'
+            PsiElement(|)('|')
+          FantomSlotDefImpl(SLOT_DEF)
+            <empty list>
+          PsiElement(IDENTIFIER)('reader')
+          PsiErrorElement:':', '::', '?', IDENTIFIER or '[' expected, got '|'
+            PsiElement(|)('|')
+          FantomSlotDefImpl(SLOT_DEF)
+            <empty list>
+          PsiElement(IDENTIFIER)('DocErr')
+          PsiErrorElement:':', '::', '?', IDENTIFIER or '[' expected, got '|'
+            PsiElement(|)('|')
+          FantomSlotDefImpl(SLOT_DEF)
+            <empty list>
+          PsiElement(IDENTIFIER)('onErr')
+          PsiElement([)('[')
+          PsiErrorElement:']' expected, got 'Str'
+            <empty list>
+          FantomSlotDefImpl(SLOT_DEF)
+            FantomFieldDefImpl(FIELD_DEF)
+              FantomFacetsImpl(FACETS)
+                <empty list>
+              FantomFieldFlagsImpl(FIELD_FLAGS)
+                <empty list>
+              FantomTypeImpl(TYPE)
+                FantomNullTypeImpl(NULL_TYPE)
+                  FantomNonNullTypeImpl(NON_NULL_TYPE)
+                    FantomMapTypeImpl(MAP_TYPE)
+                      FantomSimpleTypeImpl(SIMPLE_TYPE)
+                        FantomIdImpl(ID)
+                          PsiElement(IDENTIFIER)('Str')
+                      PsiElement(:)(':')
+                      FantomTypeImpl(TYPE)
+                        FantomNonNullTypeImpl(NON_NULL_TYPE)
+                          FantomSimpleTypeImpl(SIMPLE_TYPE)
+                            FantomIdImpl(ID)
+                              PsiElement(IDENTIFIER)('Str')
+                      PsiElement(])(']')
+                  PsiElement(?)('?')
+              FantomIdImpl(ID)
+                PsiElement(IDENTIFIER)('meta')
+        PsiElement(})('}')

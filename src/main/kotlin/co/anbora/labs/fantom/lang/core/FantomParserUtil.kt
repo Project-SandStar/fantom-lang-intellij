@@ -38,6 +38,26 @@ object FantomParserUtil: GeneratedParserUtilBase() {
     fun facetKeyword(b: PsiBuilder, level: Int): Boolean =
         contextualKeyword(b, "facet", FACET)
 
+    /**
+     * `Parser.tryItBlock`: a `{` that is followed by a protection keyword, `static`,
+     * `readonly`, `get` or `set` is a field accessor block, not an it-block.
+     */
+    @JvmStatic
+    fun notAccessorBlock(b: PsiBuilder, level: Int): Boolean {
+        if (b.tokenType != LBRACE) return true
+        val next = b.lookAhead(1)
+        if (next == PUBLIC || next == PROTECTED || next == PRIVATE || next == INTERNAL ||
+            next == STATIC || next == READONLY || next == GET || next == SET) return false
+        if (next == IDENTIFIER) {
+            val m = b.mark()
+            b.advanceLexer()
+            val text = b.tokenText
+            m.rollbackTo()
+            if (text == "get" || text == "set") return false
+        }
+        return true
+    }
+
     // ---- newline and whitespace sensitivity ---------------------------------
 
     /**
