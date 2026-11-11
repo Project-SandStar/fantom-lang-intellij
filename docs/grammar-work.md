@@ -152,6 +152,20 @@ Do it in this order. Run the snippet test after each step and the corpus test af
 5. **Slots**: `slotDef ::= staticInit | ctorDef | fieldOrMethod`. `ctorDef` starts with `facets ctorFlags new` and pins on `new`. `fieldDef` gets `[";"]`/eos and the accessor block. `abstractMethodDef` gets eos. Enum values end with eos. Shebang allowed first in `compilationUnit`.
 6. **Statements and expressions**: `forInit ::= localDef | expr`. `unaryExpr ::= prefixExpr | postfixExpr | termExpr` with `postfixExpr ::= termExpr <<sameLine>> ("++"|"--")`. `localDefTyped ::= type &IDENTIFIER id ...`. `callOp` and `indexExpr` guarded by `<<sameLine>>`. `closureSig` accepts `|->|`, `|a, b|`, `|Type a->Ret|`, `|Type?->Ret|`. `list ::= [type] "[" ...` must not let `type` eat the trailing `[]`: use `listType` without the trailing list suffix in that position, or a lookahead `&("[" (","|expr))`. `ifExpr` ternary needs `<<noSpaceBefore>>` only for the nullable type case, not here.
 
+   **Wave 2 exprs done** (branch `grammar/w2-exprs`, from `04f6431` after the types and slots merge):
+   - `stmt_item_recover` now stops at every token that can start a statement (`stmt_start_token`:
+     `( [ ++ -- ! - + & | #` and the literals). Grammar-Kit runs `recoverWhile` after every `stmtDef`, also after
+     a good one, and ate the first token of `++i`, `&f = 1`, `(2..4).each`, `-x.abs`, `"".each`, `100.times`.
+     This one change fixed all of items 1, 2, 3, 4 and the `&field` family.
+   - `unaryExpr ::= prefixExpr | termExpr postfixExpr?` with `left postfixExpr ::= <<sameLine>> ("++" | "--")`,
+     so `termExpr` is parsed once. PSI names unchanged (`FantomPostfixExpr` still exists, now a `left` rule).
+   - Items 5 to 8 already parsed on the merged base; snippets `s61_exprs_prefix`, `s62_exprs_closure_target`,
+     `s63_exprs_newline_start`, `s64_exprs_misc` cover them, all 0 errors. `06_closure` keeps 1 error for
+     `h := |Str s->Void|? x`, which is not valid Fantom.
+   - Corpus: `files=869 lines=182562 errors=0 badChars=0 filesWithErrors=0` (was 176 / 59 after the merge,
+     588 / 132 at the start; no file worse). Corpus test time 3.5 s, whole run about 25 s. `buildPlugin` passes.
+     Next step: the open questions in section 8, then run with `-Dfantom.corpus.failOnErrors=true` as a gate.
+
 ## 7. Kotlin code that depends on PSI names
 
 Keep these class names in the BNF or update these files:

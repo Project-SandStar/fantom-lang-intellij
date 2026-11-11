@@ -231,7 +231,15 @@ private stmt_item_recover ::= !('}' | <<eof>> | "@" | break
                                     | throw | while | try | catch
                                     | finally | switch | case
                                     | default | this | super | it
-                                    | IDENTIFIER | "[" | "|" | "(")
+                                    | IDENTIFIER | stmt_start_token)
+// Grammar-Kit runs recoverWhile after every stmtDef, success or not, and eats
+// tokens until one in this set. So the set must hold every token that can
+// start a statement, or `++i`, `&f = 1`, `(2..4).each`, `-x.abs` lose their
+// first token.
+private stmt_start_token ::= "(" | "[" | "++" | "--" | "!" | "-" | "+" | "&" | "|" | "#"
+                           | null | TRUE | FALSE
+                           | INT_LITERAL | FLOAT_LITERAL | DECIMAL_LITERAL | DURATION_LITERAL
+                           | URI_LITERAL | STRING_LITERAL | TRIPLE_STRING_LITERAL | CHAR_LITERAL
 
 stmt             ::=  breakStm | continueStm | forStm | ifStm | returnStm | switchStm |
                      throwStm | whileStm | tryStm | exprStmt
@@ -303,9 +311,11 @@ multExpr         ::=  parenExpr (("*" | "/" | "%") parenExpr)*
 parenExpr        ::=  unaryExpr | castExpr | groupedExpr
 castExpr       ::=  "(" type ")" parenExpr
 groupedExpr    ::=  "(" expr ")" termChain*
-unaryExpr      ::=  prefixExpr | postfixExpr | termExpr
+unaryExpr      ::=  prefixExpr | termExpr postfixExpr?
 prefixExpr     ::=  ("!" | "+" | "-" | "++" | "--") parenExpr
-postfixExpr    ::=  termExpr <<sameLine>> ("++" | "--")
+// `left`: wraps the termExpr before it, so termExpr is parsed once (no re-parse
+// when there is no ++/--). Compiler: `tokt.isIncrementOrDecrement && !tok.newline`.
+left postfixExpr ::=  <<sameLine>> ("++" | "--")
 
 termExpr       ::=  termBase termChain*
 termBase       ::=  literal | typeBase | idExpr
