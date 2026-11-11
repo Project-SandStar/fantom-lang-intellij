@@ -25,6 +25,8 @@
         <lang.psiStructureViewFactory language="fantom_lang"
                                       implementationClass="co.anbora.labs.fantom.ide.structure.FantomStructureViewFactory"/>
         <lang.findUsagesProvider language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.usages.FantomFindUsagesProvider"/>
+        <lang.documentationProvider language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.documentation.FantomDocumentationProvider"/>
+        <codeInsight.parameterInfo language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.parameters.FantomParameterInfoHandler"/>
         <lang.refactoringSupport language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.refactoring.FantomRefactoringSupportProvider"/>
         <lang.namesValidator language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.refactoring.FantomNamesValidator"/>
 
