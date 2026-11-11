@@ -107,9 +107,7 @@ layers; each needs the one before it.
 
 ### Task 3.2b: Layer 3, references
 **Priority:** P2
-**Status:** Not Started
-
-`PsiReference` on identifier terms: local or param in scope, then slot on the enclosing type and its supertypes, then type by short name from the index, then `pod::Name`. Find usages and rename then follow references.
+**Status:** In Progress (2026-11-11). Base committed: `lang/resolve/FantomReference` (kinds BARE, SLOT, TYPE) attached by `core/psi/impl/FantomIdMixin` to every used identifier; `FantomScope` walks locals, params, closure params and catch params; slots resolve on the enclosing type then its supertypes through the index; types by short name. 9 reference tests, rename follows local uses. Agents in parallel: `layer3/nav` (go to declaration tests, semantic colouring of locals/fields/calls/types, no error on unresolved), `layer3/usages` (find usages and rename across files, `getUseScope`), `layer3/scale` (resolve rate and spot checks over the `sys` pod). Known gaps until layer 4: names from other pods and `sys` built-ins do not resolve, so they stay neutral in the editor.
 
 ### Task 3.3: Tree-sitter side parser spike
 **Priority:** P3
