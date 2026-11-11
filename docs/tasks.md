@@ -82,19 +82,36 @@ Run the tree-sitter `.wasm` and the Grammar-Kit parser on the same corpus. Print
 
 ---
 
-## Phase 3: Features (after Phase 2)
+## Phase 3: Language intelligence (after Phase 2)
 
-### Task 3.1: Structure view
+Goal: completion, navigation and rename like the Java and Kotlin plugins. Built as
+layers; each needs the one before it.
+
+| Layer | What | Gives the user |
+|---|---|---|
+| 1 | Named elements (`PsiNameIdentifierOwner`) on every declaration | Rename in file, structure view, find usages by word |
+| 2 | Stubs and a file-based index of type and slot names | Go to class, go to symbol, cross-file lookup without parsing |
+| 3 | References on identifiers (local, slot on `this`, imported type, `sys`) | Ctrl+click, go to declaration, real find usages |
+| 4 | Library model for pods (read `lib/fan/*.pod` or index a Fantom home's `src/*/fan`) | Navigation into `sys::Str` and friends |
+| 5 | Type inference for `:=`, literals, calls, fields, params | Knows the type of `x` in `x.` |
+| 6 | Completion contributor | Ctrl+Space on slots, types and keywords |
+| 7 | Inspections, formatter, run configs for `fan`/`fant`, debugger | Each its own task |
+
+### Task 3.1: Layer 1, named elements, structure view, rename
+**Priority:** P1
+**Status:** In Progress (2026-11-11). Base commit `a2229b8`: `FantomNamedElement` mixin on classDef, mixinDef, facetDef, enumDef, enumValDef, fieldDef, methodDef, ctorDef, param, localDef, closureParam, catchDef. Three agents in parallel on branches `layer1/structure` (structure view), `layer1/usages` (find usages provider, refactoring support, names validator) and `layer1/psitests` (tests for every named class plus a sys-pod check). Merge order: psitests, usages, structure.
+
+### Task 3.2: Layer 2, stubs and index
 **Priority:** P2
 **Status:** Not Started
 
-`StructureViewBuilder` over the PSI: types, slots, fields. Needs stable `TypeDef`/`SlotDef` PSI from Phase 2.
+Stub element types for type and slot declarations, `StubIndex` keyed by short name, `ChooseByNameContributor` for go to class and go to symbol. Same-project files only at first.
 
-### Task 3.2: Go to symbol and find usages (local)
-**Priority:** P3
+### Task 3.2b: Layer 3, references
+**Priority:** P2
 **Status:** Not Started
 
-Named elements and a stub index for type and slot names. Same-pod resolve only at first.
+`PsiReference` on identifier terms: local or param in scope, then slot on the enclosing type and its supertypes, then type by short name from the index, then `pod::Name`. Find usages and rename then follow references.
 
 ### Task 3.3: Tree-sitter side parser spike
 **Priority:** P3
