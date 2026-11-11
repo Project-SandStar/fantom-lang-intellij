@@ -1,18 +1,24 @@
 package co.anbora.labs.fantom.lang.core
 
+import co.anbora.labs.fantom.lang.FantomParserDefinition.Companion.END_OF_LINE_COMMENT
 import co.anbora.labs.fantom.lang.core.psi.FantomTypes.*
 import com.intellij.lang.PsiBuilder
-import com.intellij.lang.PsiBuilderUtil
 import com.intellij.lang.parser.GeneratedParserUtilBase
+import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IElementType
 
+/**
+ * External rules used from `Fantom.bnf` as `<<name>>`.
+ *
+ * The real compiler (`Parser.fan`) is newline sensitive: a statement ends at a
+ * newline, `;`, `}` or EOF (`endOfStmt`), and `(`, `[`, `++`, `--`, `?` only
+ * continue an expression when they sit on the same line (or with no space)
+ * after the previous token. Grammar-Kit skips whitespace and comments, so the
+ * parser cannot see them; these helpers look at the raw token stream instead.
+ */
 object FantomParserUtil: GeneratedParserUtilBase() {
 
-    @JvmStatic
-    fun dynCallImpl(b: PsiBuilder, level: Int): Boolean = collapse(b, DYN_CALL, MINUS, GT)
-
-    @JvmStatic
-    fun safeDynCallImpl(b: PsiBuilder, level: Int): Boolean = collapse(b, SAFE_DYN_CALL, QUEST, MINUS, GT)
+    // ---- contextual keywords ------------------------------------------------
 
     @JvmStatic
     fun getKeyword(b: PsiBuilder, level: Int): Boolean =
@@ -22,19 +28,69 @@ object FantomParserUtil: GeneratedParserUtilBase() {
     fun setKeyword(b: PsiBuilder, level: Int): Boolean =
         contextualKeyword(b, "set", SET)
 
+    /** `enum` is an IDENTIFIER in the lexer; remap it to ENUM when the grammar asks for it. */
     @JvmStatic
-    private fun collapse(b: PsiBuilder, tokenType: IElementType, vararg parts: IElementType): Boolean {
-        // We do not want whitespace between parts, so firstly we do raw lookup for each part,
-        // and when we make sure that we have desired token, we consume and collapse it.
-        parts.forEachIndexed { i, tt ->
-            if (b.rawLookup(i) != tt) return false
+    fun enumKeyword(b: PsiBuilder, level: Int): Boolean =
+        contextualKeyword(b, "enum", ENUM)
+
+    /** `facet` is an IDENTIFIER in the lexer; remap it to FACET when the grammar asks for it. */
+    @JvmStatic
+    fun facetKeyword(b: PsiBuilder, level: Int): Boolean =
+        contextualKeyword(b, "facet", FACET)
+
+    // ---- newline and whitespace sensitivity ---------------------------------
+
+    /**
+     * End of statement, like `Parser.endOfStmt`: `;` (consumed), or `}` / EOF
+     * (not consumed), or a newline between the previous token and the current
+     * one (nothing consumed).
+     */
+    @JvmStatic
+    fun eos(b: PsiBuilder, level: Int): Boolean {
+        val t = b.tokenType
+        if (t == SEMICOLON) {
+            b.advanceLexer()
+            return true
         }
-        val marker = b.mark()
-        val expectedLength = parts.size
-        PsiBuilderUtil.advance(b, expectedLength)
-        marker.collapse(tokenType)
-        return true
+        if (t == null || t == RBRACE) return true
+        return newlineBefore(b)
     }
+
+    /** True when there is no newline between the previous token and the current one. */
+    @JvmStatic
+    fun sameLine(b: PsiBuilder, level: Int): Boolean = !newlineBefore(b)
+
+    /** True when there is no whitespace or comment at all between the previous token and the current one. */
+    @JvmStatic
+    fun noSpaceBefore(b: PsiBuilder, level: Int): Boolean {
+        val prev = b.rawLookup(-1) ?: return true
+        return !isSkipped(prev)
+    }
+
+    /**
+     * Walks back over the whitespace and comment tokens that Grammar-Kit skipped
+     * before the current token and reports whether any of them holds a `\n`.
+     * A line comment always ends at a newline, so it counts as one too.
+     */
+    private fun newlineBefore(b: PsiBuilder): Boolean {
+        var i = -1
+        while (true) {
+            // Past the start of the file: the first token of a file starts a new line.
+            val t = b.rawLookup(i) ?: return true
+            if (!isSkipped(t)) return false
+            if (t == END_OF_LINE_COMMENT || t == FANDOC_LINE_COMMENT) return true
+            val start = b.rawTokenTypeStart(i)
+            val end = b.rawTokenTypeStart(i + 1)
+            val text = b.originalText
+            for (k in start until end) {
+                if (text[k] == '\n' || text[k] == '\r') return true
+            }
+            i--
+        }
+    }
+
+    private fun isSkipped(t: IElementType): Boolean =
+        t == TokenType.WHITE_SPACE || t in FANTOM_COMMENTS
 
     private fun contextualKeyword(
         b: PsiBuilder,
@@ -46,7 +102,7 @@ object FantomParserUtil: GeneratedParserUtilBase() {
             b.tokenType == IDENTIFIER && b.tokenText == keyword && nextElementPredicate(b.lookAhead(1))
         ) {
             b.remapCurrentToken(elementType)
-            b.advanceLexer();
+            b.advanceLexer()
             return true
         }
         return false

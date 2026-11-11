@@ -13,13 +13,18 @@ import co.anbora.labs.fantom.lang.core.psi.FantomSimpleType
 import co.anbora.labs.fantom.lang.core.psi.FantomSlotExpr
 import co.anbora.labs.fantom.lang.core.psi.FantomStaticCall
 import co.anbora.labs.fantom.lang.core.psi.FantomType
+import co.anbora.labs.fantom.lang.core.psi.FantomTypes
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.psi.PsiElement
+import com.intellij.psi.impl.source.tree.LeafPsiElement
 
 class HighlightingAnnotator: Annotator {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
         val color = when {
+            // `enum` and `facet` are lexed as IDENTIFIER and remapped by the parser,
+            // so the lexer based highlighter does not see them as keywords.
+            element is LeafPsiElement && (element.elementType == FantomTypes.ENUM || element.elementType == FantomTypes.FACET) -> FantomColors.KEY_WORD
             (element.parent is FantomStaticCall || element.parent is FantomDotCall) -> highlightMethodCalls(element)
             element.parent is FantomFacetItems && element is FantomSimpleType -> FantomColors.ANNOTATIONS
             element is FantomType -> highlightTypes(element)

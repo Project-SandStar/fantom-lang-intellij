@@ -21,6 +21,15 @@
 
         GET                 = 'get_kw'
         SET                 = 'set_kw'
+        ENUM                = 'enum_kw'
+        FACET               = 'facet_kw'
+
+        IT                  = 'it'
+        ASSERT              = 'assert'
+        DO                  = 'do'
+        FOREACH             = 'foreach'
+        VOID                = 'void'
+        VOLATILE            = 'volatile'
 
         OR                  = '|'
         LPAR                = '('
@@ -105,8 +114,8 @@ classDef                    ::=  typeHeader class id [inheritance] highOrderBloc
 highOrderBlock              ::=  "{" slotDefs "}" { pin = 1 }
 
 mixinDef       ::=  typeHeader mixin id [inheritance] highOrderBlock {pin=2}
-facetDef       ::=  typeHeader facet class id [inheritance] highOrderBlock {pin=2}
-enumDef        ::=  typeHeader enum class id [inheritance] enumBlock {pin=2}
+facetDef       ::=  typeHeader <<facetKeyword>> class id [inheritance] highOrderBlock {pin=2}
+enumDef        ::=  typeHeader <<enumKeyword>> class id [inheritance] enumBlock {pin=2}
 enumBlock      ::=  "{" enumValDefs slotDefs "}" {pin=1}
 
 typeHeader     ::=  [doc] facets typeFlags
@@ -216,7 +225,7 @@ private stmt_item_recover ::= !('}' | <<eof>> | "@" | break
                                     | continue | for | if | return
                                     | throw | while | try | catch
                                     | finally | switch | case
-                                    | default | this | super
+                                    | default | this | super | it
                                     | IDENTIFIER)
 
 stmt             ::=  breakStm | continueStm | forStm | ifStm | returnStm | switchStm |
@@ -328,7 +337,9 @@ simpleType     ::=  nullableType ["::" nullableType]
 private nullableType  ::= id ["?"]
 listType       ::=  simpleType "[" "]" "[" "]" | simpleType "[" "]"
 mapType        ::=  ["["] simpleType ":" type ["]"]
-funcType       ::=  "|" [formals] [dynCall type] "|"
+// `|Obj?->Obj?|` lexes as `Obj` `?->` `Obj`; the compiler (Parser.funcType) accepts
+// safeArrow here too and makes the last param nullable.
+funcType       ::=  "|" [formals] [(dynCall | safeDynCall) type] "|"
 formals        ::=  [formal ("," formal)*]
 formal         ::=  formalFull
 formalFull     ::=  type [id] | id
@@ -339,8 +350,8 @@ formalFull     ::=  type [id] | id
 
 id             ::= IDENTIFIER
 
-private dynCall   ::= <<dynCallImpl>>
-private safeDynCall   ::= <<safeDynCallImpl>>
+private dynCall   ::= '->'
+private safeDynCall   ::= '?->'
 private get       ::= <<getKeyword>>
 private set       ::= <<setKeyword>>
 //private elvisOp   ::= <<elvisOpImpl>>

@@ -20,6 +20,12 @@ import static co.anbora.labs.fantom.lang.FantomParserDefinition.*;
         * Dedicated nested-comment level counter
     */
     private int zzNestedCommentLevel = 0;
+
+    /**
+        * Nesting depth and start offset of the block comment being lexed
+    */
+    private int zzBlockCommentDepth = 0;
+    private int zzBlockCommentStart = -1;
 %}
 
 %{
@@ -57,9 +63,11 @@ NLS={ONE_NL}({ONE_NL}|{WHITE_SPACE_CHAR})*
 
 IDENTIFIER=[:jletter:] [:jletterdigit:]*
 
-INTEGER_LITERAL={DECIMAL_INTEGER_LITERAL}|{HEX_INTEGER_LITERAL}
+INTEGER_LITERAL={DECIMAL_INTEGER_LITERAL}|{HEX_INTEGER_LITERAL}|{BIN_INTEGER_LITERAL}
 DECIMAL_INTEGER_LITERAL=({DIGIT})+
 HEX_INTEGER_LITERAL=0[Xx]({HEX_DIGIT})*
+BIN_DIGIT=[01] | [01]["_"]
+BIN_INTEGER_LITERAL=0[b]({BIN_DIGIT})*
 
 FLOAT_MARK_LITERAL=("f"|"F")
 FLOAT_LITERAL=({FLOATING_POINT_LITERAL1})|({FLOATING_POINT_LITERAL2})|({FLOATING_POINT_LITERAL3})|({FLOATING_POINT_LITERAL4})
@@ -67,7 +75,7 @@ FLOATING_POINT_LITERAL1=({DIGIT})+"."({DIGIT})+({EXPONENT_PART})?({FLOAT_MARK_LI
 FLOATING_POINT_LITERAL2="."({DIGIT})+({EXPONENT_PART})?({FLOAT_MARK_LITERAL})
 FLOATING_POINT_LITERAL3=({DIGIT})+({EXPONENT_PART})({FLOAT_MARK_LITERAL})
 FLOATING_POINT_LITERAL4=({DIGIT})+({FLOAT_MARK_LITERAL})
-EXPONENT_PART=[Ee]["+""-"]?({DIGIT})*
+EXPONENT_PART=[Ee]["+""-"]?({DIGIT})+
 
 DEC_MARK_LITERAL=("d"|"D")
 DEC_LITERAL=({DEC_POINT_LITERAL1})|({DEC_POINT_LITERAL2})|({DEC_POINT_LITERAL3})|({DEC_POINT_LITERAL4})
@@ -91,13 +99,13 @@ CHAR_LITERAL="'"([^\\"'"] | \\\' | \\[^"'"])*"'"
 TRIPLE_STRING_LITERAL=\"\"\"([^\"] | \"(\")?[^\"])*\"\"\"
 STRING_LITERAL=\"([^\\\"] | \\\" | \\[^\"])*\"
 
-C_STYLE_COMMENT="/""*"([^"*"] | "*"[^"/"])*"*""/"
 END_OF_LINE_COMMENT="/""/"[^\r\n]*
 FANDOC_LINE_COMMENT="*""*"[^\r\n]*
 
 SHABENG="#!"[^\n]*
 
 %xstate IN_VAR_DECLERATION
+%xstate BLOCK_COMMENT
 
 %%
 
@@ -118,6 +126,32 @@ SHABENG="#!"[^\n]*
           }
       <<EOF>> {
               zzNestedCommentLevel = 0; return imbueDslString();
+          }
+      [^]     { }
+}
+
+<YYINITIAL> "/*"                  {
+          yybegin(BLOCK_COMMENT);
+          zzBlockCommentDepth = 1;
+          zzBlockCommentStart = zzStartRead;
+       }
+
+<BLOCK_COMMENT> {
+      "/*"    { zzBlockCommentDepth++; }
+      "*/"    {
+              if (--zzBlockCommentDepth == 0) {
+                  yybegin(YYINITIAL);
+                  zzStartRead = zzBlockCommentStart;
+                  zzBlockCommentStart = -1;
+                  return C_STYLE_COMMENT;
+              }
+          }
+      <<EOF>> {
+              yybegin(YYINITIAL);
+              zzBlockCommentDepth = 0;
+              zzStartRead = zzBlockCommentStart;
+              zzBlockCommentStart = -1;
+              return C_STYLE_COMMENT;
           }
       [^]     { }
 }
@@ -143,6 +177,7 @@ SHABENG="#!"[^\n]*
 
 <YYINITIAL> "abstract"            { yybegin(YYINITIAL); return ABSTRACT; }
 <YYINITIAL> "as"                  { yybegin(YYINITIAL); return AS; }
+<YYINITIAL> "assert"              { yybegin(YYINITIAL); return ASSERT; }
 <YYINITIAL> "break"               { yybegin(YYINITIAL); return BREAK; }
 <YYINITIAL> "case"                { yybegin(YYINITIAL); return CASE; }
 <YYINITIAL> "catch"               { yybegin(YYINITIAL); return CATCH; }
@@ -150,19 +185,20 @@ SHABENG="#!"[^\n]*
 <YYINITIAL> "const"               { yybegin(YYINITIAL); return CONST; }
 <YYINITIAL> "continue"            { yybegin(YYINITIAL); return CONTINUE; }
 <YYINITIAL> "default"             { yybegin(YYINITIAL); return DEFAULT; }
-//<YYINITIAL> "do"                  { yybegin(YYINITIAL); return DO; }
+<YYINITIAL> "do"                  { yybegin(YYINITIAL); return DO; }
 <YYINITIAL> "else"                { yybegin(YYINITIAL); return ELSE; }
 //<YYINITIAL> "pod"                 { yybegin(YYINITIAL); return POD; }
-<YYINITIAL> "enum"                { yybegin(YYINITIAL); return ENUM; }
+// "enum" and "facet" are contextual identifiers, see FantomParserUtil.enumKeyword/facetKeyword
 <YYINITIAL> "false"               { yybegin(YYINITIAL); return FALSE; }
 <YYINITIAL> "final"               { yybegin(YYINITIAL); return FINAL; }
 <YYINITIAL> "finally"             { yybegin(YYINITIAL); return FINALLY; }
 <YYINITIAL> "for"                 { yybegin(YYINITIAL); return FOR; }
-//<YYINITIAL> "foreach"             { yybegin(YYINITIAL); return FOREACH; }
+<YYINITIAL> "foreach"             { yybegin(YYINITIAL); return FOREACH; }
 <YYINITIAL> "if"                  { yybegin(YYINITIAL); return IF; }
 <YYINITIAL> "internal"            { yybegin(YYINITIAL); return INTERNAL; }
 <YYINITIAL> "is"                  { yybegin(YYINITIAL); return IS; }
 <YYINITIAL> "isnot"               { yybegin(YYINITIAL); return ISNOT; }
+<YYINITIAL> "it"                  { yybegin(YYINITIAL); return IT; }
 <YYINITIAL> "mixin"               { yybegin(YYINITIAL); return MIXIN; }
 <YYINITIAL> "native"              { yybegin(YYINITIAL); return NATIVE; }
 <YYINITIAL> "new"                 { yybegin(YYINITIAL); return NEW; }
@@ -182,7 +218,8 @@ SHABENG="#!"[^\n]*
 <YYINITIAL> "true"                { yybegin(YYINITIAL); return TRUE; }
 <YYINITIAL> "try"                 { yybegin(YYINITIAL); return TRY; }
 <YYINITIAL> "virtual"             { yybegin(YYINITIAL); return VIRTUAL; }
-//<YYINITIAL> "volatile"            { yybegin(YYINITIAL); return VOLATILE; }
+<YYINITIAL> "void"                { yybegin(YYINITIAL); return VOID; }
+<YYINITIAL> "volatile"            { yybegin(YYINITIAL); return VOLATILE; }
 <YYINITIAL> "while"               { yybegin(YYINITIAL); return WHILE; }
 
 /* Type Literals */
@@ -290,7 +327,6 @@ SHABENG="#!"[^\n]*
 
 <YYINITIAL> {IDENTIFIER}          { yybegin(YYINITIAL); return IDENTIFIER; }
 
-<YYINITIAL> {C_STYLE_COMMENT}     { return C_STYLE_COMMENT; }
 <YYINITIAL> {END_OF_LINE_COMMENT} { return END_OF_LINE_COMMENT; }
 <YYINITIAL> {FANDOC_LINE_COMMENT}+ { return FANDOC_LINE_COMMENT; }
 
@@ -307,9 +343,9 @@ SHABENG="#!"[^\n]*
 <YYINITIAL> "."                   { yybegin(YYINITIAL); return DOT; }
 <YYINITIAL> ".."                  { yybegin(YYINITIAL); return RANGE_SEP_INCL; }
 <YYINITIAL> "..<"                 { yybegin(YYINITIAL); return RANGE_SEP_EXCL; }
-//<YYINITIAL> "->"                  { yybegin(YYINITIAL); return DYN_CALL; }
+<YYINITIAL> "->"                  { yybegin(YYINITIAL); return DYN_CALL; }
 <YYINITIAL> "?."                  { yybegin(YYINITIAL); return SAFE_DOT; }
-//<YYINITIAL> "?->"                 { yybegin(YYINITIAL); return SAFE_DYN_CALL; }
+<YYINITIAL> "?->"                 { yybegin(YYINITIAL); return SAFE_DYN_CALL; }
 
 <YYINITIAL> "="                   { yybegin(YYINITIAL); return EQ; }
 
