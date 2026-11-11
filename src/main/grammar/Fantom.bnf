@@ -17,6 +17,14 @@
 
     extends(".*Stm")=stmt
 
+    // Named declarations: one mixin gives getName/setName/getNameIdentifier.
+    // The pattern must list both interfaces because it replaces the global `implements`.
+    mixin("classDef|mixinDef|facetDef|enumDef|enumValDef|fieldDef|methodDef|ctorDef|param|localDef|closureParam|catchDef")="co.anbora.labs.fantom.lang.core.psi.impl.FantomNamedElementImpl"
+    implements("classDef|mixinDef|facetDef|enumDef|enumValDef|fieldDef|methodDef|ctorDef|param|localDef|closureParam|catchDef")=[
+        "co.anbora.labs.fantom.lang.core.psi.FantomElement"
+        "co.anbora.labs.fantom.lang.core.psi.FantomNamedElement"
+    ]
+
     tokens = [
 
         GET                 = 'get_kw'
@@ -360,7 +368,8 @@ mapPair        ::=  expr ":" expr
 closure        ::=  closureSig statementBlock
 closureSig     ::=  "|" closureParams [(dynCall | safeDynCall) [type]] "|"
 closureParams  ::=  [closureParam ("," closureParam)*]
-closureParam   ::=  formal | id
+// Direct `id` child so FantomClosureParam.getNameIdentifier finds the parameter name.
+closureParam   ::=  type id | type | id
 
 //--------------------
 
