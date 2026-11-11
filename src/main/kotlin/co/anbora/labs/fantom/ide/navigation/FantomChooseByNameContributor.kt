@@ -18,16 +18,22 @@ import com.intellij.util.indexing.IdFilter
  * the scope alone bounds it.
  */
 abstract class FantomChooseByNameContributor(
-    private val kindFilter: (FantomDeclarationKind) -> Boolean,
+    /** Which declaration kinds this popup lists. Null means every kind, with no per-name value check. */
+    private val kindFilter: ((FantomDeclarationKind) -> Boolean)?,
 ) : ChooseByNameContributorEx {
 
     override fun processNames(processor: Processor<in String>, scope: GlobalSearchScope, filter: IdFilter?) {
         val index = FileBasedIndex.getInstance()
+        if (kindFilter == null) {
+            // Every kind: pass the keys straight through. Stale names drop out in processElementsWithName.
+            index.processAllKeys(FantomDeclarationIndex.NAME, processor, scope, filter)
+            return
+        }
         // Collect first, filter after: no index reads inside the key-processing lambda.
         val keys = ArrayList<String>()
         index.processAllKeys(FantomDeclarationIndex.NAME, { keys.add(it); true }, scope, filter)
         for (name in keys) {
-            if (!matchesKind(name, scope)) continue
+            if (!matchesKind(name, scope, kindFilter)) continue
             if (!processor.process(name)) return
         }
     }
@@ -37,20 +43,22 @@ abstract class FantomChooseByNameContributor(
         processor: Processor<in NavigationItem>,
         parameters: FindSymbolParameters,
     ) {
-        val found = FantomDeclarationIndex.findDeclarations(name, parameters.project, parameters.searchScope, kindFilter)
+        val found = FantomDeclarationIndex.findDeclarations(
+            name, parameters.project, parameters.searchScope, kindFilter ?: { true },
+        )
         for (element in found) {
             if (!processor.process(FantomNavigationItem(element))) return
         }
     }
 
-    /** True when at least one entry under [name] in [scope] passes the kind filter. Stale keys fall out here. */
-    private fun matchesKind(name: String, scope: GlobalSearchScope): Boolean =
+    /** True when at least one entry under [name] in [scope] passes [filter]. Stale keys fall out here. */
+    private fun matchesKind(name: String, scope: GlobalSearchScope, filter: (FantomDeclarationKind) -> Boolean): Boolean =
         FileBasedIndex.getInstance().getValues(FantomDeclarationIndex.NAME, name, scope)
-            .any { entries -> entries.any { kindFilter(it.kind) } }
+            .any { entries -> entries.any { filter(it.kind) } }
 }
 
 /** Go to Class (Cmd+O): classes, mixins, enums and facets. */
 class FantomGotoClassContributor : FantomChooseByNameContributor({ it.isType })
 
 /** Go to Symbol (Cmd+Alt+O): every indexed declaration, slots included. */
-class FantomGotoSymbolContributor : FantomChooseByNameContributor({ true })
+class FantomGotoSymbolContributor : FantomChooseByNameContributor(null)

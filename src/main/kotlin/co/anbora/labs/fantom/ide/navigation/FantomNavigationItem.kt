@@ -6,8 +6,6 @@ import co.anbora.labs.fantom.lang.index.FantomDeclarationIndex
 import co.anbora.labs.fantom.lang.index.FantomDeclarationKind
 import com.intellij.navigation.ItemPresentation
 import com.intellij.navigation.NavigationItem
-import com.intellij.navigation.PsiElementNavigationItem
-import com.intellij.psi.PsiElement
 
 /**
  * A Go to Class / Go to Symbol row for one Fantom declaration.
@@ -16,10 +14,13 @@ import com.intellij.psi.PsiElement
  * text from [FantomPresentation], location `File.fan` for types and
  * `Owner (File.fan)` for slots. [getName] is the bare short name; the popup
  * matches the typed pattern against it.
+ *
+ * On purpose a plain [NavigationItem], not `PsiElementNavigationItem`: Search
+ * Everywhere unwraps the latter to its PSI and builds the row from the PSI
+ * element, which has no presentation. A plain item is rendered through
+ * [getPresentation].
  */
-class FantomNavigationItem(private val element: FantomNamedElement) : PsiElementNavigationItem {
-
-    override fun getTargetElement(): PsiElement = element
+class FantomNavigationItem(val element: FantomNamedElement) : NavigationItem {
 
     override fun getName(): String? = element.name
 

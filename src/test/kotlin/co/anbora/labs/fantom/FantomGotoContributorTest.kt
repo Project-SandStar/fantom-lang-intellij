@@ -2,6 +2,7 @@ package co.anbora.labs.fantom
 
 import co.anbora.labs.fantom.ide.navigation.FantomGotoClassContributor
 import co.anbora.labs.fantom.ide.navigation.FantomGotoSymbolContributor
+import com.intellij.navigation.ChooseByNameContributor
 import com.intellij.navigation.ChooseByNameContributorEx
 import com.intellij.navigation.NavigationItem
 import com.intellij.psi.search.GlobalSearchScope
@@ -67,6 +68,11 @@ class FantomGotoContributorTest : BasePlatformTestCase() {
     fun testGotoSymbolListsSlotsToo() {
         val names = names(FantomGotoSymbolContributor())
         assertTrue(names.toString(), names.containsAll(listOf("Foo", "Bar", "Color", "run", "name", "go", "red")))
+    }
+
+    fun testContributorsAreRegistered() {
+        assertTrue(ChooseByNameContributor.CLASS_EP_NAME.extensionList.any { it is FantomGotoClassContributor })
+        assertTrue(ChooseByNameContributor.SYMBOL_EP_NAME.extensionList.any { it is FantomGotoSymbolContributor })
     }
 
     fun testGotoSymbolItemForRun() {

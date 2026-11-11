@@ -28,12 +28,12 @@ object FantomPresentation {
 
     /** The presentable text alone, for callers that build their own presentation. */
     fun text(element: FantomNamedElement): String {
-        val name = element.name ?: "?"
+        val name = element.name
         return when (element) {
-            is FantomFieldDef -> "$name: ${typeText(element.type)}"
-            is FantomMethodDef -> "$name(${paramTypes(element.itemParameterList)}): ${typeText(element.type)}"
-            is FantomCtorDef -> "new $name(${paramTypes(element.itemParameterList)})"
-            else -> name
+            is FantomFieldDef -> "${name ?: "?"}: ${typeText(element.type)}"
+            is FantomMethodDef -> "${name ?: "?"}(${paramTypes(element.itemParameterList)}): ${typeText(element.type)}"
+            is FantomCtorDef -> "new ${name ?: "?"}(${paramTypes(element.itemParameterList)})"
+            else -> name ?: element.text.lineSequence().first()
         }
     }
 
