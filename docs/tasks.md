@@ -92,7 +92,7 @@ layers; each needs the one before it.
 | 1 | Named elements (`PsiNameIdentifierOwner`) on every declaration | Rename in file, structure view, find usages by word |
 | 2 | Stubs and a file-based index of type and slot names | Go to class, go to symbol, cross-file lookup without parsing |
 | 3 | References on identifiers (local, slot on `this`, imported type, `sys`) | Ctrl+click, go to declaration, real find usages |
-| 4 | Library model for pods (read `lib/fan/*.pod` or index a Fantom home's `src/*/fan`) | Navigation into `sys::Str` and friends |
+| 4 | Library model: a Fantom home's `src/*/fan` as a synthetic library (pod files not needed) | Navigation into `sys::Str` and friends |
 | 5 | Type inference for `:=`, literals, calls, fields, params | Knows the type of `x` in `x.` |
 | 6 | Completion contributor | Ctrl+Space on slots, types and keywords |
 | 7 | Inspections, formatter, run configs for `fan`/`fant`, debugger | Each its own task |
@@ -108,6 +108,10 @@ layers; each needs the one before it.
 ### Task 3.2b: Layer 3, references
 **Priority:** P2
 **Status:** Done (2026-11-12). `lang/resolve/FantomReference` (kinds BARE, SLOT, TYPE) is attached by `core/psi/impl/FantomIdMixin` to every used identifier; `FantomScope` walks locals, params, closure params and catch params; slots resolve on the enclosing type then its supertypes through the index; types by short name. Merged from three agent branches: go to declaration (9 cases) and semantic colours for locals, params, fields, calls and types with unresolved names left neutral; find usages and rename across files with `getUseScope` limiting body names to their method or closure (14 tests, rename through a subtype works); a resolve test over the `sys` pod: 2,436 of 2,623 references resolve, all 187 unresolved are generic type params (V, K, L, M, R), 10 ambiguous slot uses await receiver typing. 97 tests pass. Known gaps: `sys` has no method bodies so locals are only tested on small inputs; `obj.run()` matches every slot named `run` until layer 5 gives receivers a type; facet values (`@Serializable { simple = true }`) get no reference yet; an `override` is not renamed with its base method.
+
+### Task 3.2c: Layer 4, library model
+**Priority:** P2
+**Status:** In Progress (2026-11-12). Base committed (`ec5000b`): `lang/library/FantomSettings` (project service, `.idea/fantom.xml`, `homePath` with fallback to `FantomHome.detect`) and `FantomLibraryRootsProvider`, an `AdditionalLibraryRootsProvider` that exposes every `src/<pod>/fan` of the home as one synthetic library "Fantom 1.0.84". With it, `Str` resolves into the real `Str.fan` and `Env.cur` into `Env.fan`; 4 tests. Agents in parallel: `layer4/settings` (Settings page under Languages to pick the home, startup balloon when a project has `.fan` files and no home), `layer4/bodies` (resolve rate over the `util` pod, which has method bodies, with `sys` as a library), `layer4/docs` (Quick Documentation from fandoc and Parameter Info).
 
 ### Task 3.3: Tree-sitter side parser spike
 **Priority:** P3
