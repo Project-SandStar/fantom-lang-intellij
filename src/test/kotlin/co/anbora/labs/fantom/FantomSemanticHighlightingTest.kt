@@ -34,8 +34,8 @@ class FantomSemanticHighlightingTest : BasePlatformTestCase() {
     fun testLocalUse() {
         val infos = highlight("class A { Void f() { total := 1; echo(total) } }")
         assertEquals(setOf(key(FantomColors.LOCAL_VARIABLE)), keysAt(infos, "total", 1))
-        // The declaration name is not a use: no colour.
-        assertEquals(emptySet<String>(), keysAt(infos, "total", 0))
+        // The declaration name takes the same colour, like Kotlin.
+        assertEquals(setOf(key(FantomColors.LOCAL_VARIABLE)), keysAt(infos, "total", 0))
     }
 
     fun testParamUse() {

@@ -17,6 +17,10 @@ import java.awt.Font
  * Lexer colours come from [co.anbora.labs.fantom.ide.highlight.textAttributesKey],
  * the rest from [co.anbora.labs.fantom.ide.annotator.HighlightingAnnotator].
  */
+/** A key with a fixed default colour, used where the platform default is plain text. */
+private fun temp(id: String, hex: String, style: Int = Font.PLAIN): TextAttributesKey =
+    TextAttributesKey.createTempTextAttributesKey(id, TextAttributes(Color.decode(hex), null, null, null, style))
+
 enum class FantomColors(humanName: String, default: TextAttributesKey) {
 
     KEY_WORD("Keywords//Keyword", DefaultLanguageHighlighterColors.KEYWORD),
@@ -24,13 +28,15 @@ enum class FantomColors(humanName: String, default: TextAttributesKey) {
     BAD_CHAR("Bad Character", HighlighterColors.BAD_CHARACTER),
 
     // Braces and operators (lexer).
-    OPERATOR("Braces and Operators//Operator sign", DefaultLanguageHighlighterColors.OPERATION_SIGN),
-    BRACES("Braces and Operators//Braces", DefaultLanguageHighlighterColors.BRACES),
-    PARENTHESES("Braces and Operators//Parentheses", DefaultLanguageHighlighterColors.PARENTHESES),
-    BRACKETS("Braces and Operators//Brackets", DefaultLanguageHighlighterColors.BRACKETS),
-    COMMA("Braces and Operators//Comma", DefaultLanguageHighlighterColors.COMMA),
-    SEMICOLON("Braces and Operators//Semicolon", DefaultLanguageHighlighterColors.SEMICOLON),
-    DOT("Braces and Operators//Dot", DefaultLanguageHighlighterColors.DOT),
+    // The platform defaults for these are plain text in Darcula and the new UI, so Fantom
+    // ships its own colours. They are still one click away in Settings | Color Scheme | Fantom.
+    OPERATOR("Braces and Operators//Operator sign", temp("FANTOM_OPERATOR", "#CC7832", Font.BOLD)),
+    BRACES("Braces and Operators//Braces", temp("FANTOM_BRACES", "#E8BF6A", Font.BOLD)),
+    PARENTHESES("Braces and Operators//Parentheses", temp("FANTOM_PARENTHESES", "#E8BF6A")),
+    BRACKETS("Braces and Operators//Brackets", temp("FANTOM_BRACKETS", "#E8BF6A")),
+    COMMA("Braces and Operators//Comma", temp("FANTOM_COMMA", "#CC7832")),
+    SEMICOLON("Braces and Operators//Semicolon", temp("FANTOM_SEMICOLON", "#CC7832")),
+    DOT("Braces and Operators//Dot", temp("FANTOM_DOT", "#CC7832", Font.BOLD)),
     /** The `|` pair around a closure signature or a function type. */
     CLOSURE_PIPE("Braces and Operators//Closure pipe", DefaultLanguageHighlighterColors.KEYWORD),
 
@@ -58,12 +64,12 @@ enum class FantomColors(humanName: String, default: TextAttributesKey) {
     )),
 
     // Identifiers (annotator, on a use that resolves; static and const apply at the declaration too).
-    LOCAL_VARIABLE("Identifiers//Local variable", DefaultLanguageHighlighterColors.LOCAL_VARIABLE),
-    PARAMETER("Identifiers//Parameter", DefaultLanguageHighlighterColors.PARAMETER),
+    LOCAL_VARIABLE("Identifiers//Local variable", temp("FANTOM_LOCAL_VARIABLE", "#9CDCFE")),
+    PARAMETER("Identifiers//Parameter", temp("FANTOM_PARAMETER", "#9CDCFE", Font.ITALIC)),
     INSTANCE_FIELD("Identifiers//Field", DefaultLanguageHighlighterColors.INSTANCE_FIELD),
     STATIC_FIELD("Identifiers//Static field", DefaultLanguageHighlighterColors.STATIC_FIELD),
     CONSTANT("Identifiers//Constant (const field, enum value)", DefaultLanguageHighlighterColors.CONSTANT),
-    FUNCTION_CALL("Identifiers//Method call", DefaultLanguageHighlighterColors.FUNCTION_CALL),
+    FUNCTION_CALL("Identifiers//Method call", temp("FANTOM_FUNCTION_CALL", "#DCDCAA")),
     STATIC_METHOD("Identifiers//Static method", DefaultLanguageHighlighterColors.STATIC_METHOD),
     /** `recv.name` when the slot is not in the project or library. */
     METHOD_CALL(

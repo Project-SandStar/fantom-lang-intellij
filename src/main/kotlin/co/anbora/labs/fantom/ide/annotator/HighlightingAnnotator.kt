@@ -190,7 +190,10 @@ class HighlightingAnnotator: Annotator {
         is FantomCtorDef -> FantomColors.METHOD_DECLARATION
         is FantomFieldDef -> fieldColor(decl, FantomColors.FIELD_DECLARATION)
         is FantomEnumValDef -> FantomColors.CONSTANT
-        // Locals, parameters and catch params: the declaration is plain, like in Java.
+        // Locals and params are coloured at the declaration too, like Kotlin, so `p := Person()`
+        // does not read as plain text next to a coloured `p.sayHello()`.
+        is FantomLocalDef, is FantomCatchDef -> FantomColors.LOCAL_VARIABLE
+        is FantomParam, is FantomClosureParam -> FantomColors.PARAMETER
         else -> null
     }
 
