@@ -33,6 +33,8 @@
                                               isEnabledByDefault="true" group="TYPES_GROUP" providerId="fantom.types"
                                               bundle="messages.FantomBundle"
                                               nameKey="inlay.fantom.types.name" descriptionKey="inlay.fantom.types.description"/>
+        <!-- Ctrl+Space: slots of the receiver type, names in scope, types, keywords -->
+        <completion.contributor language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.completion.FantomCompletionContributor"/>
         <lang.refactoringSupport language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.refactoring.FantomRefactoringSupportProvider"/>
         <lang.namesValidator language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.refactoring.FantomNamesValidator"/>
 
