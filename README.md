@@ -46,10 +46,12 @@ one or more `src` folders, separated by `:`.
 
 ## Docs
 
-- [Language layers, the resume document](docs/language-layers.md)
-- [Tasks](docs/tasks.md)
-- [Grammar work](docs/grammar-work.md)
-- [Agent guide](AGENTS.md)
+- [Getting started](docs/getting-started.md)
+- [Features](docs/features.md)
+- [Settings](docs/settings.md)
+- [Troubleshooting](docs/troubleshooting.md)
+- [Roadmap](docs/roadmap.md)
+- [Contributing](docs/contributing.md)
 
 ## Origin and license
 

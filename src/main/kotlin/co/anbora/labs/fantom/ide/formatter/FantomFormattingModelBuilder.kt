@@ -18,7 +18,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings
  * It never adds or removes a line break, and it never changes spacing inside a line: the
  * pods write `i:=0`, `s[0..<n]`, `a + b` and hand-aligned declarations side by side. Lines
  * that continue an expression keep their indent. A `//` or `/* */` comment at column 0 is a
- * banner and keeps its place. See `docs/formatter-work.md` for the corpus survey.
+ * banner and keeps its place. See `docs/engineering/formatter-work.md` for the corpus survey.
  */
 class FantomFormattingModelBuilder : FormattingModelBuilder {
     override fun createModel(formattingContext: FormattingContext): FormattingModel {

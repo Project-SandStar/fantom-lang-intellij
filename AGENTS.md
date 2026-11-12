@@ -10,14 +10,29 @@ comments and a "new Fantom class" action. Kotlin, Gradle, Grammar-Kit.
 Published on the JetBrains Marketplace as plugin 20289
 (`co.anbora.labs.fantom-lang`).
 
-Docs live in `docs/`: [report.md](docs/report.md) (state of the plugin),
-[tasks.md](docs/tasks.md) (work list), [tree-sitter.md](docs/tree-sitter.md)
+Docs live in `docs/`: [report.md](docs/engineering/report.md) (state of the plugin),
+[tasks.md](docs/engineering/tasks.md) (work list), [tree-sitter.md](docs/engineering/tree-sitter.md)
 (can the tree-sitter grammar replace or help the parser),
-[grammar-work.md](docs/grammar-work.md) (lexer and parser rewrite: corpus,
+[grammar-work.md](docs/engineering/grammar-work.md) (lexer and parser rewrite: corpus,
 baseline, root causes, plan; read it before touching `src/main/grammar`).
 For the language intelligence work (names, index, references, library, types,
-completion, tooling) read [docs/language-layers.md](docs/language-layers.md)
+completion, tooling) read [docs/engineering/language-layers.md](docs/engineering/language-layers.md)
 first; it is the resume document.
+
+## Two remotes
+
+`origin` is the public GitHub repo; `internal` is the private GitLab repo
+`gitlab.bas.co/openbassg/skyspark/fantom-lang-intellij`. `docs/engineering/`
+and `marketing/` are git-ignored so they never reach `origin`. To commit them:
+
+```sh
+git add -f docs/engineering marketing docs/video
+git commit -m "internal: ..."
+git push internal master
+```
+
+Push `master` to both remotes after a normal commit; push the internal-only
+commits to `internal` alone. Never force `origin`.
 
 ## Use context-mode for reading and searching
 
@@ -118,7 +133,9 @@ instead of `src/main/gen/`.
   `src/main/html/` — Marketplace description and change notes.
   `src/main/resources/demo/JsonConverter.fan` — colour page sample.
 - `.github/workflows/gradle.yml` — push to `master` builds and verifies; a `v*` tag runs `publishPlugin`.
-- `docs/` — report, tasks, tree-sitter study.
+- `docs/*.md` — public user documentation (getting started, features, settings, troubleshooting, roadmap, contributing).
+- `docs/engineering/` — internal: resume document, tasks, grammar and formatter notes. Not in the public repo.
+- `marketing/` — internal: Marketplace screenshots and video material. Not in the public repo.
 
 ## Build and check
 

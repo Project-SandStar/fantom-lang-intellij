@@ -378,7 +378,7 @@ closureParam   ::=  type id | type | id
 
 // Mirrors Parser.ctype: base, then `?` (no space before it), then any number of
 // `[]` each with optional `?`, then `: type` for a map. Only the bracket form
-// `[K:V]` is a base; `|...|` is a function type. See docs/grammar-work.md 5.
+// `[K:V]` is a base; `|...|` is a function type. See docs/engineering/grammar-work.md 5.
 type           ::=  nonMapType [mapSuffix]
 private nonMapType ::= baseType (nullSuffix | listSuffix)*
 private baseType   ::= simpleType | mapType | funcType

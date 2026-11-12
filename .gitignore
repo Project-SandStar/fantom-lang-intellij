@@ -361,3 +361,7 @@ gradle-app.setting
 # End of https://www.toptal.com/developers/gitignore/api/intellij+all,gradle,windows,linux,macos,java,intellij+iml,intellij
 # PSI dumps written by FantomSnippetDumpTest
 src/test/testData/snippets/*.tree.txt
+
+# Internal material lives in the private GitLab repo (see docs/engineering/README.md locally)
+/docs/engineering/
+/marketing/
