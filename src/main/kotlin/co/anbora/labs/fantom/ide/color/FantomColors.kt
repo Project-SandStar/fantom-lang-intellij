@@ -9,38 +9,85 @@ import com.intellij.openapi.options.colors.AttributesDescriptor
 import java.awt.Color
 import java.awt.Font
 
+/**
+ * Every colour the plugin paints. Each entry is one key on the Fantom colour
+ * settings page. The external key name is `co.anbora.labs.fantom.<NAME>`, so
+ * never rename an entry: user colour schemes store that name.
+ *
+ * Lexer colours come from [co.anbora.labs.fantom.ide.highlight.textAttributesKey],
+ * the rest from [co.anbora.labs.fantom.ide.annotator.HighlightingAnnotator].
+ */
 enum class FantomColors(humanName: String, default: TextAttributesKey) {
 
-    KEY_WORD("Keywords", DefaultLanguageHighlighterColors.KEYWORD),
+    KEY_WORD("Keywords//Keyword", DefaultLanguageHighlighterColors.KEYWORD),
+    THIS_SUPER_IT("Keywords//this, super, it", DefaultLanguageHighlighterColors.KEYWORD),
     BAD_CHAR("Bad Character", HighlighterColors.BAD_CHARACTER),
-    ANNOTATIONS("Annotations",
+
+    // Braces and operators (lexer).
+    OPERATOR("Braces and Operators//Operator sign", DefaultLanguageHighlighterColors.OPERATION_SIGN),
+    BRACES("Braces and Operators//Braces", DefaultLanguageHighlighterColors.BRACES),
+    PARENTHESES("Braces and Operators//Parentheses", DefaultLanguageHighlighterColors.PARENTHESES),
+    BRACKETS("Braces and Operators//Brackets", DefaultLanguageHighlighterColors.BRACKETS),
+    COMMA("Braces and Operators//Comma", DefaultLanguageHighlighterColors.COMMA),
+    SEMICOLON("Braces and Operators//Semicolon", DefaultLanguageHighlighterColors.SEMICOLON),
+    DOT("Braces and Operators//Dot", DefaultLanguageHighlighterColors.DOT),
+    /** The `|` pair around a closure signature or a function type. */
+    CLOSURE_PIPE("Braces and Operators//Closure pipe", DefaultLanguageHighlighterColors.KEYWORD),
+
+    // Literals (lexer, plus ranged annotations inside strings).
+    STRINGS("Literals//String", DefaultLanguageHighlighterColors.STRING),
+    STRING_INTERPOLATION("Literals//String interpolation", DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE),
+    STRING_ESCAPE("Literals//String escape", DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE),
+    URI("Literals//Uri", DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE),
+    CHAR("Literals//Char", DefaultLanguageHighlighterColors.STRING),
+    DSL("Literals//DSL", DefaultLanguageHighlighterColors.STRING),
+    NUMBERS("Literals//Number", DefaultLanguageHighlighterColors.NUMBER),
+    DURATION("Literals//Duration", DefaultLanguageHighlighterColors.NUMBER),
+
+    // Declarations (annotator, on the name of a declaration).
+    CLASS_DECLARATION("Declarations//Class, mixin, enum, facet", DefaultLanguageHighlighterColors.CLASS_NAME),
+    METHOD_DECLARATION("Declarations//Method", DefaultLanguageHighlighterColors.FUNCTION_DECLARATION),
+    FIELD_DECLARATION("Declarations//Field", DefaultLanguageHighlighterColors.INSTANCE_FIELD),
+    /** `@Foo`: the `@` and the facet name. */
+    FACET("Declarations//Facet", DefaultLanguageHighlighterColors.METADATA),
+    /** `name` in `@Foo { name = 1 }`. */
+    ANNOTATIONS("Declarations//Facet value name",
         TextAttributesKey.createTempTextAttributesKey(
         "FANTOM_ANNOTATIONS",
         TextAttributes(Color.decode("#BBB529"), null, null, null, Font.PLAIN)
     )),
+
+    // Identifiers (annotator, on a use that resolves; static and const apply at the declaration too).
+    LOCAL_VARIABLE("Identifiers//Local variable", DefaultLanguageHighlighterColors.LOCAL_VARIABLE),
+    PARAMETER("Identifiers//Parameter", DefaultLanguageHighlighterColors.PARAMETER),
+    INSTANCE_FIELD("Identifiers//Field", DefaultLanguageHighlighterColors.INSTANCE_FIELD),
+    STATIC_FIELD("Identifiers//Static field", DefaultLanguageHighlighterColors.STATIC_FIELD),
+    CONSTANT("Identifiers//Constant (const field, enum value)", DefaultLanguageHighlighterColors.CONSTANT),
+    FUNCTION_CALL("Identifiers//Method call", DefaultLanguageHighlighterColors.FUNCTION_CALL),
+    STATIC_METHOD("Identifiers//Static method", DefaultLanguageHighlighterColors.STATIC_METHOD),
+    /** `recv.name` when the slot is not in the project or library. */
     METHOD_CALL(
-        "Method Call",
+        "Identifiers//Unresolved slot call",
         TextAttributesKey.createTempTextAttributesKey(
             "FANTOM_METHOD_CALL",
             TextAttributes(Color.decode("#E8C32A"), null, null, null, Font.PLAIN)
         )
     ),
+    TYPE_REFERENCE("Identifiers//Type reference", DefaultLanguageHighlighterColors.CLASS_REFERENCE),
+    /** A type name that does not resolve (no library model, or a typo). */
     TYPES(
-        "Types",
+        "Identifiers//Unresolved type",
         TextAttributesKey.createTempTextAttributesKey(
             "FANTOM_TYPES",
             TextAttributes(Color.decode("#507874"), null, null, null, Font.PLAIN)
         )
     ),
-    // Semantic colours: set by the annotator from what an identifier resolves to.
-    LOCAL_VARIABLE("Identifiers//Local variable", DefaultLanguageHighlighterColors.LOCAL_VARIABLE),
-    PARAMETER("Identifiers//Parameter", DefaultLanguageHighlighterColors.PARAMETER),
-    INSTANCE_FIELD("Identifiers//Field", DefaultLanguageHighlighterColors.INSTANCE_FIELD),
-    FUNCTION_CALL("Identifiers//Method call", DefaultLanguageHighlighterColors.FUNCTION_CALL),
-    STRINGS("Literals//Strings", DefaultLanguageHighlighterColors.STRING),
-    NUMBERS("Literals//Numbers", DefaultLanguageHighlighterColors.NUMBER),
+
+    // Comments.
     COMMENTS("Comments//Line Comment", DefaultLanguageHighlighterColors.LINE_COMMENT),
-    DOC_COMMENTS("Comments//Doc Comment", DefaultLanguageHighlighterColors.DOC_COMMENT);
+    DOC_COMMENTS("Comments//Doc Comment", DefaultLanguageHighlighterColors.DOC_COMMENT),
+    /** `` `code` `` span inside a `**` fandoc comment. */
+    FANDOC_TAG("Comments//Fandoc code span", DefaultLanguageHighlighterColors.DOC_COMMENT_TAG);
 
 
     val textAttributesKey = TextAttributesKey.createTextAttributesKey("co.anbora.labs.fantom.$name", default)

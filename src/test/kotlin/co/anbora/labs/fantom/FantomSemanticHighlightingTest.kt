@@ -59,9 +59,10 @@ class FantomSemanticHighlightingTest : BasePlatformTestCase() {
         // `B` in `B.go` and in `B()` sits under FantomSimple / static call, which the
         // old type branch leaves bare: only the resolver gives it a colour.
         val infos = highlight("class A { Void f() { B.go; b := B() } }")
-        assertEquals(setOf(key(FantomColors.TYPES)), keysAt(infos, "B", 0))
-        assertEquals(setOf(key(FantomColors.TYPES)), keysAt(infos, "B", 1))
-        assertEquals(setOf(key(FantomColors.FUNCTION_CALL)), keysAt(infos, "go", 0))
+        assertEquals(setOf(key(FantomColors.TYPE_REFERENCE)), keysAt(infos, "B", 0))
+        assertEquals(setOf(key(FantomColors.TYPE_REFERENCE)), keysAt(infos, "B", 1))
+        // `go` is `static`, so the use gets the static method colour.
+        assertEquals(setOf(key(FantomColors.STATIC_METHOD)), keysAt(infos, "go", 0))
     }
 
     fun testLibraryNamesNeverWarnAndColourOnlyWhenResolved() {
@@ -76,9 +77,10 @@ class FantomSemanticHighlightingTest : BasePlatformTestCase() {
         // With a Fantom install on the machine the library resolves sys names; without one they stay neutral.
         val hasSys = co.anbora.labs.fantom.lang.library.FantomSettings.getInstance(project).effectiveHome() != null
         if (hasSys) {
-            assertEquals(setOf(key(FantomColors.FUNCTION_CALL)), keysAt(infos, "echo"))
+            // `sys::Obj.echo` is static.
+            assertEquals(setOf(key(FantomColors.STATIC_METHOD)), keysAt(infos, "echo"))
             // `Str` #1 is the tail of `toStr`; the type in `Str.defVal` is #2.
-            assertEquals(setOf(key(FantomColors.TYPES)), keysAt(infos, "Str", 2))
+            assertEquals(setOf(key(FantomColors.TYPE_REFERENCE)), keysAt(infos, "Str", 2))
         } else {
             assertEquals(emptySet<String>(), keysAt(infos, "echo"))
             assertEquals(emptySet<String>(), keysAt(infos, "Str", 2))
