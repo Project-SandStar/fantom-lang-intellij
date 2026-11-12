@@ -18,6 +18,7 @@ import co.anbora.labs.fantom.lang.core.psi.FantomParam
 import co.anbora.labs.fantom.lang.core.psi.FantomTypeHeader
 import co.anbora.labs.fantom.lang.core.psi.FantomTypes.FANDOC_LINE_COMMENT
 import co.anbora.labs.fantom.lang.resolve.FantomScope
+import co.anbora.labs.fantom.lang.types.FantomTypeInference
 import com.intellij.lang.documentation.AbstractDocumentationProvider
 import com.intellij.lang.documentation.DocumentationMarkup
 import com.intellij.psi.PsiComment
@@ -76,13 +77,18 @@ class FantomDocumentationProvider : AbstractDocumentationProvider() {
                 is FantomCtorDef -> withFlags(decl.ctorFlags.text, FantomPresentation.text(decl))
                 is FantomFieldDef -> withFlags(decl.fieldFlags.text, FantomPresentation.text(decl))
                 is FantomParam -> "${decl.type.text.trim()} $name" + (decl.expr?.let { " := ${it.text.trim()}" } ?: "")
-                is FantomLocalDef -> (decl.type?.text?.trim()?.let { "$it " } ?: "") + name
-                is FantomClosureParam -> (decl.type?.text?.trim()?.let { "$it " } ?: "") + name
+                // No written type: show the inferred one after the name, `local x: Str`.
+                is FantomLocalDef -> decl.type?.text?.trim()?.let { "$it $name" } ?: ("local $name" + inferredSuffix(decl))
+                is FantomClosureParam -> decl.type?.text?.trim()?.let { "$it $name" } ?: ("param $name" + inferredSuffix(decl))
                 is FantomCatchDef -> (decl.type?.text?.trim()?.let { "$it " } ?: "") + name
                 is FantomEnumValDef -> name
                 else -> FantomPresentation.text(decl)
             }
         }
+
+        /** `: Type` from type inference for a declaration with no written type, or "" when unknown. */
+        private fun inferredSuffix(decl: FantomNamedElement): String =
+            FantomTypeInference.typeOfDeclaration(decl)?.let { ": ${it.presentableText}" } ?: ""
 
         /** The enclosing type name for slots and enum values, else null. */
         fun ownerName(decl: FantomNamedElement): String? =

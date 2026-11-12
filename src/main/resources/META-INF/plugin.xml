@@ -27,6 +27,12 @@
         <lang.findUsagesProvider language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.usages.FantomFindUsagesProvider"/>
         <lang.documentationProvider language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.documentation.FantomDocumentationProvider"/>
         <codeInsight.parameterInfo language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.parameters.FantomParameterInfoHandler"/>
+        <!-- Inferred type after `x := ...` locals and untyped closure params, like Kotlin's type hints -->
+        <codeInsight.declarativeInlayProvider language="fantom_lang"
+                                              implementationClass="co.anbora.labs.fantom.ide.hints.FantomTypeHintsProvider"
+                                              isEnabledByDefault="true" group="TYPES_GROUP" providerId="fantom.types"
+                                              bundle="messages.FantomBundle"
+                                              nameKey="inlay.fantom.types.name" descriptionKey="inlay.fantom.types.description"/>
         <lang.refactoringSupport language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.refactoring.FantomRefactoringSupportProvider"/>
         <lang.namesValidator language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.refactoring.FantomNamesValidator"/>
 
