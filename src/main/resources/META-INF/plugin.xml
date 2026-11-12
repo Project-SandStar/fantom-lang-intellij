@@ -21,6 +21,10 @@
         <lang.syntaxHighlighterFactory language="fantom_lang"
                                        implementationClass="co.anbora.labs.fantom.ide.highlight.FantomSyntaxHighlighterFactory"/>
         <lang.braceMatcher language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.typing.FantomBraceMatcher"/>
+        <lang.quoteHandler language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.typing.FantomQuoteHandler"/>
+        <typedHandler implementation="co.anbora.labs.fantom.ide.typing.FantomTypedHandler"/>
+        <enterHandlerDelegate implementation="co.anbora.labs.fantom.ide.typing.FantomEnterHandler" order="first"/>
+        <backspaceHandlerDelegate implementation="co.anbora.labs.fantom.ide.typing.FantomBackspaceHandler"/>
         <lang.foldingBuilder language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.folding.FantomFoldingBuilder"/>
         <lang.psiStructureViewFactory language="fantom_lang"
                                       implementationClass="co.anbora.labs.fantom.ide.structure.FantomStructureViewFactory"/>
