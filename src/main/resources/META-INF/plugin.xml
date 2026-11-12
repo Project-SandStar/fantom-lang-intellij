@@ -35,6 +35,11 @@
                                               nameKey="inlay.fantom.types.name" descriptionKey="inlay.fantom.types.description"/>
         <!-- Ctrl+Space: slots of the receiver type, names in scope, types, keywords -->
         <completion.contributor language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.completion.FantomCompletionContributor"/>
+        <!-- Live templates (main, if, for, each, ...) and postfix templates (expr.if, .not, .each, .echo, .var, ...) -->
+        <liveTemplateContext contextId="FANTOM" implementation="co.anbora.labs.fantom.ide.templates.FantomTemplateContextType"/>
+        <defaultLiveTemplates file="/liveTemplates/Fantom.xml"/>
+        <codeInsight.template.postfixTemplateProvider language="fantom_lang"
+                                                      implementationClass="co.anbora.labs.fantom.ide.templates.FantomPostfixTemplateProvider"/>
         <lang.refactoringSupport language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.refactoring.FantomRefactoringSupportProvider"/>
         <lang.namesValidator language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.refactoring.FantomNamesValidator"/>
 
