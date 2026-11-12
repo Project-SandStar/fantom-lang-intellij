@@ -155,3 +155,6 @@ tasks {
         dependsOn("generateLexer", "generateParser")
     }
 }
+
+tasks {
+}

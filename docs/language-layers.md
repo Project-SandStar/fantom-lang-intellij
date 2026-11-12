@@ -112,8 +112,13 @@ agents to commit a short resume note early.
 - Release: bump change notes for 1.8.1, open a PR from `grammar/fantom-corpus`
   to `master`. The push to `master` publishes to the Marketplace.
 - Live soak: install the 1.8.1 zip in the main IDE, open a real pod, and use it
-  for a day. The `idea` MCP server can then drive every check that the sandbox
-  needed AppleScript for.
+  for a day.
+- Sandbox by tool calls: the `runIde` sandbox runs the built-in MCP server on
+  port 64343 (no token). Claude Code has it as `idea-sandbox` with header
+  `IJ_MCP_SERVER_PROJECT_PATH: /tmp/fantest`; `get_file_problems`,
+  `get_symbol_info`, `rename_refactoring` and `reformat_file` all work on `.fan`
+  files. A clean sandbox needs consent again in
+  `.intellijPlatform/sandbox/.../config_runIde/options/mcpServer.xml`.
 - Fix gap 1 in section 6 (it-block field assignment); it also removes the last
   false warnings in `util`.
 - Colour defaults live in `resources/colorSchemes/Fantom*.xml`; temp attribute
