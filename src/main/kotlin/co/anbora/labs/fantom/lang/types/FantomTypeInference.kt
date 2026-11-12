@@ -185,10 +185,11 @@ object FantomTypeInference {
         is FantomLiteral -> inferLiteral(e)
         is FantomTypeBase -> inferTypeBase(e)
         is FantomIdExpr -> (e.local ?: e.slotExpr)?.let { typeOf(it) }
-        is FantomLocal -> typeOfReference(e.id)
+        // A bare name (`put` in `put("a").put("b")`) parses as a local; a `This` slot means the enclosing type.
+        is FantomLocal -> typeOfReference(e.id)?.let { resolveThis(it, FantomScope.enclosingType(e)?.name?.let { n -> FanType.Named(n) }) }
         is FantomSlotExpr -> (e.field ?: e.call)?.let { typeOf(it) }
-        is FantomField -> typeOfReference(e.id)
-        is FantomCall -> typeOfReference(e.id)
+        is FantomField -> typeOfReference(e.id)?.let { resolveThis(it, FantomScope.enclosingType(e)?.name?.let { n -> FanType.Named(n) }) }
+        is FantomCall -> typeOfReference(e.id)?.let { resolveThis(it, FantomScope.enclosingType(e)?.name?.let { n -> FanType.Named(n) }) }
         is FantomList -> fromPsiType(e.type)?.let { FanType.ListOf(it) }
             ?: FanType.ListOf(e.listItems?.exprList?.firstOrNull()?.let { typeOf(it) } ?: FanType.OBJ)
         is FantomMap -> fromPsiType(e.type) ?: run {
@@ -247,7 +248,7 @@ object FantomTypeInference {
     private fun inferTypeBase(e: FantomTypeBase): FanType? {
         e.typeLiteral?.let { return FanType.TYPE }
         e.namedSuper?.let { return fromPsiType(it.type) }
-        e.staticCall?.let { sc -> return (sc.slotExpr?.field?.id ?: sc.slotExpr?.call?.id)?.let { typeOfReference(it) } }
+        e.staticCall?.let { sc -> return slotType(sc.slotExpr, fromPsiType(sc.type)) }
         e.dsl?.let { return fromPsiType(it.type) }
         e.simple?.let { return fromPsiType(it.type)?.withNullable(false) }
         e.ctorBlock?.let { return fromPsiType(it.type)?.withNullable(false) }
@@ -274,26 +275,39 @@ object FantomTypeInference {
     }
 
     private fun applyChain(receiver: FanType, chain: FantomTermChain): FanType? {
-        chain.dotCall?.let { return slotType(it.slotExpr) }
-        chain.indexExpr?.let {
+        chain.dotCall?.let { return slotType(it.slotExpr, receiver) }
+        chain.indexExpr?.let { ix ->
+            // `x[a..b]` is getRange and keeps the container type; `x[i]` is get.
+            val byRange = ix.expr?.let { typeOf(it) } == FanType.RANGE
             return when (receiver) {
-                is FanType.ListOf -> receiver.element
+                is FanType.ListOf -> if (byRange) receiver else receiver.element
                 is FanType.MapOf -> receiver.value.withNullable(true)
-                is FanType.Named -> if (receiver.name == "Str") FanType.INT else null
+                is FanType.Named -> if (receiver.name == "Str") (if (byRange) FanType.STR else FanType.INT) else null
                 else -> null
             }
         }
         chain.callOp?.let { return if (receiver is FanType.Func) receiver.returns else receiver }
         chain.itBlock?.let { return receiver }
         when (val stm = chain.stmt) {
-            is FantomSafeDotCallStm -> return slotType(stm.slotExpr)?.withNullable(true)
+            is FantomSafeDotCallStm -> return slotType(stm.slotExpr, receiver)?.withNullable(true)
             is FantomDynCallStm, is FantomSafeDynCallStm -> return null // dynamic call: unknown
         }
         return null
     }
 
-    private fun slotType(slotExpr: FantomSlotExpr?): FanType? =
-        (slotExpr?.field?.id ?: slotExpr?.call?.id)?.let { typeOfReference(it) }
+    /**
+     * Type of slot `recv.x`. A slot declared as `This` returns the receiver's own type
+     * (fluent APIs such as `StrBuf.add`, `OutStream.print`), so chains keep their type.
+     */
+    private fun slotType(slotExpr: FantomSlotExpr?, receiver: FanType?): FanType? {
+        val t = (slotExpr?.field?.id ?: slotExpr?.call?.id)?.let { typeOfReference(it) } ?: return null
+        return resolveThis(t, receiver)
+    }
+
+    /** `This` stands for the receiver type; nullability of the declared type is kept. */
+    fun resolveThis(declared: FanType, receiver: FanType?): FanType =
+        if (declared is FanType.Named && declared.name == "This" && receiver != null) receiver.withNullable(declared.nullable)
+        else declared
 
     private fun <T : PsiElement> cached(e: T, compute: () -> FanType?): FanType? =
         CachedValuesManager.getCachedValue(e) {

@@ -120,6 +120,35 @@ class FantomTypeInferenceTest : BasePlatformTestCase() {
         assertEquals(2, ref.resolveAll().size)
     }
 
+    fun testThisReturnTypeIsTheReceiver() {
+        configure(
+            "s := S(); a := s.add(\"x\"); b := s.add(\"x\").add(\"y\"); c := S.make.add(\"z\")",
+            "class S { This add(Str x) { this } static new make() {} }",
+        )
+        assertEquals(FanType.Named("S"), localType("a"))
+        assertEquals(FanType.Named("S"), localType("b"))
+        assertEquals(FanType.Named("S"), localType("c"))
+    }
+
+    fun testFluentThisChainResolvesToOwnType() {
+        myFixture.configureByText("A.fan", """
+            class Other { This put(Int x) { this } }
+            class S { This put(Str x) { this }  Void f() { put("a").p<caret>ut("b") } }
+        """.trimIndent())
+        val ref = myFixture.file.findReferenceAt(myFixture.caretOffset) as FantomReference
+        val targets = ref.resolveAll()
+        assertEquals(1, targets.size)
+        assertEquals("S", FantomDeclarationIndex.enclosingTypeName(targets.single()))
+    }
+
+    fun testRangeIndexKeepsContainerType() {
+        configure("Str s := \"abc\"; a := s[0]; b := s[0..1]; Int[] l := [,]; c := l[0]; d := l[0..<2]; e := s[1..-1].size")
+        assertEquals(FanType.INT, localType("a"))
+        assertEquals(FanType.STR, localType("b"))
+        assertEquals(FanType.INT, localType("c"))
+        assertEquals(FanType.ListOf(FanType.INT), localType("d"))
+    }
+
     fun testNoTargetDisagreementGivesNull() {
         configure("x := unknownThing; y := x", "")
         assertNull(localType("x"))
