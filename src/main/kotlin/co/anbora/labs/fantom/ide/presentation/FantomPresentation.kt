@@ -43,9 +43,25 @@ object FantomPresentation {
         is FantomMixinDef -> AllIcons.Nodes.Interface
         is FantomEnumDef -> AllIcons.Nodes.Enum
         is FantomFacetDef -> AllIcons.Nodes.Annotationtype
-        is FantomEnumValDef, is FantomFieldDef -> AllIcons.Nodes.Field
-        is FantomCtorDef, is FantomMethodDef -> AllIcons.Nodes.Method
+        is FantomEnumValDef -> AllIcons.Nodes.Constant
+        is FantomFieldDef -> if ("const" in modifiers(element)) AllIcons.Nodes.Constant else AllIcons.Nodes.Field
+        is FantomCtorDef -> AllIcons.Nodes.ClassInitializer
+        is FantomMethodDef -> if ("abstract" in modifiers(element)) AllIcons.Nodes.AbstractMethod else AllIcons.Nodes.Method
         else -> null
+    }
+
+    /**
+     * The flag words written before a slot (`private`, `static`, `const`, `override`, ...),
+     * read from the flags node text. Empty for slots without flags and for non-slots.
+     */
+    fun modifiers(element: FantomNamedElement): Set<String> {
+        val flags = when (element) {
+            is FantomMethodDef -> element.methodFlags?.text
+            is FantomFieldDef -> element.fieldFlags?.text
+            is FantomCtorDef -> element.ctorFlags?.text
+            else -> null
+        } ?: return emptySet()
+        return flags.split(Regex("\\s+")).filterTo(LinkedHashSet()) { it.isNotEmpty() }
     }
 
     private fun paramTypes(list: FantomItemParameterList?): String =
