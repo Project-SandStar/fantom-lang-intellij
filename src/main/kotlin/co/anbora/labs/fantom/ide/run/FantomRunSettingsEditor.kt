@@ -15,7 +15,7 @@ class FantomRunSettingsEditor(private val project: Project) : SettingsEditor<Fan
     private val targetField = JBTextField()
     private val argsField = JBTextField()
     private val workDirField = TextFieldWithBrowseButton()
-    private val envComponent = EnvironmentVariablesComponent()
+    private val envComponent = EnvironmentVariablesComponent(project)
 
     override fun resetEditorFrom(config: FantomRunConfiguration) {
         targetField.text = config.target

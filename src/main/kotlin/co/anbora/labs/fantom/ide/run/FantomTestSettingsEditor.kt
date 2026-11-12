@@ -16,7 +16,7 @@ class FantomTestSettingsEditor(private val project: Project) : SettingsEditor<Fa
     private val classField = JBTextField()
     private val methodField = JBTextField()
     private val workDirField = TextFieldWithBrowseButton()
-    private val envComponent = EnvironmentVariablesComponent()
+    private val envComponent = EnvironmentVariablesComponent(project)
 
     override fun resetEditorFrom(config: FantomTestRunConfiguration) {
         podField.text = config.pod

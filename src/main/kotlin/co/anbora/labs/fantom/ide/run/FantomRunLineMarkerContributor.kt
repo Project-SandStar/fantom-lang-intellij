@@ -35,7 +35,7 @@ class FantomRunLineMarkerContributor : RunLineMarkerContributor() {
             }
             else -> return null
         }
-        val icon = if (isTest) AllIcons.RunConfigurations.TestState.Run else AllIcons.RunConfigurations.TestState.Run_run
+        val icon = if (isTest) AllIcons.RunConfigurations.TestState.Run else AllIcons.Actions.Execute
         return Info(icon, ExecutorAction.getActions(), null)
     }
 }

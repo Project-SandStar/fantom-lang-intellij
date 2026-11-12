@@ -180,6 +180,41 @@ class FantomRunConfigurationTest : BasePlatformTestCase() {
         assertEquals(mapOf("A" to "b"), back.envs)
     }
 
+    @Suppress("UNCHECKED_CAST")
+    fun testSettingsEditorsRoundTrip() {
+        val type = FantomRunConfigurationType.instance
+        val run = FantomRunConfiguration(project, type.mainFactory, "x").apply {
+            target = "mypod::Foo.main"; programArgs = "-v"; workingDir = "/tmp"; envs["A"] = "b"
+        }
+        val runEditor = run.configurationEditor as com.intellij.openapi.options.SettingsEditor<FantomRunConfiguration>
+        try {
+            runEditor.component
+            runEditor.resetFrom(run)
+            val copy = FantomRunConfiguration(project, type.mainFactory, "y")
+            runEditor.applyTo(copy)
+            assertEquals("mypod::Foo.main", copy.target)
+            assertEquals("-v", copy.programArgs)
+            assertEquals("/tmp", copy.workingDir)
+            assertEquals(mapOf("A" to "b"), copy.envs)
+        } finally {
+            com.intellij.openapi.util.Disposer.dispose(runEditor)
+        }
+
+        val test = FantomTestRunConfiguration(project, type.testFactory, "x").apply {
+            pod = "mypod"; testClass = "FooTest"; testMethod = "testBar"
+        }
+        val testEditor = test.configurationEditor as com.intellij.openapi.options.SettingsEditor<FantomTestRunConfiguration>
+        try {
+            testEditor.component
+            testEditor.resetFrom(test)
+            val copy = FantomTestRunConfiguration(project, type.testFactory, "y")
+            testEditor.applyTo(copy)
+            assertEquals("mypod::FooTest.testBar", copy.testSpec())
+        } finally {
+            com.intellij.openapi.util.Disposer.dispose(testEditor)
+        }
+    }
+
     fun testGuttersOnMainAndTestMethod() {
         pod()
         val file = myFixture.addFileToProject(
@@ -189,7 +224,7 @@ class FantomRunConfigurationTest : BasePlatformTestCase() {
         )
         myFixture.configureFromExistingVirtualFile(file.virtualFile)
         myFixture.doHighlighting()
-        val runIcons = setOf(AllIcons.RunConfigurations.TestState.Run, AllIcons.RunConfigurations.TestState.Run_run)
+        val runIcons = setOf(AllIcons.RunConfigurations.TestState.Run, AllIcons.Actions.Execute)
         val all = myFixture.findAllGutters().filter { it.icon in runIcons }
         assertEquals("arrows on Foo, main, FooTest, testBar; got ${all.map { it.tooltipText }}", 4, all.size)
 
@@ -198,7 +233,7 @@ class FantomRunConfigurationTest : BasePlatformTestCase() {
             myFixture.editor.caretModel.moveToOffset(text.indexOf(snippet) + 1)
             return myFixture.findGuttersAtCaret().map { it.icon }.filter { it in runIcons }
         }
-        assertEquals(listOf(AllIcons.RunConfigurations.TestState.Run_run), arrowsAt("static Void main"))
+        assertEquals(listOf(AllIcons.Actions.Execute), arrowsAt("static Void main"))
         assertEquals(listOf(AllIcons.RunConfigurations.TestState.Run), arrowsAt("Void testBar"))
         assertEmpty(arrowsAt("Void other"))
         assertEmpty(arrowsAt("Void setup"))
