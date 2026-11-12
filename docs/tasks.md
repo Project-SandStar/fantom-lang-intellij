@@ -121,6 +121,10 @@ layers; each needs the one before it.
 **Priority:** P1
 **Status:** Done (2026-11-12). `lang/resolve/FantomSlotLookup` (type chain, all slots nearest first) and `ide/completion/FantomCompletionContributor`. After `.`, `?.`, `->`: slots of the receiver's inferred type; `this.`/`super.`: enclosing chain; `Type.`: static slots and ctors first; bare name: locals, params, enclosing slots, types, keywords; type position: types. Order: locals, own slots, inherited, `Obj`, types, keywords; private slots of other types hidden; ctors hidden after an instance receiver; no-param methods insert the name only, others `()` with the caret inside; keywords only where they can appear (`FantomKeywords` groups FILE, TYPE_BODY, STATEMENT, VALUES). Live templates `main if ife for while each try tryf sw echo doc class fn` and postfix `.if .not .each .echo .var .return .null .nn` (type-gated). Measured on 150 real `recv.slot` sites in `util`: 90.7 percent offered, 87.3 percent in the top 10, 100 percent of bare names; every miss was a closure-param or generic gap that the layer 5 closures work then closed. 187 tests pass.
 
+### Task 3.2f: Layer 7, editor tooling
+**Priority:** P2
+**Status:** In Progress (2026-11-12). Wave 1, three agents: `layer7/inspections` (unresolved reference with "Add using" fix, unused declaration, nullable receiver with `?.` fix; all with suppression for generic params, dynamic calls, unknown receivers and no-home), `layer7/typing` (quote handler, `|` pairing for closures, Enter indents inside braces and continues `**` fandoc, backspace on empty pairs), `layer7/override` (Alt+Insert override/implement members, override gutter markers). Wave 2 planned: formatter with a `sys` idempotence gate, run configurations for `fan` and `fant`, pod-aware `using` organisation.
+
 ### Task 3.3: Tree-sitter side parser spike
 **Priority:** P3
 **Status:** Not Started
