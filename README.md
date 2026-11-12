@@ -4,6 +4,7 @@
 
 Language support for [Fantom](https://fantom-lang.org/) in IntelliJ IDEA and
 the other JetBrains IDEs. Part of [Project Sandstar](https://project-sandstar.org).
+Source: [github.com/Project-SandStar/fantom-lang-intellij](https://github.com/Project-SandStar/fantom-lang-intellij).
 
 ## What it does
 
@@ -22,6 +23,10 @@ the other JetBrains IDEs. Part of [Project Sandstar](https://project-sandstar.or
 
 From the JetBrains Marketplace: search for "Project Sandstar Fantom" in
 Settings | Plugins.
+
+From a release: download `fantom-lang-<version>.zip` from
+[GitHub Releases](https://github.com/Project-SandStar/fantom-lang-intellij/releases),
+then Settings | Plugins | Install Plugin from Disk.
 
 From a build: `./gradlew buildPlugin`, then Settings | Plugins | Install Plugin
 from Disk and pick `build/distributions/fantom-lang-<version>.zip`.
