@@ -1,0 +1,84 @@
+<templateSet group="Fantom">
+  <template name="main" value="static Void main(Str[] args) {&#10;  $END$&#10;}"
+            description="main method" toReformat="false" toShortenFQNames="false">
+    <context><option name="FANTOM" value="true"/></context>
+  </template>
+
+  <template name="if" value="if ($COND$) {&#10;  $END$&#10;}"
+            description="if statement" toReformat="false" toShortenFQNames="false">
+    <variable name="COND" expression="" defaultValue="&quot;cond&quot;" alwaysStopAt="true"/>
+    <context><option name="FANTOM" value="true"/></context>
+  </template>
+
+  <template name="ife" value="if ($COND$) {&#10;  $THEN$&#10;} else {&#10;  $END$&#10;}"
+            description="if / else statement" toReformat="false" toShortenFQNames="false">
+    <variable name="COND" expression="" defaultValue="&quot;cond&quot;" alwaysStopAt="true"/>
+    <variable name="THEN" expression="" defaultValue="" alwaysStopAt="true"/>
+    <context><option name="FANTOM" value="true"/></context>
+  </template>
+
+  <template name="for" value="for (i := 0; i &lt; $COUNT$; ++i) {&#10;  $END$&#10;}"
+            description="for loop with a counter" toReformat="false" toShortenFQNames="false">
+    <variable name="COUNT" expression="" defaultValue="&quot;n&quot;" alwaysStopAt="true"/>
+    <context><option name="FANTOM" value="true"/></context>
+  </template>
+
+  <template name="while" value="while ($COND$) {&#10;  $END$&#10;}"
+            description="while loop" toReformat="false" toShortenFQNames="false">
+    <variable name="COND" expression="" defaultValue="&quot;cond&quot;" alwaysStopAt="true"/>
+    <context><option name="FANTOM" value="true"/></context>
+  </template>
+
+  <template name="each" value="$LIST$.each |$ITEM$| {&#10;  $END$&#10;}"
+            description="each closure over a list or map" toReformat="false" toShortenFQNames="false">
+    <variable name="LIST" expression="" defaultValue="&quot;list&quot;" alwaysStopAt="true"/>
+    <variable name="ITEM" expression="" defaultValue="&quot;item&quot;" alwaysStopAt="true"/>
+    <context><option name="FANTOM" value="true"/></context>
+  </template>
+
+  <template name="try" value="try {&#10;  $BODY$&#10;} catch ($TYPE$ $NAME$) {&#10;  $END$&#10;}"
+            description="try / catch Err" toReformat="false" toShortenFQNames="false">
+    <variable name="BODY" expression="" defaultValue="" alwaysStopAt="true"/>
+    <variable name="TYPE" expression="" defaultValue="&quot;Err&quot;" alwaysStopAt="true"/>
+    <variable name="NAME" expression="" defaultValue="&quot;e&quot;" alwaysStopAt="true"/>
+    <context><option name="FANTOM" value="true"/></context>
+  </template>
+
+  <template name="tryf" value="try {&#10;  $BODY$&#10;} finally {&#10;  $END$&#10;}"
+            description="try / finally" toReformat="false" toShortenFQNames="false">
+    <variable name="BODY" expression="" defaultValue="" alwaysStopAt="true"/>
+    <context><option name="FANTOM" value="true"/></context>
+  </template>
+
+  <template name="sw" value="switch ($VALUE$) {&#10;  case $CASE$:&#10;    $BODY$&#10;  default:&#10;    $END$&#10;}"
+            description="switch with one case and default" toReformat="false" toShortenFQNames="false">
+    <variable name="VALUE" expression="" defaultValue="&quot;value&quot;" alwaysStopAt="true"/>
+    <variable name="CASE" expression="" defaultValue="&quot;0&quot;" alwaysStopAt="true"/>
+    <variable name="BODY" expression="" defaultValue="" alwaysStopAt="true"/>
+    <context><option name="FANTOM" value="true"/></context>
+  </template>
+
+  <template name="echo" value="echo($END$)"
+            description="echo call" toReformat="false" toShortenFQNames="false">
+    <context><option name="FANTOM" value="true"/></context>
+  </template>
+
+  <template name="doc" value="** $END$"
+            description="fandoc comment line" toReformat="false" toShortenFQNames="false">
+    <context><option name="FANTOM" value="true"/></context>
+  </template>
+
+  <template name="class" value="class $NAME$ {&#10;  $END$&#10;}"
+            description="class declaration" toReformat="false" toShortenFQNames="false">
+    <variable name="NAME" expression="fileNameWithoutExtension()" defaultValue="&quot;Name&quot;" alwaysStopAt="true"/>
+    <context><option name="FANTOM" value="true"/></context>
+  </template>
+
+  <template name="fn" value="$RET$ $NAME$($PARAMS$) {&#10;  $END$&#10;}"
+            description="method declaration" toReformat="false" toShortenFQNames="false">
+    <variable name="RET" expression="" defaultValue="&quot;Void&quot;" alwaysStopAt="true"/>
+    <variable name="NAME" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
+    <variable name="PARAMS" expression="" defaultValue="" alwaysStopAt="true"/>
+    <context><option name="FANTOM" value="true"/></context>
+  </template>
+</templateSet>
