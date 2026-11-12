@@ -18,3 +18,5 @@ and the local verifier report. Treat `./gradlew verifyPlugin` as the final word.
 
 Never run `publishPlugin` or `signPlugin`, and never push to `master`.
 A push to `master` publishes the plugin to the JetBrains Marketplace.
+
+Resume document for the language work: `docs/language-layers.md`.

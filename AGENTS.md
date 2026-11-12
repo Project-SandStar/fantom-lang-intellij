@@ -15,6 +15,9 @@ Docs live in `docs/`: [report.md](docs/report.md) (state of the plugin),
 (can the tree-sitter grammar replace or help the parser),
 [grammar-work.md](docs/grammar-work.md) (lexer and parser rewrite: corpus,
 baseline, root causes, plan; read it before touching `src/main/grammar`).
+For the language intelligence work (names, index, references, library, types,
+completion, tooling) read [docs/language-layers.md](docs/language-layers.md)
+first; it is the resume document.
 
 ## Use context-mode for reading and searching
 
