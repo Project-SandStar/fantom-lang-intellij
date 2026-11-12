@@ -27,6 +27,11 @@
         <lang.findUsagesProvider language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.usages.FantomFindUsagesProvider"/>
         <lang.documentationProvider language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.documentation.FantomDocumentationProvider"/>
         <codeInsight.parameterInfo language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.parameters.FantomParameterInfoHandler"/>
+        <!-- Alt+Insert: Override Methods (virtual and abstract slots), Implement Methods (abstract only) -->
+        <codeInsight.overrideMethod language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.generate.FantomOverrideMethodsHandler"/>
+        <codeInsight.implementMethod language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.generate.FantomImplementMethodsHandler"/>
+        <!-- Gutter: overriding arrow on `override` slots, overridden arrow on virtual/abstract slots with project overrides -->
+        <codeInsight.lineMarkerProvider language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.generate.FantomOverrideLineMarkerProvider"/>
         <!-- Inferred type after `x := ...` locals and untyped closure params, like Kotlin's type hints -->
         <codeInsight.declarativeInlayProvider language="fantom_lang"
                                               implementationClass="co.anbora.labs.fantom.ide.hints.FantomTypeHintsProvider"
