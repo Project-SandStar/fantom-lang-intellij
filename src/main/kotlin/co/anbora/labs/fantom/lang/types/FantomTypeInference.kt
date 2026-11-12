@@ -10,6 +10,7 @@ import co.anbora.labs.fantom.lang.core.psi.FantomTypes.FLOAT_LITERAL
 import co.anbora.labs.fantom.lang.core.psi.FantomTypes.INT_LITERAL
 import co.anbora.labs.fantom.lang.core.psi.FantomTypes.IS
 import co.anbora.labs.fantom.lang.core.psi.FantomTypes.ISNOT
+import co.anbora.labs.fantom.lang.core.psi.FantomTypes.IT
 import co.anbora.labs.fantom.lang.core.psi.FantomTypes.LBRACKET
 import co.anbora.labs.fantom.lang.core.psi.FantomTypes.NULL
 import co.anbora.labs.fantom.lang.core.psi.FantomTypes.QUEST
@@ -29,6 +30,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
+import com.intellij.psi.util.PsiTreeUtil
 
 /**
  * Static type of an expression or a declaration, as far as syntax and the
@@ -49,7 +51,7 @@ object FantomTypeInference {
             is FantomFieldDef -> fromPsiType(decl.type) ?: decl.expr?.let { typeOf(it) }
             is FantomLocalDef -> fromPsiType(decl.type) ?: decl.expr?.let { typeOf(it) }
             is FantomParam -> fromPsiType(decl.type) ?: decl.expr?.let { typeOf(it) }
-            is FantomClosureParam -> fromPsiType(decl.type)
+            is FantomClosureParam -> fromPsiType(decl.type) ?: FantomItScope.typeOfClosureParam(decl)
             is FantomCatchDef -> fromPsiType(decl.type)
             is FantomMethodDef -> fromPsiType(decl.type)
             is FantomCtorDef -> FantomScope.enclosingType(decl)?.name?.let { FanType.Named(it) }
@@ -74,9 +76,9 @@ object FantomTypeInference {
             else -> return null
         }
         var t = base ?: return null
-        for (c in chains) {
-            if (c == step) return t
-            t = applyChain(t, c) ?: return null
+        for (i in chains.indices) {
+            if (chains[i] == step) return t
+            t = applyChain(t, chains, i) ?: return null
         }
         return null
     }
@@ -241,7 +243,8 @@ object FantomTypeInference {
             NULL -> FanType.NULL
             THIS -> FantomScope.enclosingType(e)?.name?.let { FanType.Named(it) }
             SUPER -> FantomScope.enclosingType(e)?.let { FantomScope.superTypeNames(it).firstOrNull() }?.let { FanType.Named(it) }
-            else -> null // `it` is resolved by the it-block / closure rules (layer 5 agents)
+            IT -> FantomItScope.typeOfIt(e)
+            else -> null
         }
     }
 
@@ -252,12 +255,29 @@ object FantomTypeInference {
         e.dsl?.let { return fromPsiType(it.type) }
         e.simple?.let { return fromPsiType(it.type)?.withNullable(false) }
         e.ctorBlock?.let { return fromPsiType(it.type)?.withNullable(false) }
-        e.closure?.let { c ->
-            val sig = c.closureSig ?: return FanType.Func(emptyList(), null)
-            val params = sig.closureParams?.closureParamList?.map { fromPsiType(it.type) ?: FanType.OBJ } ?: emptyList()
-            return FanType.Func(params, fromPsiType(sig.type))
-        }
+        e.closure?.let { return typeOfClosure(it) }
         return null
+    }
+
+    /**
+     * A closure is a `Func` of its declared param types (an untyped param takes the type
+     * the called method's func param gives it, else `Obj`) and its declared return type.
+     * Without `->T` in the sig, the return type is that of a `return x` in the body, else
+     * of the last expression statement; an empty body returns `Void`.
+     */
+    fun typeOfClosure(c: FantomClosure): FanType.Func = cached(c) {
+        val sig = c.closureSig
+        val params = sig?.closureParams?.closureParamList?.map { typeOfDeclaration(it) ?: FanType.OBJ } ?: emptyList()
+        FanType.Func(params, sig?.type?.let { fromPsiType(it) } ?: closureBodyReturn(c))
+    } as? FanType.Func ?: FanType.Func(emptyList(), null)
+
+    private fun closureBodyReturn(c: FantomClosure): FanType? {
+        val block = c.statementBlock ?: return null
+        val ret = PsiTreeUtil.findChildrenOfType(block, FantomReturnStm::class.java)
+            .firstOrNull { PsiTreeUtil.getParentOfType(it, FantomClosure::class.java) == c }
+        if (ret != null) return ret.expr?.let { typeOf(it) } ?: FanType.VOID
+        val last = block.stmts?.stmtList?.lastOrNull() ?: return FanType.VOID
+        return last.exprStmt?.expr?.let { typeOf(it) }
     }
 
     /** Type of what an identifier use resolves to; several targets must agree or the type is unknown. */
@@ -270,12 +290,19 @@ object FantomTypeInference {
 
     private fun applyChains(start: FanType, chains: List<FantomTermChain>): FanType? {
         var t: FanType = start
-        for (c in chains) t = applyChain(t, c) ?: return null
+        for (i in chains.indices) t = applyChain(t, chains, i) ?: return null
         return t
     }
 
-    private fun applyChain(receiver: FanType, chain: FantomTermChain): FanType? {
-        chain.dotCall?.let { return slotType(it.slotExpr, receiver) }
+    /**
+     * Type after chain step [i]. `recv.m |x| { }` and `recv.m(a) |x| { }` parse as the
+     * step `.m` followed by a call step that holds the closure, so the slot step looks
+     * one step ahead for the closure whose return type binds `R`.
+     */
+    private fun applyChain(receiver: FanType, chains: List<FantomTermChain>, i: Int): FanType? {
+        val chain = chains[i]
+        val next = chains.getOrNull(i + 1)
+        chain.dotCall?.let { return slotType(it.slotExpr, receiver, closureOf(next)) }
         chain.indexExpr?.let { ix ->
             // `x[a..b]` is getRange and keeps the container type; `x[i]` is get.
             val byRange = ix.expr?.let { typeOf(it) } == FanType.RANGE
@@ -289,7 +316,7 @@ object FantomTypeInference {
         chain.callOp?.let { return if (receiver is FanType.Func) receiver.returns else receiver }
         chain.itBlock?.let { return receiver }
         when (val stm = chain.stmt) {
-            is FantomSafeDotCallStm -> return slotType(stm.slotExpr, receiver)?.withNullable(true)
+            is FantomSafeDotCallStm -> return slotType(stm.slotExpr, receiver, closureOf(next))?.withNullable(true)
             is FantomDynCallStm, is FantomSafeDynCallStm -> return null // dynamic call: unknown
         }
         return null
@@ -299,10 +326,50 @@ object FantomTypeInference {
      * Type of slot `recv.x`. A slot declared as `This` returns the receiver's own type
      * (fluent APIs such as `StrBuf.add`, `OutStream.print`), so chains keep their type.
      */
-    private fun slotType(slotExpr: FantomSlotExpr?, receiver: FanType?): FanType? {
-        val t = (slotExpr?.field?.id ?: slotExpr?.call?.id)?.let { typeOfReference(it) } ?: return null
-        return resolveThis(t, receiver)
+    private fun slotType(slotExpr: FantomSlotExpr?, receiver: FanType?, closure: FantomClosure? = null): FanType? {
+        val call = slotExpr?.call
+        val ref = (slotExpr?.field?.id ?: call?.id)?.reference as? FantomReference ?: return null
+        val closureArg = closure ?: call?.let { closureArgument(it) }
+        val types = ref.resolveAll().mapNotNull { target ->
+            val declared = typeOfDeclaration(target) ?: return@mapNotNull null
+            val owner = FantomDeclarationIndex.enclosingTypeName(target)
+            val generic = owner in FantomGenerics.GENERIC_OWNERS
+            val closureReturn = closureArg?.let { typeOfClosure(it).returns }
+            if (generic && closureReturn != null && receiver != null) {
+                mapFamilyType(target.name, owner, receiver, closureReturn)?.let { return@mapNotNull it }
+            }
+            val extra = if (closureReturn != null) mapOf("R" to closureReturn) else emptyMap()
+            FantomGenerics.substitute(declared, receiver, extra, generic)
+        }.distinct()
+        return types.singleOrNull()
     }
+
+    /**
+     * sys `List.map`, `mapNotNull`, `flatMap` and `Map.map`, `mapNotNull` are declared with
+     * `Obj?` results; the closure's return type gives the useful answer (`l.map |s| { s.size }`
+     * is `Int[]`).
+     */
+    private fun mapFamilyType(name: String?, owner: String?, receiver: FanType, ret: FanType): FanType? = when {
+        owner == "List" && name == "map" -> FanType.ListOf(ret)
+        owner == "List" && name == "mapNotNull" -> FanType.ListOf(ret.withNullable(false))
+        owner == "List" && name == "flatMap" -> ret as? FanType.ListOf
+        owner == "Map" && receiver is FanType.MapOf && name == "map" -> FanType.MapOf(receiver.key, ret)
+        owner == "Map" && receiver is FanType.MapOf && name == "mapNotNull" -> FanType.MapOf(receiver.key, ret.withNullable(false))
+        else -> null
+    }
+
+    /** The closure handed to [call]: trailing (`f |x| { }`, `f(a) |x| { }`) or as the last argument. */
+    private fun closureArgument(call: FantomCall): FantomClosure? =
+        call.closure ?: call.args?.exprList?.lastOrNull()?.let { closureExpr(it) }
+
+    /** The closure a call step holds: trailing, or as the last argument. */
+    private fun closureOf(step: FantomTermChain?): FantomClosure? {
+        val op = step?.callOp ?: return null
+        return op.closure ?: op.args?.exprList?.lastOrNull()?.let { closureExpr(it) }
+    }
+
+    private fun closureExpr(e: FantomExpr): FantomClosure? =
+        PsiTreeUtil.findChildOfType(e, FantomClosure::class.java)?.takeIf { it.textRange == e.textRange }
 
     /** `This` stands for the receiver type; nullability of the declared type is kept. */
     fun resolveThis(declared: FanType, receiver: FanType?): FanType =
