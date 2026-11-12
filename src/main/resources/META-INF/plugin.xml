@@ -29,6 +29,11 @@
         <lang.psiStructureViewFactory language="fantom_lang"
                                       implementationClass="co.anbora.labs.fantom.ide.structure.FantomStructureViewFactory"/>
         <lang.findUsagesProvider language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.usages.FantomFindUsagesProvider"/>
+        <!-- Ctrl+Alt+O: drop unused `using` lines and sort the rest -->
+        <lang.importOptimizer language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.imports.FantomImportOptimizer"/>
+        <localInspection language="fantom_lang" shortName="FantomUnusedUsing" displayName="Unused using"
+                         groupName="Fantom" enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="co.anbora.labs.fantom.ide.inspections.FantomUnusedUsingInspection"/>
         <lang.documentationProvider language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.documentation.FantomDocumentationProvider"/>
         <codeInsight.parameterInfo language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.parameters.FantomParameterInfoHandler"/>
         <!-- Alt+Insert: Override Methods (virtual and abstract slots), Implement Methods (abstract only) -->
