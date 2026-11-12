@@ -3,6 +3,7 @@ package co.anbora.labs.fantom.lang.resolve
 import co.anbora.labs.fantom.lang.core.psi.FantomNamedElement
 import co.anbora.labs.fantom.lang.index.FantomDeclarationIndex
 import co.anbora.labs.fantom.lang.index.FantomDeclarationKind
+import co.anbora.labs.fantom.lang.types.FantomTypeInference
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
@@ -69,6 +70,18 @@ class FantomReference(
             }
             Kind.SLOT -> {
                 if (thisReceiver) return slotsInEnclosingTypeChain(name, scope)
+                if (ownerName != null) {
+                    // `Type.x`: slots on that type and its supertypes.
+                    val narrowed = FantomTypeInference.typeDefinitions(ownerName, project)
+                        .flatMap { slotsInTypeChain(it, name, scope) }
+                    if (narrowed.isNotEmpty()) return narrowed
+                }
+                // `recv.x`: narrow by the inferred type of the receiver when it is known.
+                receiverTypeName()?.let { typeName ->
+                    val narrowed = FantomTypeInference.typeDefinitions(typeName, project)
+                        .flatMap { slotsInTypeChain(it, name, scope) }
+                    if (narrowed.isNotEmpty()) return narrowed
+                }
                 val all = FantomDeclarationIndex.findDeclarations(name, project, scope) { !it.isType }
                 if (ownerName != null) all.filter { FantomDeclarationIndex.enclosingTypeName(it) == ownerName }.ifEmpty { all }
                 else all
@@ -80,13 +93,24 @@ class FantomReference(
     private fun types(name: String, project: com.intellij.openapi.project.Project, scope: GlobalSearchScope) =
         FantomDeclarationIndex.findDeclarations(name, project, scope) { it.isType }
 
-    /**
-     * Slots named [name] on the enclosing type, then on each declared supertype, breadth
-     * first, and last on the implicit roots every Fantom type has: `Enum` for enums,
-     * `Facet` for facets, and `Obj` for everything (where `echo`, `toStr`, `equals` live).
-     */
+    // The short type name of the receiver of `recv.x`, from the chain operator that holds this id.
+    private fun receiverTypeName(): String? {
+        val slotExpr = element.parent?.parent as? co.anbora.labs.fantom.lang.core.psi.FantomSlotExpr ?: return null
+        val chainOp = slotExpr.parent ?: return null
+        return FantomTypeInference.receiverType(chainOp)?.slotOwnerName
+    }
+
     private fun slotsInEnclosingTypeChain(name: String, scope: GlobalSearchScope): List<FantomNamedElement> {
         val start = FantomScope.enclosingType(element) ?: return emptyList()
+        return slotsInTypeChain(start, name, scope)
+    }
+
+    /**
+     * Slots named [name] on [start], then on each declared supertype, breadth first,
+     * and last on the implicit roots every Fantom type has: `Enum` for enums, `Facet`
+     * for facets, and `Obj` for everything (where `echo`, `toStr`, `equals` live).
+     */
+    private fun slotsInTypeChain(start: FantomNamedElement, name: String, scope: GlobalSearchScope): List<FantomNamedElement> {
         val project = element.project
         val seen = HashSet<String>()
         val queue = ArrayDeque<FantomNamedElement>().apply { add(start) }
