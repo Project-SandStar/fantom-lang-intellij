@@ -117,6 +117,10 @@ layers; each needs the one before it.
 **Priority:** P2
 **Status:** In Progress (2026-11-12). Base committed: `lang/types/FanType` (Named, ListOf, MapOf, Func, nullability) and `FantomTypeInference` (declaration types from the written type or the initializer; expression types for literals, resolved names, calls, ctors, casts, `as`/`is`, comparisons, ternary/elvis, list and map literals, and chains through slots, index and call; cached per element). `FantomReference` now narrows `recv.x` to the receiver's type chain and `Type.x` to that type's chain. 8 tests. Agents in parallel: `layer5/closures` (`it` in it-blocks, untyped closure params from the callee's func-type param, generic variable substitution V/K/L/M/R/A..H from the receiver, closure return types), `layer5/scale` (what inference bought on `util`, which receivers still fall back, top null-type shapes), `layer5/hints` (inlay type hints for `:=` locals and closure params, inferred type in Quick Doc).
 
+### Task 3.2e: Layer 6, completion
+**Priority:** P1
+**Status:** In Progress (2026-11-12). Base committed: `lang/resolve/FantomSlotLookup` (type chain and all slots, nearest first) and `ide/completion/FantomCompletionContributor`. After `.`, `?.`, `->`: slots of the receiver's inferred type; `this.`/`super.`: enclosing chain; `Type.`: that type; bare name: locals, params, enclosing slots, types, keywords; type position: types. Methods with params insert `()`. Unknown receiver offers nothing. 9 tests, one against the real `sys` library. Agents in parallel: `layer6/ranking` (order: locals, own slots, inherited, Obj, types, keywords; hide private and ctors after `recv.`; keyword positions), `layer6/scale` (hit rate and rank over 150 real `recv.slot` sites in `util`), `layer6/templates` (live templates `main if for each try sw echo doc class fn`, postfix `.if .not .each .echo .var .return .null .nn`).
+
 ### Task 3.3: Tree-sitter side parser spike
 **Priority:** P3
 **Status:** Not Started
