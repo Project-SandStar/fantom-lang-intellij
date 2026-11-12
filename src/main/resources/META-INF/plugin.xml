@@ -26,6 +26,8 @@
         <enterHandlerDelegate implementation="co.anbora.labs.fantom.ide.typing.FantomEnterHandler" order="first"/>
         <backspaceHandlerDelegate implementation="co.anbora.labs.fantom.ide.typing.FantomBackspaceHandler"/>
         <lang.foldingBuilder language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.folding.FantomFoldingBuilder"/>
+        <lang.formatter language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.formatter.FantomFormattingModelBuilder"/>
+        <langCodeStyleSettingsProvider implementation="co.anbora.labs.fantom.ide.formatter.FantomLanguageCodeStyleSettingsProvider"/>
         <lang.psiStructureViewFactory language="fantom_lang"
                                       implementationClass="co.anbora.labs.fantom.ide.structure.FantomStructureViewFactory"/>
         <lang.findUsagesProvider language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.usages.FantomFindUsagesProvider"/>
