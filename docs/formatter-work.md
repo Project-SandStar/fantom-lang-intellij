@@ -6,11 +6,9 @@ Resume note for the Fantom formatting model task. Facts only.
 
 Reformat Code and auto-indent for `.fan` files. Fantom house style
 (sys/util pods): two-space indent, Allman braces for types, slots and
-control statements, `{` on the same line for closures and it-blocks, one
-space around binary operators and `:=`/`=`, no space before `(` in calls,
-`, ` in args, `case x:` at body indent, blank lines kept up to 1 between
-slots (2 at file level), comments keep their column. Keep runs of more than
-one space inside a line (column-aligned initializers in sys).
+control statements, `{` on the same line for closures and it-blocks,
+`case x:` one step in from `switch`, body one more step, blank lines kept
+up to 3, comments keep their column, banners at column 0 stay there.
 
 Gate: reformatting every `sys/fan/*.fan` and `util/fan/*.fan` must change
 nothing (0 differing files), or a short list of justified exceptions.
@@ -18,18 +16,25 @@ nothing (0 differing files), or a short list of justified exceptions.
 ## State
 
 - Branch `layer7/formatter` from `grammar/fantom-corpus`.
-- Generated sources present (`./gradlew --no-daemon generateLexer generateParser` done).
-- Nothing implemented yet. Only this note is committed.
+- Done. All three classes exist and are registered. Tests green.
+- Enter handler and formatter agree (`testEnterHandlerAgreesWithFormatter`).
 
-## Plan (files)
+## What the formatter does
+
+Indent only. It sets the indent of a line that starts a statement, slot,
+type, brace, `else`/`catch`/`finally`, `case`/`default` or a comment. It
+never adds or removes a line break and never changes spacing inside a line
+(`i:=0`, `s[0..<n]`, hand-aligned declarations stay as they are). Every
+other line start, for example a continued expression or a ternary `:`,
+keeps its indent (`Spacing.getReadOnlySpacing`).
+
+## Files
 
 - `src/main/kotlin/co/anbora/labs/fantom/ide/formatter/FantomFormattingModelBuilder.kt`
-  (`FormattingModelBuilder`, `SpacingBuilder`).
-- `.../ide/formatter/FantomBlock.kt` (`AbstractBlock`, indent and wrap rules).
+- `.../ide/formatter/FantomBlock.kt` (one block class, indent rules in `childIndent`).
 - `.../ide/formatter/FantomLanguageCodeStyleSettingsProvider.kt`
-  (indent 2, continuation 2, code sample, minimal options).
-- `plugin.xml`: `<lang.formatter language="fantom_lang" .../>` and
-  `<langCodeStyleSettingsProvider .../>` right after `lang.foldingBuilder`.
+  (indent 2, continuation 2, tab 2, blank lines 3, indent and blank-line tabs only).
+- `plugin.xml`: `lang.formatter` and `langCodeStyleSettingsProvider`.
 - Tests: `src/test/kotlin/co/anbora/labs/fantom/FantomFormatterTest.kt`,
   `FantomFormatterCorpusTest.kt`.
 
@@ -38,15 +43,14 @@ nothing (0 differing files), or a short list of justified exceptions.
 - Lines that start with `?` / `:` (ternary continuation): util/PathEnv.fan:77-78.
 - Operators at line end: util/FileLogger.fan:130-131 (`+`), JsonInStream.fan:172 (`?`).
 - Compact operators exist: `str.size-off`, `i<toks.size`, `i:=0`, `s[0..<open]`,
-  `(Opt)field.facet(...)`. So the formatter must NOT add spaces inside
-  expressions that already have none; it must only keep existing spacing or
-  normalise a single space to one. Safest rule: within a line, keep what is
-  there; only indent at line starts is normalised.
+  `(Opt)field.facet(...)`. So the formatter must NOT touch spacing inside a line.
 - `while(` and `while( cur ... )` in util/CsvInStream.fan:106, JsonInStream.fan:181.
-- Trailing whitespace on ~10 lines (Env.fan:411, Locale.fan:24, AbstractMain.fan).
+- Trailing whitespace: one line, sys/Locale.fan:24.
 - `[,]`, `[:]` empty list/map literals must stay compact.
 - Facet it-blocks `@Serializable { simple = true }` on one line.
 - Empty bodies `{}` on one line: `class BootEnv : Env {}`, `new make(...) : super(...) {}`.
+- `else if` chains: the nested `if` sits at the column of the first `if`.
+- Max blank-line run in the pods: 4 (one place); runs of 3: one place.
 
 ## How to run
 
@@ -61,16 +65,31 @@ the first 5 differing files with a 3-line diff, and the count.
 
 ## Corpus count
 
-Not measured yet (no formatter).
+96 files, 0 differing. Two kinds of change are counted apart and allowed:
+
+- Trailing-space only: 1 file (sys/Locale.fan:24). The formatter trims the
+  end of a line it re-indents.
+- Known pod oddities, listed in `KNOWN_CORPUS_ODDITIES` in the test:
+  - util/TestRunner.fan:122-124: three statements at 5 spaces after a
+    triple-quoted string. The pod itself breaks the two-space rule.
+  - util/JsonOutStream.fan:69: the first `if` of a chain is pushed right by
+    hand to line up with the `else if` lines below it.
 
 ## Platform API gotchas
 
-None hit yet.
+- `TabbedLanguageCodeStylePanel` has a protected constructor. Subclass it
+  and override `initTabs` to pick the tabs.
+- A typing test that reformats after `myFixture.type` must call
+  `PsiDocumentManager.commitAllDocuments()` first, or reformat throws
+  "Attempt to modify PSI for non-committed Document".
+- Only nodes that start a line get a real indent. `STMT` is the node for
+  every statement, so `IF_STM`, `TRY_STM`, `EXPR_STMT`, `LOCAL_DEF` and the
+  others must be in the same indent set as `STMT` or nested control blocks
+  fall back to read-only spacing and keep their wrong indent.
+- The `BLOCK` child of `if`/`while`/`for`/`catch`: no indent when it starts
+  with `{` or is an `else if`; otherwise one step.
 
 ## Next steps
 
-1. Write the three main classes and register them.
-2. Write the corpus test with a printed count; run it; fix rules; tighten to 0.
-3. Write the unit test; check Enter after `{` still gives +2 with the enter
-   handler (adjust `FantomEnterHandler` only if they disagree).
-4. Update this note; commit.
+None open. Possible later work: optional spacing rules behind code style
+flags, and alignment of `else if` chains.
