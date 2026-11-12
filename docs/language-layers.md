@@ -7,10 +7,10 @@ history and corpus gate: [grammar-work.md](grammar-work.md).
 
 ## 1. One-line state
 
-Layers 1 to 6 done, layer 7 wave 1 done, wave 2 two of three merged (run configs,
-usings). Open: the formatter (`layer7/formatter`, note in `docs/formatter-work.md`
-when its agent writes it). 256+ tests pass. Corpus: 6,035 `.fan` files across seven
-Fantom versions parse with 0 errors.
+Layers 1 to 7 done. 48 test classes, 315 tests pass. Corpus: 6,035 `.fan` files
+across seven Fantom versions parse with 0 errors; reformatting the 96 files of
+`sys` and `util` changes nothing. Branch `grammar/fantom-corpus`, not pushed.
+Next step is a release PR to `master` or a live soak in the main IDE.
 
 ## 2. How to run everything
 
@@ -50,7 +50,7 @@ Rules that bit us:
 | 4 library | `lang/library` | `FantomHome` (detect install), `FantomSettings` (project service, `.idea/fantom.xml`), `FantomLibraryRootsProvider` (every `src/<pod>/fan` as one synthetic library), `FantomPodResolver` (pod name of a file) | `FantomLibraryTest`, `FantomConfigurableTest` |
 | 5 types | `lang/types` | `FanType` (Named, ListOf, MapOf, Func), `FantomTypeInference` (cached per element), `FantomGenerics` (V L K M R A..H This), `FantomItScope` (`it` and untyped closure params) | `FantomTypeInferenceTest`, `FantomClosureTypeTest`, `FantomTypeHintsTest` |
 | 6 completion | `ide/completion`, `lang/resolve/FantomSlotLookup` | `FantomCompletionContributor` (receiver slots, scope, types, keywords; priority ladder), `FantomKeywords` | `FantomCompletionTest`, `FantomCompletionRankingTest`, `FantomCompletionAutoImportTest` |
-| 7 tooling | `ide/inspections`, `ide/typing`, `ide/generate`, `ide/run`, `ide/imports`, `ide/templates` | unresolved/unused/nullable/unused-using inspections, typing handlers, override/implement, run configs for `fan`/`fant`, import optimizer, live and postfix templates | `*Inspection*Test`, `FantomTypingTest`, `FantomOverrideTest`, `FantomRunConfigurationTest`, `FantomImportOptimizerTest`, `FantomUsingScopeTest`, `FantomLiveTemplateTest`, `FantomPostfixTemplateTest` |
+| 7 tooling | `ide/inspections`, `ide/typing`, `ide/generate`, `ide/run`, `ide/imports`, `ide/templates`, `ide/formatter`, `ide/color` | unresolved/unused/nullable/unused-using inspections, typing handlers, override/implement, run configs for `fan`/`fant`, import optimizer, live and postfix templates, indent-only formatter, per-scheme colour defaults | `*Inspection*Test`, `FantomTypingTest`, `FantomOverrideTest`, `FantomRunConfigurationTest`, `FantomImportOptimizerTest`, `FantomUsingScopeTest`, `FantomLiveTemplateTest`, `FantomPostfixTemplateTest`, `FantomFormatterTest`, `FantomFormatterCorpusTest`, `FantomColorsTest`, `FantomSchemeDefaultsTest` |
 
 Shared presentation (icons, signatures) lives in `ide/presentation/FantomPresentation`.
 
@@ -77,6 +77,7 @@ inspections must skip them.
 | `FantomTypedResolveCorpusTest` | slot refs narrowed to one target in `util` | 501 of 647 by receiver type, 134 by owner, 3 plain fallbacks |
 | `FantomCompletionCorpusTest` | right slot offered at 150 real sites | 90.7 percent, 87.3 percent in top 10 |
 | `FantomUnresolvedInspectionCorpusTest` | false warnings over `util` | 4 (it-block field `ordered = true`) |
+| `FantomFormatterCorpusTest` | files changed by reformatting `sys` and `util` | 0 of 96 |
 
 ## 6. Known gaps, in priority order
 
@@ -108,10 +109,12 @@ agents to commit a short resume note early.
 
 ## 8. Next steps
 
-- Merge `layer7/formatter` when its corpus gate (reformatting `sys` and `util`
-  changes nothing) holds, then run the full check and update this file.
-- Fix gap 1 above; it also removes the last inspection false positives in `util`.
-- Try the plugin live with `runIde`, open a real pod, exercise completion, rename,
-  run arrow, Alt+Insert.
-- Release: bump change notes, open a PR from `grammar/fantom-corpus` to `master`.
-  The push to `master` publishes to the Marketplace.
+- Release: bump change notes for 1.8.1, open a PR from `grammar/fantom-corpus`
+  to `master`. The push to `master` publishes to the Marketplace.
+- Live soak: install the 1.8.1 zip in the main IDE, open a real pod, and use it
+  for a day. The `idea` MCP server can then drive every check that the sandbox
+  needed AppleScript for.
+- Fix gap 1 in section 6 (it-block field assignment); it also removes the last
+  false warnings in `util`.
+- Colour defaults live in `resources/colorSchemes/Fantom*.xml`; temp attribute
+  keys do not reach the editor, so new keys that need a colour go there.
