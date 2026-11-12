@@ -1,5 +1,6 @@
 package co.anbora.labs.fantom.ide.completion
 
+import co.anbora.labs.fantom.ide.imports.FantomUsingInserter
 import co.anbora.labs.fantom.ide.presentation.FantomPresentation
 import co.anbora.labs.fantom.lang.FantomLanguage
 import co.anbora.labs.fantom.lang.core.psi.FantomCall
@@ -34,6 +35,7 @@ import co.anbora.labs.fantom.lang.index.FantomDeclarationIndex
 import co.anbora.labs.fantom.lang.index.FantomDeclarationKind
 import co.anbora.labs.fantom.lang.resolve.FantomScope
 import co.anbora.labs.fantom.lang.resolve.FantomSlotLookup
+import co.anbora.labs.fantom.lang.resolve.FantomUsingScope
 import co.anbora.labs.fantom.lang.types.FantomTypeInference
 import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionParameters
@@ -54,6 +56,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ProcessingContext
+import com.intellij.util.indexing.FileBasedIndex
 
 /**
  * Basic completion for Fantom.
@@ -108,7 +111,7 @@ class FantomCompletionContributor : CompletionContributor() {
                 is FantomSimpleType -> when {
                     isStatementStartParsedAsType(owner) -> addBare(id, project, scope, ::add)
                     else -> {
-                        addTypes(project, scope, ::add)
+                        addTypes(id.containingFile, project, scope, ::add)
                         if (isSlotStartParsedAsType(owner)) addKeywords(FantomKeywords.TYPE_BODY, ::add)
                     }
                 }
@@ -202,7 +205,7 @@ class FantomCompletionContributor : CompletionContributor() {
             when {
                 p == null || p is PsiFile -> addKeywords(FantomKeywords.FILE, add)
                 p is FantomSlotDefs || p is FantomHighOrderBlock -> {
-                    addTypes(project, scope, add)
+                    addTypes(position.containingFile, project, scope, add)
                     addKeywords(FantomKeywords.TYPE_BODY, add)
                 }
                 PsiTreeUtil.getParentOfType(position, FantomStatementBlock::class.java) != null -> addBare(position, project, scope, add)
@@ -213,7 +216,7 @@ class FantomCompletionContributor : CompletionContributor() {
             val locals = FantomScope.localsVisibleAt(at).sortedByDescending { it.textRange.startOffset }
             locals.forEachIndexed { i, local -> add(withPriority(localElement(local), LOCAL - i * STEP)) }
             FantomScope.enclosingType(at)?.let { type -> addReceiverSlots(type, Receiver.BARE, at, project, scope, add) }
-            addTypes(project, scope, add)
+            addTypes(at.containingFile, project, scope, add)
             if (isStatementStart(at)) addKeywords(FantomKeywords.STATEMENT, add)
             addKeywords(FantomKeywords.VALUES, add)
         }
@@ -268,18 +271,43 @@ class FantomCompletionContributor : CompletionContributor() {
             return out
         }
 
-        private fun addTypes(project: Project, scope: GlobalSearchScope, add: (LookupElement) -> Unit) {
+        /**
+         * Type names from the index. A type no `using` line of [file] makes visible shows
+         * its pod as grey tail text, `Actor (concurrent)`, and inserting it adds
+         * `using <pod>::<Name>`. A visible type gets neither.
+         */
+        private fun addTypes(file: PsiFile, project: Project, scope: GlobalSearchScope, add: (LookupElement) -> Unit) {
+            val usings = FantomUsingScope.usingsOf(file.originalFile)
+            val index = FileBasedIndex.getInstance()
             for (name in FantomDeclarationIndex.allNames(project, scope)) {
                 if (name.isEmpty() || !name[0].isUpperCase()) continue
-                val kinds = FantomDeclarationIndex.entries(name, project, scope)
-                val kind = kinds.firstOrNull { it.kind.isType }?.kind ?: continue
-                val icon = when (kind) {
+                var kind: FantomDeclarationKind? = null
+                var visible = false
+                val pods = java.util.TreeSet<String>()
+                index.processValues(FantomDeclarationIndex.NAME, name, null, { vf, entries ->
+                    val typeKind = entries.firstOrNull { it.kind.isType }?.kind
+                    if (typeKind != null) {
+                        if (kind == null) kind = typeKind
+                        if (!visible) {
+                            val pod = FantomUsingScope.podOf(vf, project)
+                            if (usings.isVisible(name, pod)) visible = true else pods += pod!!
+                        }
+                    }
+                    true
+                }, scope)
+                val icon = when (kind ?: continue) {
                     FantomDeclarationKind.MIXIN -> AllIcons.Nodes.Interface
                     FantomDeclarationKind.ENUM -> AllIcons.Nodes.Enum
                     FantomDeclarationKind.FACET -> AllIcons.Nodes.Annotationtype
                     else -> AllIcons.Nodes.Class
                 }
-                add(withPriority(LookupElementBuilder.create(name).withIcon(icon), TYPE))
+                var element = LookupElementBuilder.create(name).withIcon(icon)
+                if (!visible && pods.isNotEmpty()) {
+                    val pod = pods.first()
+                    element = element.withTailText(" ($pod)", true)
+                        .withInsertHandler(FantomUsingInserter.AddUsingInsertHandler(pod, name))
+                }
+                add(withPriority(element, TYPE))
             }
         }
 

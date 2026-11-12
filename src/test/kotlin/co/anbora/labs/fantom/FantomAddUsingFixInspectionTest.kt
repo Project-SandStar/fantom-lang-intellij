@@ -1,5 +1,6 @@
 package co.anbora.labs.fantom
 
+import co.anbora.labs.fantom.ide.imports.FantomUsingCandidates
 import co.anbora.labs.fantom.ide.inspections.FantomUnresolvedReferenceInspection
 import co.anbora.labs.fantom.lang.library.FantomSettings
 import java.io.File
@@ -21,7 +22,7 @@ class FantomAddUsingFixInspectionTest : FantomInspectionTestBase() {
         File(fakeHome, "bin/fan").writeText("#!/bin/sh\n")
         File(fakeHome, "src/zzpod/fan").mkdirs()
         File(fakeHome, "src/zzpod/fan/Zzqx.fan").writeText("class Zzqx {}\n")
-        FantomUnresolvedReferenceInspection.UsingCandidates.reset()
+        FantomUsingCandidates.reset()
         FantomSettings.getInstance(project).homePath = fakeHome.path
         myFixture.enableInspections(FantomUnresolvedReferenceInspection())
     }
@@ -29,7 +30,7 @@ class FantomAddUsingFixInspectionTest : FantomInspectionTestBase() {
     override fun tearDown() {
         try {
             FantomSettings.getInstance(project).homePath = null
-            FantomUnresolvedReferenceInspection.UsingCandidates.reset()
+            FantomUsingCandidates.reset()
             fakeHome.deleteRecursively()
         } finally {
             super.tearDown()

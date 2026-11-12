@@ -86,7 +86,9 @@ class FantomReference(
                 if (ownerName != null) all.filter { FantomDeclarationIndex.enclosingTypeName(it) == ownerName }.ifEmpty { all }
                 else all
             }
-            Kind.TYPE -> types(name, project, scope)
+            // Of several types with this short name, prefer those the file's `using`
+            // lines make visible; when none is, keep them all.
+            Kind.TYPE -> FantomUsingScope.preferVisible(types(name, project, scope), element.containingFile)
         }
     }
 
