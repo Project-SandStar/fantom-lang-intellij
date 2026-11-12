@@ -75,6 +75,11 @@
         <localInspection language="fantom_lang" shortName="FantomNullableReceiver" displayName="Nullable receiver"
                          groupName="Fantom" enabledByDefault="true" level="WARNING"
                          implementationClass="co.anbora.labs.fantom.ide.inspections.FantomNullableReceiverInspection"/>
+        <!-- Run: `fan pod::Type.main` / `fan script.fan` and `fant pod[::Class[.method]]`, with gutter arrows -->
+        <configurationType implementation="co.anbora.labs.fantom.ide.run.FantomRunConfigurationType"/>
+        <runConfigurationProducer implementation="co.anbora.labs.fantom.ide.run.FantomRunConfigurationProducer"/>
+        <runConfigurationProducer implementation="co.anbora.labs.fantom.ide.run.FantomTestRunConfigurationProducer"/>
+        <runLineMarkerContributor language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.run.FantomRunLineMarkerContributor"/>
     </extensions>
 
     <actions>
