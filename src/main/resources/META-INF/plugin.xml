@@ -56,6 +56,16 @@
 
         <annotator language="fantom_lang"
                    implementationClass="co.anbora.labs.fantom.ide.annotator.HighlightingAnnotator"/>
+        <!-- Inspections -->
+        <localInspection language="fantom_lang" shortName="FantomUnresolvedReference" displayName="Unresolved reference"
+                         groupName="Fantom" enabledByDefault="true" level="WARNING"
+                         implementationClass="co.anbora.labs.fantom.ide.inspections.FantomUnresolvedReferenceInspection"/>
+        <localInspection language="fantom_lang" shortName="FantomUnusedDeclaration" displayName="Unused declaration"
+                         groupName="Fantom" enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="co.anbora.labs.fantom.ide.inspections.FantomUnusedDeclarationInspection"/>
+        <localInspection language="fantom_lang" shortName="FantomNullableReceiver" displayName="Nullable receiver"
+                         groupName="Fantom" enabledByDefault="true" level="WARNING"
+                         implementationClass="co.anbora.labs.fantom.ide.inspections.FantomNullableReceiverInspection"/>
     </extensions>
 
     <actions>

@@ -1,0 +1,8 @@
+<html>
+<body>
+Reports <code>x.slot</code> where <code>x</code> is a local, parameter or field whose declared type is nullable, such as <code>Str?</code>.
+<p>The quick fix replaces <code>.</code> with the safe call <code>?.</code>.</p>
+<p>Slots that accept a null receiver (<code>equals</code>, <code>toStr</code>, <code>isImmutable</code>, <code>typeof</code>, <code>hash</code>, <code>compare</code>) are not reported. Only the declared type counts; there is no null-check flow analysis.</p>
+<!-- tooltip end -->
+</body>
+</html>
