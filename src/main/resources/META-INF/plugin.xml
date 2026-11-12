@@ -14,6 +14,11 @@
         <!-- 2026.3+: declarative registration; com.intellij.colorSettingsPage is deprecated since 263 -->
         <colorSettings implementation="co.anbora.labs.fantom.ide.color.FantomColorSettingPage"
                        displayName="Fantom"/>
+        <!-- Default colours for keys the platform leaves plain (operators, braces, locals, params, calls) -->
+        <additionalTextAttributes scheme="Default" file="colorSchemes/FantomDefault.xml"/>
+        <additionalTextAttributes scheme="Light" file="colorSchemes/FantomLight.xml"/>
+        <additionalTextAttributes scheme="Darcula" file="colorSchemes/FantomDarcula.xml"/>
+        <additionalTextAttributes scheme="Dark" file="colorSchemes/FantomDark.xml"/>
 
         <lang.parserDefinition language="fantom_lang"
                                implementationClass="co.anbora.labs.fantom.lang.FantomParserDefinition"/>

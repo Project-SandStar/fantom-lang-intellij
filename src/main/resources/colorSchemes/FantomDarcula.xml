@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Fantom defaults for keys whose platform value is plain text. Users override them in Settings | Color Scheme | Fantom. -->
+<list>
+  <option name="co.anbora.labs.fantom.OPERATOR">
+    <value>
+      <option name="FOREGROUND" value="cc7832"/>
+      <option name="FONT_TYPE" value="1"/>
+    </value>
+  </option>
+  <option name="co.anbora.labs.fantom.DOT">
+    <value>
+      <option name="FOREGROUND" value="cc7832"/>
+      <option name="FONT_TYPE" value="1"/>
+    </value>
+  </option>
+  <option name="co.anbora.labs.fantom.COMMA">
+    <value>
+      <option name="FOREGROUND" value="cc7832"/>
+    </value>
+  </option>
+  <option name="co.anbora.labs.fantom.SEMICOLON">
+    <value>
+      <option name="FOREGROUND" value="cc7832"/>
+    </value>
+  </option>
+  <option name="co.anbora.labs.fantom.BRACES">
+    <value>
+      <option name="FOREGROUND" value="e8bf6a"/>
+      <option name="FONT_TYPE" value="1"/>
+    </value>
+  </option>
+  <option name="co.anbora.labs.fantom.PARENTHESES">
+    <value>
+      <option name="FOREGROUND" value="e8bf6a"/>
+    </value>
+  </option>
+  <option name="co.anbora.labs.fantom.BRACKETS">
+    <value>
+      <option name="FOREGROUND" value="e8bf6a"/>
+    </value>
+  </option>
+  <option name="co.anbora.labs.fantom.LOCAL_VARIABLE">
+    <value>
+      <option name="FOREGROUND" value="9cdcfe"/>
+    </value>
+  </option>
+  <option name="co.anbora.labs.fantom.PARAMETER">
+    <value>
+      <option name="FOREGROUND" value="9cdcfe"/>
+      <option name="FONT_TYPE" value="2"/>
+    </value>
+  </option>
+  <option name="co.anbora.labs.fantom.FUNCTION_CALL">
+    <value>
+      <option name="FOREGROUND" value="dcdcaa"/>
+    </value>
+  </option>
+</list>
