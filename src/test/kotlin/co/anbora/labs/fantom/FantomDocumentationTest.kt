@@ -113,6 +113,27 @@ class FantomDocumentationTest : BasePlatformTestCase() {
         assertEquals("const count: Int", FantomDocumentationProvider().getQuickNavigateInfo(target, null))
     }
 
+    @Suppress("DEPRECATION")
+    fun testLocalDocShowsInferredType() {
+        myFixture.configureByText("A.fan", """
+            class A {
+              Int count := 0
+              Void h() { y := count; echo(<caret>y) }
+            }
+        """.trimIndent())
+        val doc = docAtCaret()
+        assertTrue(doc, doc.contains("local y: Int"))
+        val target = targetAtCaret() as FantomNamedElement
+        assertEquals("local y: Int", FantomDocumentationProvider().getQuickNavigateInfo(target, null))
+    }
+
+    @Suppress("DEPRECATION")
+    fun testTypedLocalDocKeepsWrittenType() {
+        myFixture.configureByText("A.fan", "class A { Void h() { Str? s := null; echo(<caret>s) } }")
+        val target = targetAtCaret() as FantomNamedElement
+        assertEquals("Str? s", FantomDocumentationProvider().getQuickNavigateInfo(target, null))
+    }
+
     fun testClassDocFromFileLevelComments() {
         myFixture.addFileToProject("B.fan", "** B does things.\n**\n** Second paragraph.\nabstract class B {}\n")
         myFixture.configureByText("A.fan", "class A { <caret>B b }")
