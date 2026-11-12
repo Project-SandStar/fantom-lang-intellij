@@ -16,6 +16,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import co.anbora.labs.fantom.lang.library.FantomHome
 import java.io.File
 
 /**
@@ -32,7 +33,7 @@ import java.io.File
  */
 class FantomResolveCorpusTest : BasePlatformTestCase() {
 
-    private val sysDir = File(System.getProperty("fantom.sys.dir", "/Users/alper/fantom/fantom-1.0.84/src/sys/fan"))
+    private val sysDir = File(System.getProperty("fantom.sys.dir") ?: (FantomHome.detect()?.path + "/src/sys/fan"))
     private val tag = "FantomResolveCorpusTest:"
 
     private class Tally {

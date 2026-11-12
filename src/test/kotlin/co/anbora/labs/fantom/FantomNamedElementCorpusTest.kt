@@ -4,6 +4,7 @@ import co.anbora.labs.fantom.lang.core.psi.FantomNamedElement
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import co.anbora.labs.fantom.lang.library.FantomHome
 import java.io.File
 
 /**
@@ -13,7 +14,7 @@ import java.io.File
  */
 class FantomNamedElementCorpusTest : BasePlatformTestCase() {
 
-    private val sysDir = File(System.getProperty("fantom.sys.dir", "/Users/alper/fantom/fantom-1.0.84/src/sys/fan"))
+    private val sysDir = File(System.getProperty("fantom.sys.dir") ?: (FantomHome.detect()?.path + "/src/sys/fan"))
     private val identifier = Regex("[A-Za-z_][A-Za-z0-9_]*")
 
     private data class Bad(val file: String, val cls: String, val offset: Int, val name: String?, val text: String, val fileHasErrors: Boolean)

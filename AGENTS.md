@@ -117,7 +117,7 @@ instead of `src/main/gen/`.
 - `src/main/resources/META-INF/plugin.xml` — extension points.
   `src/main/html/` — Marketplace description and change notes.
   `src/main/resources/demo/JsonConverter.fan` — colour page sample.
-- `.github/workflows/gradle.yml` — push to `master` runs `publishPlugin`.
+- `.github/workflows/gradle.yml` — push to `master` builds and verifies; a `v*` tag runs `publishPlugin`.
 - `docs/` — report, tasks, tree-sitter study.
 
 ## Build and check
@@ -150,7 +150,7 @@ APIs this plugin uses with those pages and the verifier report.
   Never commit `src/main/gen/` or `build/`.
 - Commit messages end with the `Co-Authored-By` line given in your task.
 - Never push to `master`. The workflow on `master` signs and publishes the
-  plugin. Never run `publishPlugin` or `signPlugin` locally.
+  plugin. Never run `publishPlugin` or `signPlugin` locally; publishing is CI on a `v*` tag.
 - Never print secrets: `PUBLISH_TOKEN`, `CERTIFICATE_CHAIN`, `PRIVATE_KEY`,
   `PRIVATE_KEY_PASSWORD`.
 - When you bump the SDK, update `gradle.properties`, `change-notes.html`

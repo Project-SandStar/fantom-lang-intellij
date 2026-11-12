@@ -1,6 +1,6 @@
 # Can tree-sitter-fantom help this plugin?
 
-Date: 2026-11-11. Grammar studied: `/Users/alper/Code/mcpfantom/tree-sitter-fantom` (version 0.1.0, ABI 14, 787-line `grammar.js`, 187 node types, 44 corpus tests, a `.wasm` build, C source in `src/parser.c`).
+Date: 2026-11-11. Grammar studied: `the `tree-sitter-fantom` grammar from the mcpfantom project` (version 0.1.0, ABI 14, 787-line `grammar.js`, 187 node types, 44 corpus tests, a `.wasm` build, C source in `src/parser.c`).
 
 Short answer: **not as the parser. Maybe later as a helper.** Reasons below.
 
@@ -60,14 +60,14 @@ The local `tree-sitter` CLI cannot compile the grammar right now because the Xco
 ## 6. How to repeat the measurement
 
 ```sh
-cd /Users/alper/Code/mcpfantom
+cd mcpfantom
 node - <<'EOF'
 const TS = require('web-tree-sitter'); const fs = require('fs');
 (async () => {
   await TS.Parser.init();
   const lang = await TS.Language.load('tree-sitter-fantom/tree-sitter-fantom.wasm');
   const p = new TS.Parser(); p.setLanguage(lang);
-  const t = p.parse(fs.readFileSync(process.argv[2] ?? '/Users/alper/Code/fantom-lang-intellij/src/main/resources/demo/JsonConverter.fan', 'utf8'));
+  const t = p.parse(fs.readFileSync(process.argv[2] ?? 'src/main/resources/demo/JsonConverter.fan', 'utf8'));
   let e = 0; const w = n => { if (n.type === 'ERROR') e++; n.children.forEach(w); }; w(t.rootNode);
   console.log('ERROR nodes:', e, 'hasError:', t.rootNode.hasError);
 })();

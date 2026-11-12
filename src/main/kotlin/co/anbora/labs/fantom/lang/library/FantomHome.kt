@@ -24,7 +24,8 @@ object FantomHome {
     const val ENV = "FAN_HOME"
 
     /** Default parent folder searched for `fantom-1.0.N` installs. Checked last. */
-    const val DEFAULT_PARENT = "/Users/alper/fantom"
+    /** Folder scanned for `fantom-<version>` installs when neither the property nor FAN_HOME is set. */
+    val DEFAULT_PARENT: String = System.getProperty("user.home") + "/fantom"
 
     private val versionedName = Regex("fantom-(\\d+(?:\\.\\d+)*)")
 

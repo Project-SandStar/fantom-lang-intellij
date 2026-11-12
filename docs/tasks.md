@@ -66,7 +66,7 @@ Once 0.1 is answered: install the Marketplace build on the named IDE, open the n
 **Priority:** P1
 **Status:** Done (2026-11-11, branch `grammar/fantom-corpus`)
 
-Corpus is the seven Fantom distributions in `/Users/alper/fantom` (1.0.78 to 1.0.84, 869 files in 1.0.84). Test harness: `FantomCorpusParsingTest` and `FantomSnippetDumpTest` in `src/test/kotlin`, 42 snippets in `src/test/testData/snippets`. Baseline for 1.0.84: 4,590 errors in 560 of 869 files. How to run, the baseline, the root causes and the rewrite plan are in [grammar-work.md](grammar-work.md).
+Corpus is the seven Fantom distributions in `~/fantom` (1.0.78 to 1.0.84, 869 files in 1.0.84). Test harness: `FantomCorpusParsingTest` and `FantomSnippetDumpTest` in `src/test/kotlin`, 42 snippets in `src/test/testData/snippets`. Baseline for 1.0.84: 4,590 errors in 560 of 869 files. How to run, the baseline, the root causes and the rewrite plan are in [grammar-work.md](grammar-work.md).
 
 ### Task 2.2: Fix the top grammar gaps
 **Priority:** P1
@@ -103,7 +103,7 @@ layers; each needs the one before it.
 
 ### Task 3.2: Layer 2, index and navigation
 **Priority:** P2
-**Status:** Done (2026-11-11). Design choice: a `FileBasedIndex` (`lang/index/FantomDeclarationIndex`) instead of stub trees. It maps a short name to `(kind, ownerType)` per file and re-parses only matching files on lookup. This keeps the grammar free of stub plumbing and is enough for navigation and for the layer 3 resolver; stubs can come later if memory or speed demands it. Merged: Go to Class and Go to Symbol (`ide/navigation`, plain `NavigationItem` rows with a shared `ide/presentation/FantomPresentation` helper also used by the structure view), a corpus test over the real `sys` pod (79 files, 831 names, 1,528 entries, index built in about 1.5 s, cross-checked against the source with ripgrep), and `lang/library/FantomHome` which finds a Fantom install (`fantom.home` property, `FAN_HOME`, newest `/Users/alper/fantom/fantom-*`) for a later library root. 58 tests pass. Follow-ups: register `FantomHome.sourceRoots` as an `AdditionalLibraryRootsProvider` so `sys` types resolve from any project; add `getPresentation()` to `FantomNamedElementImpl` so the navigation wrapper can go.
+**Status:** Done (2026-11-11). Design choice: a `FileBasedIndex` (`lang/index/FantomDeclarationIndex`) instead of stub trees. It maps a short name to `(kind, ownerType)` per file and re-parses only matching files on lookup. This keeps the grammar free of stub plumbing and is enough for navigation and for the layer 3 resolver; stubs can come later if memory or speed demands it. Merged: Go to Class and Go to Symbol (`ide/navigation`, plain `NavigationItem` rows with a shared `ide/presentation/FantomPresentation` helper also used by the structure view), a corpus test over the real `sys` pod (79 files, 831 names, 1,528 entries, index built in about 1.5 s, cross-checked against the source with ripgrep), and `lang/library/FantomHome` which finds a Fantom install (`fantom.home` property, `FAN_HOME`, newest `~/fantom/fantom-*`) for a later library root. 58 tests pass. Follow-ups: register `FantomHome.sourceRoots` as an `AdditionalLibraryRootsProvider` so `sys` types resolve from any project; add `getPresentation()` to `FantomNamedElementImpl` so the navigation wrapper can go.
 
 ### Task 3.2b: Layer 3, references
 **Priority:** P2

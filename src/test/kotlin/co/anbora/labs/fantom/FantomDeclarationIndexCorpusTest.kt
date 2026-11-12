@@ -6,6 +6,7 @@ import co.anbora.labs.fantom.lang.index.FantomDeclarationKind
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import co.anbora.labs.fantom.lang.library.FantomHome
 import java.io.File
 
 /**
@@ -15,7 +16,7 @@ import java.io.File
  */
 class FantomDeclarationIndexCorpusTest : BasePlatformTestCase() {
 
-    private val sysDir = File(System.getProperty("fantom.sys.dir", "/Users/alper/fantom/fantom-1.0.84/src/sys/fan"))
+    private val sysDir = File(System.getProperty("fantom.sys.dir") ?: (FantomHome.detect()?.path + "/src/sys/fan"))
     private val tag = "FantomDeclarationIndexCorpusTest:"
 
     fun testSysPodIndex() {

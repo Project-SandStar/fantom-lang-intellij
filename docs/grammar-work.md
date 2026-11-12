@@ -5,7 +5,7 @@ Read this first if you pick up the grammar work in a new session. Everything bel
 
 ## 1. Goal
 
-Make the plugin's lexer (`src/main/grammar/Fantom.flex`) and parser (`src/main/grammar/Fantom.bnf`) parse real Fantom code with no errors. The measure is a corpus test over the seven Fantom distributions in `/Users/alper/fantom`:
+Make the plugin's lexer (`src/main/grammar/Fantom.flex`) and parser (`src/main/grammar/Fantom.bnf`) parse real Fantom code with no errors. The measure is a corpus test over the seven Fantom distributions in `~/fantom`:
 
 | Folder | `.fan` files |
 |---|---|
@@ -32,13 +32,13 @@ Generated sources in `src/main/gen/` are git-ignored. Gradle regenerates them fr
 ## 3. How to run
 
 ```sh
-cd /Users/alper/Code/fantom-lang-intellij
+cd fantom-lang-intellij
 
 # full corpus, about 2 minutes, report in build/reports/fantom-corpus.txt
-FANTOM_CORPUS=/Users/alper/fantom/fantom-1.0.84/src ./gradlew --no-daemon test --tests '*FantomCorpusParsingTest*'
+FANTOM_CORPUS=~/fantom/fantom-1.0.84/src ./gradlew --no-daemon test --tests '*FantomCorpusParsingTest*'
 
 # all seven distributions
-FANTOM_CORPUS=$(ls -d /Users/alper/fantom/*/src | paste -sd: -) ./gradlew --no-daemon test --tests '*FantomCorpusParsingTest*'
+FANTOM_CORPUS=$(ls -d ~/fantom/*/src | paste -sd: -) ./gradlew --no-daemon test --tests '*FantomCorpusParsingTest*'
 
 # snippets, about 15 seconds, trees written next to the .fan files
 FANTOM_SNIPPETS=$PWD/src/test/testData/snippets ./gradlew --no-daemon test --tests '*FantomSnippetDumpTest*'
@@ -46,7 +46,7 @@ FANTOM_SNIPPETS=$PWD/src/test/testData/snippets ./gradlew --no-daemon test --tes
 
 Gradle prints only `BUILD SUCCESSFUL`. The per snippet lines are in `build/test-results/test/TEST-co.anbora.labs.fantom.FantomSnippetDumpTest.xml` inside `<system-out>`.
 
-Check a construct against the real compiler with a tiny file and `/Users/alper/fantom/fantom-1.0.84/bin/fan File.fan`. A file with a `main` runs; a parse error prints the line.
+Check a construct against the real compiler with a tiny file and `~/fantom/fantom-1.0.84/bin/fan File.fan`. A file with a `main` runs; a parse error prints the line.
 
 ## 4. Baseline (before any grammar change)
 

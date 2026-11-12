@@ -16,7 +16,7 @@ Next step is a release PR to `master` or a live soak in the main IDE.
 
 ```sh
 # full check: regenerate lexer+parser, all tests, corpus over every Fantom version, plugin zip
-FANTOM_CORPUS=$(ls -d /Users/alper/fantom/*/src | paste -sd: -) \
+FANTOM_CORPUS=$(ls -d ~/fantom/*/src | paste -sd: -) \
   ./gradlew --no-daemon --rerun-tasks generateLexer generateParser test buildPlugin
 
 # one test class
@@ -34,7 +34,7 @@ Rules that bit us:
 - Tests that read the real Fantom install need `NO_FS_ROOTS_ACCESS_CHECK=true`
   (set in the Gradle test task). A roots change in a test must run inside
   `WriteAction.runAndWait { ProjectRootManagerEx.makeRootsChange(...) }`.
-- `FantomHome.detect()` finds `/Users/alper/fantom/fantom-1.0.84` on this machine
+- `FantomHome.detect()` finds `~/fantom/fantom-1.0.84` when `~/fantom` holds an install
   even with no configured home, so "library present" is the normal test condition
   here. Library-dependent tests must skip with a println when `detect()` is null.
 - Snippet `.tree.txt` dumps are generated and git-ignored.

@@ -16,7 +16,8 @@ Before you change platform or API code, run the `intellij-api-check` agent
 (`.claude/agents/intellij-api-check.md`). It reads the JetBrains change lists
 and the local verifier report. Treat `./gradlew verifyPlugin` as the final word.
 
-Never run `publishPlugin` or `signPlugin`, and never push to `master`.
-A push to `master` publishes the plugin to the JetBrains Marketplace.
+Never run `publishPlugin` or `signPlugin` by hand, and never push a `v*` tag
+without the user's word. A `v*` tag publishes the plugin to the JetBrains
+Marketplace through CI; pushes to `master` only build and verify.
 
 Resume document for the language work: `docs/language-layers.md`.
