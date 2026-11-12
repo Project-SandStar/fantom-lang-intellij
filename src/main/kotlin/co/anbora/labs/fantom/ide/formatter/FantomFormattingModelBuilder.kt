@@ -10,20 +10,22 @@ import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 
 /**
- * Formatting model for Fantom. The rules follow the house style of the `sys` and `util`
- * pods: two-space indent, Allman braces for types, slots and control statements, `{` on the
- * same line for closures and it-blocks, one space around `:=`, `=`, `&&`, `||` and the
- * equality operators, `, ` in lists, no space before `(` in a call. Line breaks are never
- * added or removed. Runs of more than one space inside a line are kept, because `sys` aligns
- * some declarations and initializers by hand. Arithmetic, relational and range operators keep
- * their existing spacing (`i+1`, `0..<n` and `a + b` all occur in `sys`).
+ * Formatting model for Fantom. It follows the house style of the `sys` and `util` pods and
+ * does one thing: it sets the indent of lines that start a statement, a slot, a type, a
+ * brace or a comment. Two-space indent, Allman braces for types, slots and control
+ * statements, `{` at the statement column for closures and it-blocks.
+ *
+ * It never adds or removes a line break, and it never changes spacing inside a line: the
+ * pods write `i:=0`, `s[0..<n]`, `a + b` and hand-aligned declarations side by side. Lines
+ * that continue an expression keep their indent. A `//` or `/* */` comment at column 0 is a
+ * banner and keeps its place. See `docs/formatter-work.md` for the corpus survey.
  */
 class FantomFormattingModelBuilder : FormattingModelBuilder {
     override fun createModel(formattingContext: FormattingContext): FormattingModel {
         val file = formattingContext.containingFile
         val settings = formattingContext.codeStyleSettings
         val context = FantomFormatContext(file.text, settings, settings.getCommonSettings(FantomLanguage))
-        val root = FantomBlock(file.node, null, Indent.getNoneIndent(), context)
+        val root = FantomBlock(file.node, Indent.getNoneIndent(), context)
         return FormattingModelProvider.createFormattingModelForPsiFile(file, root, settings)
     }
 }
