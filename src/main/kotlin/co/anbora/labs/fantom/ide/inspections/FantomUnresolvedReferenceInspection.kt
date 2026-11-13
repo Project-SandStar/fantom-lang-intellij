@@ -13,6 +13,7 @@ import co.anbora.labs.fantom.lang.core.psi.FantomSlotExpr
 import co.anbora.labs.fantom.lang.core.psi.FantomStaticCall
 import co.anbora.labs.fantom.lang.library.FantomSettings
 import co.anbora.labs.fantom.lang.resolve.FantomReference
+import co.anbora.labs.fantom.lang.resolve.FantomUsingScope
 import co.anbora.labs.fantom.lang.types.FantomTypeInference
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.LocalQuickFix
@@ -51,7 +52,11 @@ class FantomUnresolvedReferenceInspection : LocalInspectionTool() {
                 if (!isCheckable(element, ref)) return
                 if (ref.resolveAll().isNotEmpty()) return
                 val fixes: Array<LocalQuickFix> = if (ref.kind == FantomReference.Kind.TYPE) {
-                    FantomUsingCandidates.podsFor(pods, ref.name).map { AddUsingFix(it, ref.name) }.toTypedArray()
+                    // Pods of the build.fan `depends` first.
+                    val usings = FantomUsingScope.usingsOf(holder.file)
+                    FantomUsingCandidates.podsFor(pods, ref.name)
+                        .sortedBy { if (usings.isPodAvailable(it)) 0 else 1 }
+                        .map { AddUsingFix(it, ref.name) }.toTypedArray()
                 } else emptyArray()
                 holder.registerProblem(element, "Cannot resolve symbol '${ref.name}'", *fixes)
             }

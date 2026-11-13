@@ -29,7 +29,9 @@ abstract class FantomInspectionTestBase : BasePlatformTestCase() {
             }
         }
         plain.append(markedText, last, markedText.length)
-        myFixture.configureByText(fileName, plain.toString())
+        // A path such as `foo/fan/A.fan` goes into the project at that path.
+        if ('/' in fileName) myFixture.configureFromExistingVirtualFile(myFixture.addFileToProject(fileName, plain.toString()).virtualFile)
+        else myFixture.configureByText(fileName, plain.toString())
         val actual = myFixture.doHighlighting(HighlightSeverity.WEAK_WARNING).map { info ->
             val kind = if (info.severity == HighlightSeverity.WEAK_WARNING) "weak_warning" else info.severity.name.lowercase()
             "$kind ${info.text}@${info.startOffset}: ${info.description}"

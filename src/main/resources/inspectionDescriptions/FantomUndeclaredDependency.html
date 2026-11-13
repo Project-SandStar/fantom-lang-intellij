@@ -1,0 +1,8 @@
+<html>
+<body>
+Reports <code>using x</code> and <code>using x::Type</code> when pod <code>x</code> is not in the <code>depends</code> list of the pod's <code>build.fan</code>. The Fantom compiler rejects such a using.
+<p>The quick fix adds <code>"x 1.0"</code> to <code>depends</code>. The version comes from the installed <code>x.pod</code>, else from the <code>version</code> in the pod's source <code>build.fan</code>.</p>
+<p>Not reported for <code>sys</code>, for the file's own pod, when there is no <code>build.fan</code>, or when <code>depends</code> is not a literal list of strings.</p>
+<!-- tooltip end -->
+</body>
+</html>

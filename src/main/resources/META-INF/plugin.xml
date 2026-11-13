@@ -134,6 +134,11 @@
         <lang.parserDefinition language="fan_props" implementationClass="co.anbora.labs.fantom.lang.props.FanPropsParserDefinition"/>
         <lang.syntaxHighlighterFactory language="fan_props" implementationClass="co.anbora.labs.fantom.lang.props.FanPropsSyntaxHighlighterFactory"/>
         <lang.commenter language="fan_props" implementationClass="co.anbora.labs.fantom.lang.props.FanPropsCommenter"/>
+        <!-- build.fan depends: undeclared pod warning, Build Pod gutter icon -->
+        <localInspection language="fantom_lang" shortName="FantomUndeclaredDependency" displayName="Pod not in build.fan depends"
+                         groupName="Fantom" enabledByDefault="true" level="WARNING"
+                         implementationClass="co.anbora.labs.fantom.ide.inspections.FantomUndeclaredDependencyInspection"/>
+        <codeInsight.lineMarkerProvider language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.compiler.FantomBuildPodLineMarkerProvider"/>
     </extensions>
     <applicationListeners>
         <listener class="co.anbora.labs.fantom.ide.compiler.FantomCompileOnSaveListener"
@@ -149,6 +154,16 @@
                 class="co.anbora.labs.fantom.ide.actions.CreateNewClassAction"
                 text="Fantom Class"
                 description="Create new Fantom class">
+        </action>
+    </actions>
+    <actions>
+        <action id="Fantom.BuildPod"
+                class="co.anbora.labs.fantom.ide.compiler.FantomBuildPodAction"
+                text="Build Pod"
+                description="Run fan build.fan compile for the Fantom pod of the current file"
+                icon="AllIcons.Actions.Compile">
+            <add-to-group group-id="BuildMenu" anchor="last"/>
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
         </action>
     </actions>
 </idea-plugin>
