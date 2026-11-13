@@ -146,14 +146,15 @@ class FantomCompilerService(private val project: Project) : Disposable {
             val rootPath = FantomCompilerDiagnostics.canonical(podRoot.path)
             val daemon = DaemonCodeAnalyzer.getInstance(project)
             val psiManager = PsiManager.getInstance(project)
-            ReadAction.run<RuntimeException> {
-                for (vf in FileEditorManager.getInstance(project).openFiles) {
-                    if (vf == requester) continue
-                    val root = podRootFor(vf) ?: continue
-                    if (FantomCompilerDiagnostics.canonical(root.path) != rootPath) continue
-                    psiManager.findFile(vf)?.let { daemon.restart(it) }
+            val files = ReadAction.computeBlocking<List<PsiFile>, RuntimeException> {
+                FileEditorManager.getInstance(project).openFiles.mapNotNull { vf ->
+                    if (vf == requester) return@mapNotNull null
+                    val root = podRootFor(vf) ?: return@mapNotNull null
+                    if (FantomCompilerDiagnostics.canonical(root.path) != rootPath) return@mapNotNull null
+                    psiManager.findFile(vf)
                 }
             }
+            for (file in files) daemon.restart(file, "Fantom compiler result for ${podRoot.name}")
         }, project.disposed)
     }
 

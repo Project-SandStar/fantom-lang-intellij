@@ -26,7 +26,9 @@ class FantomCompileOnSaveListener : FileDocumentManagerListener {
             val podRoot = service.podRootFor(vf) ?: continue
             service.markDirty(podRoot)
             if (FileEditorManager.getInstance(project).isFileOpen(vf)) {
-                PsiManager.getInstance(project).findFile(vf)?.let { DaemonCodeAnalyzer.getInstance(project).restart(it) }
+                PsiManager.getInstance(project).findFile(vf)?.let {
+                    DaemonCodeAnalyzer.getInstance(project).restart(it, "Fantom file saved")
+                }
             }
         }
     }
