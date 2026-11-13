@@ -23,11 +23,17 @@ class FantomSettings : SimplePersistentStateComponent<FantomSettings.State>(Stat
         var homePath by string()
         /** True once the "no Fantom installation" balloon was shown for this project. */
         var noHomeNoticeShown by property(false)
+        /** Run `fan build.fan compile` on save and show the compiler's messages in the editor. */
+        var compileOnSave by property(true)
     }
 
     var homePath: String?
         get() = state.homePath
         set(value) { state.homePath = value?.takeIf { it.isNotBlank() } }
+
+    var compileOnSave: Boolean
+        get() = state.compileOnSave
+        set(value) { state.compileOnSave = value }
 
     /** The home to use: the configured one if valid, else the detected one, else null. */
     fun effectiveHome(): File? {

@@ -98,7 +98,17 @@
         <runConfigurationProducer implementation="co.anbora.labs.fantom.ide.run.FantomRunConfigurationProducer"/>
         <runConfigurationProducer implementation="co.anbora.labs.fantom.ide.run.FantomTestRunConfigurationProducer"/>
         <runLineMarkerContributor language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.run.FantomRunLineMarkerContributor"/>
+        <!-- Compiler diagnostics: `fan build.fan compile` on save, messages painted in the editor -->
+        <externalAnnotator language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.compiler.FantomCompilerAnnotator"/>
     </extensions>
+    <applicationListeners>
+        <listener class="co.anbora.labs.fantom.ide.compiler.FantomCompileOnSaveListener"
+                  topic="com.intellij.openapi.fileEditor.FileDocumentManagerListener"/>
+    </applicationListeners>
+    <projectListeners>
+        <listener class="co.anbora.labs.fantom.ide.compiler.FantomCompileOnOpenListener"
+                  topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+    </projectListeners>
 
     <actions>
         <action id="Fantom.NewFantomClass"
