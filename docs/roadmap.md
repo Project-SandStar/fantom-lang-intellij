@@ -75,6 +75,22 @@ Items 1 to 15 shipped in 2.1.0; items 16 and 17 shipped in 3.0.0.
     target's pods. Writing the built pod into the target's `lib/fan` is an
     explicit choice per build; a running server loads it after a restart.
 
+18. **Dependencies resolved from source.** Each pod in `build.fan`
+    `depends` maps to real source when it exists:
+    - SkySpark pods come from the Haxall source of the same version
+      (SkySpark 4.0.7 pairs with Haxall 4.0.7, `haystack` from
+      `core/haystack`), with a compiled-pod stub only as a fallback.
+    - Your own pods come from source roots you add (for example `~/Code`).
+      Copies of one repository are grouped by their git remote, and the
+      version comes from git tags such as `bassgCommon/4.0.6.2.2`, not from
+      the checked-out branch. The tagged code is indexed read-only, so the
+      working copy is never touched.
+    - With no tag for the build target, the nearest lower tag is used with a
+      warning, for example `4.0.6.2.2` when building for SkySpark 4.0.7.
+    - The build target is one click to switch, from the status bar and the
+      Build Pod menu; switching re-maps every dependency to that target.
+    - Each dependency row has a dropdown to pin another source or tag.
+
 The promotional video follows these items.
 
 Ideas and votes: <https://github.com/Project-SandStar/fantom-lang-intellij/discussions>.
