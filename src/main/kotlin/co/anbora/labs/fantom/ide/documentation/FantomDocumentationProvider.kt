@@ -17,6 +17,7 @@ import co.anbora.labs.fantom.lang.core.psi.FantomNamedElement
 import co.anbora.labs.fantom.lang.core.psi.FantomParam
 import co.anbora.labs.fantom.lang.core.psi.FantomTypeHeader
 import co.anbora.labs.fantom.lang.core.psi.FantomTypes.FANDOC_LINE_COMMENT
+import co.anbora.labs.fantom.lang.fandoc.FandocRenderer
 import co.anbora.labs.fantom.lang.resolve.FantomScope
 import co.anbora.labs.fantom.lang.types.FantomTypeInference
 import com.intellij.lang.documentation.AbstractDocumentationProvider
@@ -29,7 +30,7 @@ import com.intellij.psi.PsiWhiteSpace
 /**
  * Quick Documentation (Ctrl+Q) for Fantom declarations: a definition block with
  * the flags and signature, the owning type for slots, then the fandoc (`**` lines
- * above the declaration) as minimal HTML.
+ * above the declaration) rendered by [FandocRenderer], then a sections table.
  */
 class FantomDocumentationProvider : AbstractDocumentationProvider() {
 
@@ -51,6 +52,14 @@ class FantomDocumentationProvider : AbstractDocumentationProvider() {
         val html = fandocHtml(fandocLines(decl))
         if (html.isNotEmpty()) {
             sb.append(DocumentationMarkup.CONTENT_START).append(html).append(DocumentationMarkup.CONTENT_END)
+        }
+        val file = decl.containingFile?.name
+        if (file != null && (owner != null || FantomScope.isTypeDef(decl))) {
+            sb.append(DocumentationMarkup.SECTIONS_START)
+                .append(DocumentationMarkup.SECTION_HEADER_START).append("Declared in:")
+                .append(DocumentationMarkup.SECTION_SEPARATOR).append("<p>").append(escape(file))
+                .append(DocumentationMarkup.SECTION_END)
+                .append(DocumentationMarkup.SECTIONS_END)
         }
         return sb.toString()
     }
@@ -137,34 +146,8 @@ class FantomDocumentationProvider : AbstractDocumentationProvider() {
             return lines
         }
 
-        /** Minimal fandoc to HTML: blank line = paragraph, `` `x` `` and `'x'` = code. */
-        fun fandocHtml(lines: List<String>): String {
-            if (lines.isEmpty()) return ""
-            val paragraphs = ArrayList<List<String>>()
-            var cur = ArrayList<String>()
-            for (line in lines) {
-                if (line.isBlank()) {
-                    if (cur.isNotEmpty()) { paragraphs += cur; cur = ArrayList() }
-                } else cur += line.trim()
-            }
-            if (cur.isNotEmpty()) paragraphs += cur
-            return paragraphs.joinToString("") { "<p>" + inline(it.joinToString(" ")) + "</p>" }
-        }
-
-        private val span = Regex("`([^`]+)`|(?<![\\w'])'([^'\\n]+?)'(?![\\w'])")
-
-        private fun inline(text: String): String {
-            val sb = StringBuilder()
-            var last = 0
-            for (m in span.findAll(text)) {
-                sb.append(escape(text.substring(last, m.range.first)))
-                val code = m.groups[1]?.value ?: m.groups[2]?.value ?: ""
-                sb.append("<code>").append(escape(code)).append("</code>")
-                last = m.range.last + 1
-            }
-            sb.append(escape(text.substring(last)))
-            return sb.toString()
-        }
+        /** Fandoc to HTML, see [FandocRenderer]. */
+        fun fandocHtml(lines: List<String>): String = FandocRenderer.render(lines)
 
         private fun stripPrefix(line: String): String {
             val t = line.trim()
