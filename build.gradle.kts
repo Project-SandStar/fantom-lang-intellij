@@ -40,6 +40,9 @@ dependencies {
         // Plugin Dependencies. Uses `platformPlugins` property from the gradle.properties file for plugin from JetBrains Marketplace.
         plugins(properties("platformPlugins").map { it.split(',') })
 
+        // Spell checking: a platform product module, loaded through an optional <depends>.
+        bundledModule("intellij.spellchecker")
+
         pluginVerifier()
         testFramework(TestFrameworkType.Platform)
     }

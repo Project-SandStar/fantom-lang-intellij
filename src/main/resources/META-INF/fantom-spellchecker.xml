@@ -1,0 +1,7 @@
+<idea-plugin>
+    <!-- Loaded only when the spellchecker is present (com.intellij.modules.spellchecker). -->
+    <extensions defaultExtensionNs="com.intellij">
+        <spellchecker.support language="fantom_lang"
+                              implementationClass="co.anbora.labs.fantom.ide.spellchecker.FantomSpellcheckingStrategy"/>
+    </extensions>
+</idea-plugin>
