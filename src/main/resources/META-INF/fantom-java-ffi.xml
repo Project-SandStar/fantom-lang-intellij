@@ -1,0 +1,12 @@
+<idea-plugin>
+    <!-- Loaded only when the Java plugin is present (com.intellij.java): Fantom's Java FFI,
+         `using [java] pkg::Type`. Every class registered here lives in co.anbora.labs.fantom.ide.java. -->
+    <extensions defaultExtensionNs="co.anbora.labs.fantom">
+        <ffiResolver implementation="co.anbora.labs.fantom.ide.java.FantomJavaFfiResolver"/>
+    </extensions>
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- <home>/lib/java/sys.jar: fanx.interop::Interop and the primitive arrays -->
+        <additionalLibraryRootsProvider implementation="co.anbora.labs.fantom.ide.java.FantomSysJarRootsProvider"/>
+        <java.elementFinder implementation="co.anbora.labs.fantom.ide.java.FantomSysJarClassFinder"/>
+    </extensions>
+</idea-plugin>

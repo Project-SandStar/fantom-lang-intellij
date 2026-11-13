@@ -1,0 +1,110 @@
+package co.anbora.labs.fantom.ide.java
+
+import co.anbora.labs.fantom.ide.icons.FantomIcons
+import co.anbora.labs.fantom.lang.library.FantomSettings
+import co.anbora.labs.fantom.lang.resolve.FantomFfiResolver
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.navigation.ItemPresentation
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.AdditionalLibraryRootsProvider
+import com.intellij.openapi.roots.SyntheticLibrary
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.NonClasspathClassFinder
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.search.GlobalSearchScope
+import java.io.File
+import javax.swing.Icon
+
+/**
+ * Java FFI through the Java plugin: classes by `JavaPsiFacade` in the project's whole
+ * scope (the JDK, project libraries, `java.base` from the debugger's roots provider when
+ * there is no Java SDK, and `sys.jar` from [FantomSysJarRootsProvider]); members by name.
+ */
+class FantomJavaFfiResolver : FantomFfiResolver {
+
+    override fun findClasses(fqns: List<String>, project: Project): List<PsiElement> {
+        val facade = JavaPsiFacade.getInstance(project)
+        val scope = GlobalSearchScope.allScope(project)
+        return fqns.mapNotNull { facade.findClass(it, scope) }.distinct()
+    }
+
+    override fun findMembers(classes: List<PsiElement>, name: String): List<PsiElement> =
+        classes.filterIsInstance<PsiClass>().flatMap { c ->
+            c.findMethodsByName(name, true).filter { !it.isConstructor } + listOfNotNull(c.findFieldByName(name, true))
+        }.distinct()
+
+    override fun memberVariants(classes: List<PsiElement>, staticOnly: Boolean): List<LookupElement> {
+        val seen = HashSet<String>()
+        val out = ArrayList<LookupElement>()
+        for (c in classes.filterIsInstance<PsiClass>()) {
+            val members: List<PsiMember> = c.allMethods.filter { !it.isConstructor } + c.allFields
+            for (m in members) {
+                if (!m.hasModifierProperty(PsiModifier.PUBLIC)) continue
+                if (staticOnly && !m.hasModifierProperty(PsiModifier.STATIC)) continue
+                val name = m.name ?: continue
+                if (!seen.add(name)) continue
+                out += when (m) {
+                    is PsiMethod -> LookupElementBuilder.createWithIcon(m)
+                        .withTailText(if (m.parameterList.isEmpty) "()" else "(…)", true)
+                        .withTypeText(m.returnType?.presentableText)
+                    is PsiField -> LookupElementBuilder.createWithIcon(m).withTypeText(m.type.presentableText)
+                    else -> LookupElementBuilder.create(name)
+                }
+            }
+        }
+        return out
+    }
+}
+
+/**
+ * `<fantom home>/lib/java/sys.jar` as a class-only library, so `fanx.interop::Interop` and
+ * the primitive arrays (`ByteArray`, ...) resolve. Taken from the configured home, else from
+ * the Fantom sources folder.
+ */
+class FantomSysJarRootsProvider : AdditionalLibraryRootsProvider() {
+
+    override fun getAdditionalProjectLibraries(project: Project): Collection<SyntheticLibrary> {
+        val root = sysJarRoot(project) ?: return emptyList()
+        return listOf(SysJarLibrary(root))
+    }
+
+    class SysJarLibrary(private val root: VirtualFile) : SyntheticLibrary(), ItemPresentation {
+        override fun getSourceRoots(): Collection<VirtualFile> = emptyList()
+        override fun getBinaryRoots(): Collection<VirtualFile> = listOf(root)
+        override fun getPresentableText(): String = "sys.jar (Fantom Java FFI)"
+        override fun getLocationString(): String = root.path
+        override fun getIcon(unused: Boolean): Icon = FantomIcons.FILE
+        override fun equals(other: Any?): Boolean = other is SysJarLibrary && other.root == root
+        override fun hashCode(): Int = root.hashCode()
+    }
+
+    companion object {
+        /** The jar root of `lib/java/sys.jar` of the home, else of the sources folder; null when neither has one. */
+        fun sysJarRoot(project: Project): VirtualFile? {
+            val settings = FantomSettings.getInstance(project)
+            for (dir in listOfNotNull(settings.homePath, settings.sourcesPath)) {
+                val jar = File(dir, "lib/java/sys.jar")
+                if (!jar.isFile) continue
+                val url = "jar://${jar.absolutePath.replace(File.separatorChar, '/')}!/"
+                VirtualFileManager.getInstance().findFileByUrl(url)?.let { return it }
+            }
+            return null
+        }
+    }
+}
+
+/**
+ * The packages and classes of `sys.jar` for `JavaPsiFacade`: the roots of a synthetic library
+ * are no package roots, so without this finder `fanx.interop` has no package.
+ */
+class FantomSysJarClassFinder(project: Project) : NonClasspathClassFinder(project, "class") {
+    override fun calcClassRoots(): List<VirtualFile> = listOfNotNull(FantomSysJarRootsProvider.sysJarRoot(myProject))
+}

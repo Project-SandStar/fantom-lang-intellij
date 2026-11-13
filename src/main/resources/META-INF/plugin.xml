@@ -9,9 +9,16 @@
     <depends optional="true" config-file="fantom-spellchecker.xml">com.intellij.modules.spellchecker</depends>
     <!-- JVM debugger for .fan files; IDEs without the Java plugin load the rest of the plugin. -->
     <depends optional="true" config-file="fantom-java-debugger.xml">com.intellij.java</depends>
+    <!-- Java FFI (`using [java] pkg::Type`): Java classes and members resolve when the Java plugin is present. -->
+    <depends optional="true" config-file="fantom-java-ffi.xml">com.intellij.java</depends>
 
     <!-- Extension points defined by the plugin.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
+    <extensionPoints>
+        <!-- Resolves `[java]` FFI names; implemented in fantom-java-ffi.xml only. -->
+        <extensionPoint qualifiedName="co.anbora.labs.fantom.ffiResolver"
+                        interface="co.anbora.labs.fantom.lang.resolve.FantomFfiResolver" dynamic="true"/>
+    </extensionPoints>
     <extensions defaultExtensionNs="com.intellij">
         <fileType name="Fantom" implementationClass="co.anbora.labs.fantom.lang.FantomFileType"
                   fieldName="INSTANCE" language="fantom_lang" extensions="fan"/>

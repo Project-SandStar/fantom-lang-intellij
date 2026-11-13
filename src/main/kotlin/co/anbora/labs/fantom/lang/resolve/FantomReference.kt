@@ -46,9 +46,47 @@ class FantomReference(
     val name: String get() = element.text
 
     override fun multiResolve(incompleteCode: Boolean): Array<ResolveResult> =
-        resolveAll().map { PsiElementResolveResult(it) }.toTypedArray()
+        resolveWithFfi().map { PsiElementResolveResult(it) }.toTypedArray()
 
+    /** Fantom declarations only; Java FFI targets are in [resolveWithFfi]. */
     fun resolveAll(): List<FantomNamedElement> = preferProject(resolveRaw())
+
+    /**
+     * [resolveAll], plus Java classes and members the file's `using [java]` lines bring in
+     * ([FantomFfi]; empty without the Java plugin). A class imported by name wins over a
+     * Fantom type of that name; a slot on a receiver whose type is a Java class (no Fantom
+     * type has the name) resolves to the Java members, every overload. Otherwise Java is the
+     * fallback when nothing in Fantom matches.
+     */
+    fun resolveWithFfi(): List<PsiElement> {
+        val file = element.containingFile ?: return resolveAll()
+        val imports = FantomFfi.javaImports(file)
+        if (imports.isEmpty) return resolveAll()
+        when (kind) {
+            Kind.TYPE -> {
+                if (name in imports.types) FantomFfi.resolveType(name, file).let { if (it.isNotEmpty()) return it }
+                // A Java package import beats a Fantom type the file's `using` lines do not name.
+                val fan = resolveAll()
+                if (fan.any { FantomUsingScope.isVisible(it, file) }) return fan
+                FantomFfi.resolveType(name, file).let { if (it.isNotEmpty()) return it }
+                return fan
+            }
+            Kind.SLOT -> if (!thisReceiver) {
+                val owner = ownerName ?: receiverTypeName()
+                if (owner != null && FantomTypeInference.typeDefinitions(owner, element.project).isEmpty()) {
+                    val java = FantomFfi.resolveSlot(owner, name, file)
+                    if (java.isNotEmpty()) return java
+                }
+            }
+            Kind.BARE -> {}
+        }
+        val fan = resolveAll()
+        if (fan.isNotEmpty() || kind == Kind.SLOT) return fan
+        return FantomFfi.resolveType(name, file)
+    }
+
+    /** The Java type of an FFI receiver: `Type.x` with a Java `Type`, or `recv.x` whose type is one. */
+    fun ffiOwnerName(): String? = if (thisReceiver) null else ownerName ?: receiverTypeName()
 
     /**
      * When a name is declared both in the project and in the Fantom library (for
