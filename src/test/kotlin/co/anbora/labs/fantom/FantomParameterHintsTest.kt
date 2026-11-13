@@ -32,6 +32,7 @@ class FantomParameterHintsTest : DeclarativeInlayHintsProviderTestCase() {
           Void addLine(Str sku, Int qty, Float price) {}
           Void set(Str key, Obj val) {}
           Void one(Str name) {}
+          Void run(Int times, |Int| fn) {}
           new make(Str sku, Int qty := 1) {}
           Str sku := ""
         }
@@ -40,12 +41,14 @@ class FantomParameterHintsTest : DeclarativeInlayHintsProviderTestCase() {
     private fun doTest(body: String) {
         doTestProvider(
             "A.fan",
-            "$order\nclass A {\nStr sku := \"\"; Int qty := 0; Float price := 0f; Order o := Order()\nVoid f(Str[] names) {\n$body\n} }",
+            "$order\nclass A {\nStr sku := \"\"; Int qty := 0; Float price := 0f; Order o := Order()\nVoid addLine(Str sku, Int qty, Float price) {}\nVoid f(Str[] names) {\n$body\n} }",
             FantomParameterHintsProvider(),
         )
     }
 
     fun testLiteralsGetNames() = doTest("o.addLine(/*<# sku: #>*/\"A-1\", /*<# qty: #>*/2, /*<# price: #>*/9.5f)")
+
+    fun testBareCallGetsNames() = doTest("addLine(/*<# sku: #>*/\"A-1\", /*<# qty: #>*/2, /*<# price: #>*/9.5d)\naddLine(sku, qty, price)")
 
     fun testCallsAndArithmeticGetNames() =
         doTest("o.addLine(/*<# sku: #>*/sku.upper, /*<# qty: #>*/qty + 1, /*<# price: #>*/price * 2f)")
@@ -54,11 +57,15 @@ class FantomParameterHintsTest : DeclarativeInlayHintsProviderTestCase() {
 
     fun testMixedArgumentsHintOnlyTheUnnamed() = doTest("o.addLine(sku, /*<# qty: #>*/2, price)")
 
+    fun testExpressionEndingInParamNameStillGetsHint() =
+        doTest("o.addLine(/*<# sku: #>*/\"x\" + o.sku, /*<# qty: #>*/0 - qty, /*<# price: #>*/-price)")
+
     fun testOneParameterHasNoHint() = doTest("o.one(\"x\")\necho(sku)")
 
     fun testOperatorLikeSlotHasNoHint() = doTest("o.set(\"k\", 1)")
 
-    fun testClosureArgumentHasNoHint() = doTest("names.each |n| {}\nnames.each(|n| {})")
+    fun testClosureArgumentHasNoHint() =
+        doTest("names.each |n| {}\nnames.each(|n| {})\no.run(/*<# times: #>*/3, |i| {})\no.run(/*<# times: #>*/3) |i| {}")
 
     fun testCtorCallGetsNames() = doTest("Order(/*<# sku: #>*/\"A-1\", /*<# qty: #>*/3)\nOrder(/*<# sku: #>*/\"A-1\")")
 
@@ -68,7 +75,7 @@ class FantomParameterHintsTest : DeclarativeInlayHintsProviderTestCase() {
         if (!enableLibrary()) return
         doTestProvider(
             "A.fan",
-            "class A { Void f(Str s) {\ns.replace(/*<# from: #>*/\"a\", /*<# to: #>*/\"b\")\ns.padl(/*<# width: #>*/5)\n} }",
+            "class A { Void f(Str s) {\ns.replace(/*<# from: #>*/\"a\", /*<# to: #>*/\"b\")\ns.padl(/*<# width: #>*/5)\nInt.fromStr(/*<# s: #>*/\"7\", /*<# radix: #>*/16)\n} }",
             FantomParameterHintsProvider(),
         )
     }

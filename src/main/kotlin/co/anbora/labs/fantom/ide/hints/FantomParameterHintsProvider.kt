@@ -69,11 +69,12 @@ class FantomParameterHintsProvider : InlayHintsProvider {
             }
         }
 
-        private val LAST_NAME = Regex("""(?:^|[.>])([A-Za-z_]\w*)$""")
+        // A plain name chain: `a`, `a.b`, `a?.b`, `a->b`, `a?->b`, `this.b`; nothing else in the text.
+        private val NAME_CHAIN = Regex("""^(?:[A-Za-z_]\w*(?:\?)?(?:\.|->))*([A-Za-z_]\w*)$""")
 
-        /** True when the argument text is `name` or ends in `.name`, `?.name` or `->name`. */
+        /** True when the whole argument is a name chain whose last segment is [name]. */
         private fun isNamedLike(arg: FantomExpr, name: String): Boolean =
-            LAST_NAME.find(arg.text.trim())?.groupValues?.get(1) == name
+            NAME_CHAIN.matchEntire(arg.text.trim())?.groupValues?.get(1) == name
 
         /** True when the whole argument is a closure `|...| { }`. */
         private fun isClosure(arg: FantomExpr): Boolean {

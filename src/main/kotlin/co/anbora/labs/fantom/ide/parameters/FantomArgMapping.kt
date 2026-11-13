@@ -12,7 +12,8 @@ import co.anbora.labs.fantom.lang.core.psi.FantomSimple
  * Fantom has no varargs and no overloads by arity, so the mapping is by position; the
  * only choice is between several ctors of `Type(...)`, where `make` wins.
  *
- * Shared by Parameter Info (Cmd+P) and the parameter name inlay hints.
+ * Builds on the call resolution of [FantomParameterInfoHandler] (Cmd+P) and feeds the
+ * parameter name inlay hints.
  */
 object FantomArgMapping {
 
