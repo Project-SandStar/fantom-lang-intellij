@@ -3,6 +3,7 @@ package co.anbora.labs.fantom.ide.settings
 import co.anbora.labs.fantom.ide.imports.FantomUsingCandidates
 import co.anbora.labs.fantom.lang.library.FantomHome
 import co.anbora.labs.fantom.lang.library.FantomSettings
+import co.anbora.labs.fantom.lang.pod.FantomPodStubActivity
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.BoundConfigurable
@@ -179,6 +180,7 @@ class FantomConfigurable(private val project: Project) : BoundConfigurable("Fant
             ProjectRootManagerEx.getInstanceEx(project)
                 .makeRootsChange(EmptyRunnable.getInstance(), RootsChangeRescanningInfo.TOTAL_RESCAN)
         }
+        FantomPodStubActivity.schedule(project)
     }
 
     companion object {

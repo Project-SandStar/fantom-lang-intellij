@@ -1,0 +1,23 @@
+== ThrowErr
+base=axon::EvalErr axon::AxonErr sys::Err sys::Obj
+flags=const public
+loc=Errs.fan:76/73
+@sys::Js
+@sys::NoDoc
+
+ThrowErr is an exception explicitly thrown by Axon code using a 'throw' expression.
+
+-- make(
+cx axon::AxonContext
+loc axon::Loc
+tags haystack::Dict
+) sys::Void
+flags=public new
+loc=:78
+
+-- tags haystack::Dict
+flags=const public
+loc=:84/83
+
+Tags for exception - always has "err" marker and "dis" string.
+

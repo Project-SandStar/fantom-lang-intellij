@@ -107,6 +107,8 @@
         <definitionsScopedSearch implementation="co.anbora.labs.fantom.ide.navigation.FantomImplementationSearch"/>
         <breadcrumbsInfoProvider implementation="co.anbora.labs.fantom.ide.structure.FantomBreadcrumbsProvider"/>
         <indexPatternBuilder implementation="co.anbora.labs.fantom.ide.todo.FantomIndexPatternBuilder"/>
+        <!-- Compiled pods without sources: .fan stubs from the pod's apidoc -->
+        <postStartupActivity implementation="co.anbora.labs.fantom.lang.pod.FantomPodStubActivity"/>
     </extensions>
     <applicationListeners>
         <listener class="co.anbora.labs.fantom.ide.compiler.FantomCompileOnSaveListener"

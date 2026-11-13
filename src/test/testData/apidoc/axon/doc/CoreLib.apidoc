@@ -1,0 +1,3106 @@
+== CoreLib
+base=sys::Obj
+flags=const public
+loc=CoreLib.fan:16/13
+@sys::Js
+
+System library
+
+-- _equals(
+a sys::Obj?
+b sys::Obj?
+) sys::Obj?
+flags=const public static
+loc=:28/23
+@axon::Axon
+
+Return if two values are equivalent.  Unlike the standard '==' operator
+this function will compare the contents of collection values such
+as lists, dicts, and grids.  For non-collection values, the result
+is the same as the '==' operator.  This function does not work with
+lazy grids such as hisRead result.
+
+-- isEmpty(
+val sys::Obj?
+) sys::Obj?
+flags=const public static
+loc=:31/30
+@axon::Axon
+
+Return if a collection is empty: str, list, dict, or grid
+
+-- size(
+val sys::Obj?
+) haystack::Number
+flags=const public static
+loc=:38/37
+@axon::Axon
+
+Return number of items in str, list, or grid
+
+-- get(
+val sys::Obj?
+key sys::Obj?
+) sys::Obj?
+flags=const public static
+loc=:58/45
+@axon::Axon
+
+Get an item from a collection:
+  - str(num): get character at index as int (same semantics as Fantom)
+  - str(range): get string slice (same semantics as Fantom)
+  - list(num): get item at given index (same semantics as Fantom)
+  - list(range): get list slice at given index (same semantics as Fantom)
+  - dict(key): get item with given key or return null
+  - grid(num): get row at given index
+  - grid(range): `haystack::Grid.getRange`
+
+The get function maybe be accessed using the '[]' shortcut operator:
+   list[3]  >>  list.get(3)
+
+See `docSkySpark::AxonLang#getAndTrap`.
+
+-- getSafe(
+val sys::Obj?
+key sys::Obj?
+) sys::Obj?
+flags=const public static
+loc=:74/67
+@axon::Axon
+
+Get an item from a str, list, or grid safely when an index is out of bounds:
+  - str(num): get a character at index or null if index invalid
+  - str(range): get safe slice or "" if entire range invalid
+  - list(num): get item at given index or null is index invalid
+  - list(range): get list slice with safe index
+  - grid(num): get row at given index or null if index invalid
+  - grid(range): `haystack::Grid.getRange` with safe range
+
+-- first(
+val sys::Obj?
+) sys::Obj?
+flags=const public static
+loc=:120/115
+@axon::Axon
+
+Get the first item from an ordered collection or return null
+if the collection is empty:
+  - list: item at index 0
+  - grid: first frow
+  - stream: first item; see `docSkySpark::Streams#first`
+
+-- last(
+val sys::Obj?
+) sys::Obj?
+flags=const public static
+loc=:131/126
+@axon::Axon
+
+Get the last item from an ordered collection or return null
+if the collection is empty:
+  - list: item at index -1
+  - grid: item at index -1
+  - stream: last item; see `docSkySpark::Streams#last`
+
+-- has(
+val sys::Obj?
+name sys::Str
+) sys::Obj?
+flags=const public static
+loc=:139/137
+@axon::Axon
+
+If val is a Grid return if it has the given column name.
+If val is a Dict return if the given name is mapped to a non-null value.
+
+-- missing(
+val sys::Obj?
+name sys::Str
+) sys::Obj?
+flags=const public static
+loc=:148/146
+@axon::Axon
+
+If val is a Grid return if it does not have given column name.
+If val is a Dict, return if the given name is not mapped to a non-null value.
+
+-- index(
+val sys::Obj
+x sys::Obj
+offset haystack::Number:=Number.zero
+) sys::Obj?
+flags=const public static
+loc=:160/155
+@axon::Axon
+
+Return the first match of 'x' in 'val' searching forward, starting
+at the specified offset index.  A negative offset may be used to
+access from the end of string.  Return null if no occurences are found:
+ - if 'val' is Str, then 'x' is substring.
+ - if 'val' is List, then 'x' is item to search.
+
+-- indexr(
+val sys::Obj
+x sys::Obj
+offset haystack::Number:=Number.negOne
+) sys::Obj?
+flags=const public static
+loc=:172/167
+@axon::Axon
+
+Return the last match of 'x' in 'val' searching backward, starting
+at the specified offset index.  A negative offset may be used to
+access from the end of string.  Return null if no occurences are found:
+ - if 'val' is Str, then 'x' is substring.
+ - if 'val' is List, then 'x' is item to search.
+
+-- contains(
+val sys::Obj
+x sys::Obj?
+) sys::Bool
+flags=const public static
+loc=:184/179
+@axon::Axon
+
+Return if 'val' contains 'x':
+ - if 'val' is Str, then 'x' is substring.
+ - if 'val' is List, then 'x' is item to search.
+ - if 'val' is Range, then is 'x' inside the range inclusively
+ - if 'val' is DateSpan, then is 'x' a date in the span
+
+-- add(
+val sys::Obj?
+item sys::Obj?
+) sys::Obj?
+flags=const public static
+loc=:194/193
+@axon::Axon
+
+Add item to the end of a list and return a new list.
+
+-- addAll(
+val sys::Obj?
+items sys::Obj?
+) sys::Obj?
+flags=const public static
+loc=:201/200
+@axon::Axon
+
+Add all the items to the end of a list and return a new list.
+
+-- set(
+val sys::Obj?
+key sys::Obj?
+item sys::Obj?
+) sys::Obj?
+flags=const public static
+loc=:210/207
+@axon::Axon
+
+Set a collection item and return a new collection.
+ - List: set item by index key
+ - Dict: set item by key name
+
+-- merge(
+a sys::Obj?
+b sys::Obj?
+) sys::Obj?
+flags=const public static
+loc=:222/217
+@axon::Axon
+
+Merge two Dicts together and return a new Dict.  Any tags
+in 'b' are added to 'a'.  If 'b' defines a tag already
+in 'a', then it is overwritten by 'b'.  If a tag in 'b' is
+mapped to 'Remove.val', then that tag is removed from the
+result.
+
+-- insert(
+val sys::Obj?
+index haystack::Number
+item sys::Obj?
+) sys::Obj?
+flags=const public static
+loc=:225/224
+@axon::Axon
+
+Insert an item into a list at the given index and return a new list.
+
+-- insertAll(
+val sys::Obj?
+index haystack::Number
+items sys::Obj?
+) sys::Obj?
+flags=const public static
+loc=:232/231
+@axon::Axon
+
+Insert a list of items at the given index and return a new list.
+
+-- remove(
+val sys::Obj?
+key sys::Obj?
+) sys::Obj?
+flags=const public static
+loc=:241/238
+@axon::Axon
+
+Remove an item from a collection and return a new collection.
+ - List: key is index to remove at
+ - Dict: key is tag name
+
+-- stream(
+val sys::Obj?
+) sys::Obj
+flags=const public static
+loc=:255/250
+@axon::Axon
+
+Create new stream from given collection:
+  - Grid: stream the rows
+  - List: stream the items
+  - Range: stream inclusive range of integers
+See `docSkySpark::Streams#stream`.
+
+-- collect(
+stream sys::Obj?
+to axon::Fn?:=null
+) sys::Obj
+flags=const public static
+loc=:265/263
+@axon::Axon
+
+Collect stream into a in-memory list or grid.
+See `docSkySpark::Streams#collect`.
+
+-- limit(
+stream sys::Obj?
+limit haystack::Number
+) sys::Obj
+flags=const public static
+loc=:272/270
+@axon::Axon
+
+Truncate stream after given limit is reached.
+See `docSkySpark::Streams#limit`.
+
+-- skip(
+stream sys::Obj?
+count haystack::Number
+) sys::Obj
+flags=const public static
+loc=:279/277
+@axon::Axon
+
+Skip the given number of items in a stream.
+See `docSkySpark::Streams#skip`.
+
+-- sort(
+val sys::Obj
+sorter sys::Obj?:=null
+) sys::Obj?
+flags=const public static
+loc=:296/286
+@axon::Axon
+
+Sort a list or grid.
+
+If sorting a list, the sorter should be a function
+that takes two list items and returns -1, 0, or 1 (typicaly
+done with the '<=>' operator.  If no sorter is passed, then
+the list is sorted by its natural ordering.
+
+If sorting a grid, the sorter can be a column name
+or a function.  If a function, it should take two rows
+and return -1, 0, or 1.
+
+-- sortDis(
+val haystack::Grid
+) sys::Obj?
+flags=const public static
+loc=:302/301
+@axon::Axon
+
+Sort a grid by row display name - see `haystack::Grid.sortDis`
+
+-- sortr(
+val sys::Obj
+sorter sys::Obj?:=null
+) sys::Obj?
+flags=const public static
+loc=:306/304
+@axon::Axon
+
+Reverse sort a list or grid.  This function works just
+like `sort` except sorts in reverse.
+
+-- each(
+val sys::Obj
+fn axon::Fn
+) sys::Obj?
+flags=const public static
+loc=:317/311
+@axon::Axon
+
+Iterate the items of a collection:
+  - Grid: iterate the rows as (row, index)
+  - List: iterate the items as (value, index)
+  - Dict: iterate the name/value pairs (value, name)
+  - Range: iterate the integer range (integer)
+  - Stream: iterate items as (val); see `docSkySpark::Streams#each`
+
+-- eachWhile(
+val sys::Obj
+fn axon::Fn
+) sys::Obj?
+flags=const public static
+loc=:336/327
+@axon::Axon
+
+Iterate the items of a collection until the given function returns
+non-null.  Once non-null is returned, then break the iteration and
+return the resulting object.  Return null if the function returns null
+for every item.
+  - Grid: iterate the rows as (row, index)
+  - List: iterate the items as (val, index)
+  - Dict: iterate the name/value pairs (val, name)
+  - Range: iterate the integer range (integer)
+  - Stream: iterate items as (val); see `docSkySpark::Streams#eachWhile`
+
+-- map(
+val sys::Obj
+fn axon::Fn
+) sys::Obj?
+flags=const public static
+loc=:368/346
+@axon::Axon
+
+Map list, dict, or grid by applying the given mapping function.
+
+If mapping a list, the mapping should be a function
+that takes '(val)' or '(val, index)'.  It should return
+the new value for that index.
+
+If mapping a dict, the mapping should be a function
+that takes '(val)' or '(val, name)'.  It should return
+the new value for that name.
+
+If mapping a grid, the mapping function takes '(row)' or '(row,index)'
+and returns a new dictionary to use for the row.  The resulting
+grid shares the original's grid level meta.  Columns
+left intact share the old meta-data, new columns have no
+meta-data.  If the mapping function returns null, then that row
+is removed from the resulting grid (not mapped).
+
+If mapping a range, then the mapping function takes '(integer)', and
+returns a list for each mapped integer inte the range.
+
+If mapping a stream, the mapping functions takes '(val)'.
+See `docSkySpark::Streams#map`.
+
+-- flatMap(
+val sys::Obj
+fn axon::Fn
+) sys::Obj?
+flags=const public static
+loc=:392/378
+@axon::Axon
+
+Map each item in a list or grid to zero or more new items
+as a flattened result.
+
+If mapping a list, the mapping should be a function
+that takes '(val)' or '(val, index)'.  It should return
+the a list of zero or more new values.
+See `sys::List.flatMap`.
+
+If mapping a grid, the mapping function takes '(row)' or '(row,index)'
+and returns a list of zero or more new Dict rows.
+See `haystack::Grid.flatMap`.
+
+If mapping a stream, the mapping functions takes '(val)'.
+See `docSkySpark::Streams#flatMap`.
+
+-- find(
+val sys::Obj
+fn axon::Fn
+) sys::Obj?
+flags=const public static
+loc=:417/400
+@axon::Axon
+
+Find the first matching item in a list or grid by
+applying the given filter function.  If no match
+is found return null.
+
+If working with a list, the filter should be a function
+that takes '(val)' or '(val, index)'.  It should return
+true to match and return the item.
+
+If working with a dict, the filter should be a function
+that takes '(val)' or '(val, name)'.  It should return
+true to match and return the item.
+
+If working with a grid, the filter function takes '(row)'
+or '(row, index)' and returns true to match and return the row.
+
+If working with a stream, the filter takes '(val)' and returns
+true to match.  See `docSkySpark::Streams#find`.
+
+-- findAll(
+val sys::Obj
+fn axon::Fn
+) sys::Obj?
+flags=const public static
+loc=:443/426
+@axon::Axon
+
+Find all the items in a list, dict, or grid by applying
+the given filter function.  Also see `find`.
+
+If working with a list, the filter should be a function
+that takes '(val)' or '(val, index)'.  It should return
+true to keep the item.
+
+If working with a dict, the filter should be a function
+that takes '(val)' or '(val, name)'.  It should return
+the true to keep the name/value pair.
+
+If working with a grid, the filter function takes '(row)'
+or '(row, index)' and returns true to keep the row.  The
+resulting grid shares the original's grid meta and columns.
+
+If working with a stream, the filter takes '(val)' and returns
+true to match.  See `docSkySpark::Streams#findAll`.
+
+-- all(
+val sys::Obj
+fn axon::Fn
+) sys::Obj?
+flags=const public static
+loc=:471/452
+@axon::Axon
+
+Return if all the items in a list, dict, or grid match the
+given test function.  If the collection is empty, then return
+true.
+
+If working with a list, the function takes '(val)'
+or '(val, index)' and returns true or false.
+
+If working with a dict, the function takes '(val)'
+or '(val, name)' and returns true or false.
+
+If working with a grid, the function takes '(row)'
+or '(row, index)' and returns true or false.
+
+If working with a stream, then function takes '(val)'
+and returns true or false.  See `docSkySpark::Streams#all`.
+
+Examples:
+  [1, 3, 5].all v => v.isOdd  >>  true
+  [1, 3, 6].all(isOdd)        >>  false
+
+-- any(
+val sys::Obj
+fn axon::Fn
+) sys::Obj?
+flags=const public static
+loc=:499/480
+@axon::Axon
+
+Return if any the items in a list, dict, or grid match the
+given test function.  If the collection is empty, then return
+false.
+
+If working with a list, the function takes '(val)'
+or '(val, index)' and returns true or false.
+
+If working with a dict, the function takes '(val)'
+or '(val, name)' and returns true or false.
+
+If working with a grid, the function takes '(row)'
+or '(row, index)' and returns true or false.
+
+If working with a stream, then function takes '(val)'
+and returns true or false.  See `docSkySpark::Streams#any`.
+
+Examples:
+  [1, 3, 5].any v => v.isOdd  >>  true
+  [2, 4, 6].any(isOdd)        >>  false
+
+-- reduce(
+val sys::Obj
+init sys::Obj?
+fn axon::Fn
+) sys::Obj?
+flags=const public static
+loc=:528/508
+@axon::Axon
+
+Reduce a collection to a single value with the given reducer
+function.  The given function is called with each item in the
+collection along with a current *accumulation* value.  The accumation
+value is initialized to 'init' for the first item, and for every
+subsequent item it is the result of the previous item.  Return
+the final accumulation value.  Also see `fold` which is preferred
+if doing standard rollup such as sum or average.
+
+If working with a list, the function takes '(acc, val, index)'
+and returns accumulation value
+
+If working with a grid, the function takes '(acc, row, index)'
+and returns accumulation value
+
+If working with a stream, then function takes '(acc, val)'
+and returns accumulation value  See `docSkySpark::Streams#reduce`.
+
+Examples:
+  [2, 5, 3].reduce(0, (acc, val)=>acc+val)  >> 10
+  [2, 5, 3].reduce(1, (acc, val)=>acc*val)  >> 30
+
+-- moveTo(
+list sys::Obj[]
+item sys::Obj?
+toIndex haystack::Number
+) sys::Obj[]
+flags=const public static
+loc=:546/538
+@axon::Axon
+
+Find the given item in a list, and move it to the given index.  All
+the other items are shifted accordingly.  Negative indexes may
+used to access an index from the end of the list.  If the item is
+not found then this is a no op.  Return new list.
+
+Examples:
+  [10, 11, 12].moveTo(11, 0)  >>  [11, 10, 12]
+  [10, 11, 12].moveTo(11, -1) >>  [10, 12, 11]
+
+-- unique(
+val sys::Obj
+key sys::Obj?:=null
+) sys::Obj?
+flags=const public static
+loc=:560/551
+@axon::Axon
+
+Return the unique items in a collection.  If val is a List
+then return `sys::List.unique`.  If val is a Grid then
+return `haystack::Grid.unique` where key must be a column
+name or list of column names.
+
+Examples:
+  [1, 1, 2, 2].unique                 >> [1, 2]
+  grid.unique("geoState")             >> unique states
+  grid.unique(["geoCity", geoState"]) >> city,state combos
+
+-- flatten(
+list sys::List
+) sys::Obj
+flags=const public static
+loc=:577/567
+@axon::Axon
+
+Flatten a list to a single level.  If given a list of
+grids, then flatten rows to a single grid.  Also see
+`sys::List.flatten` and `haystack::Etc.gridFlatten`.
+
+Examples:
+  // flatten a list of numbers
+  [1, [2, 3], [4, [5, 6]]].flatten  >>  [1, 2, 3, 4, 5, 6]
+
+  // flatten a list of grids
+  ["Carytown", "Gaithersburg"].map(n=>readAll(siteRef->dis==n)).flatten
+
+-- gridRowsToDict(
+grid haystack::Grid
+rowToKey axon::Fn
+rowToVal axon::Fn
+) haystack::Dict
+flags=const public static
+loc=:588/585
+@axon::Axon
+
+Convert grid rows into a dict of name/val pairs.  The name/value
+pairs are derived from each row using the given functions.  The
+functions take '(row, index)'
+
+-- gridColsToDict(
+grid haystack::Grid
+colToKey axon::Fn
+colToVal axon::Fn
+) haystack::Dict
+flags=const public static
+loc=:606/603
+@axon::Axon
+
+Convert grid columns into a dict of name/val pairs.  The name/val
+paris are derived from each column using the given functions.  The
+functions take '(col, index)'
+
+-- gridColKinds(
+grid haystack::Grid
+) haystack::Grid
+flags=const public static
+loc=:627/621
+@axon::Axon
+
+Given a grid return the types used in each column as a grid
+with the following:
+  - 'name': string name of the column
+  - 'kind': all the different value kinds in the column separated by "|"
+  - 'count': total number of rows with column with a non-null value
+Also see `readAllTagNames`.
+
+-- fold(
+val sys::Obj?
+fn axon::Fn
+) sys::Obj?
+flags=const public static
+loc=:715/673
+@axon::Axon
+
+Fold a list or stream into a single value using given folding function.
+The folding function signature must be '(val, acc)' where val is the items
+being folded, and acc is an accumulator used to maintain
+state between interations.  Lifecycle of a fold:
+  1. Call 'fn(foldStart, null)', return initial accumulator state
+  2. Call 'fn(item, acc)' for every item, return new accumulator state
+  3. Call 'fn(foldEnd, acc)' return final result
+
+See `docSkySpark::Streams#fold` for streaming details.
+
+The fold will short-circuit and halt immediately if the folding
+function returns `na()` for the accumulator state. The result of
+the fold is `na()` in this case.  A folding function should document
+its behavior when a collection contains `na()`.
+
+Built-in folding functions include:
+  - `count()`
+  - `sum()`
+  - `avg()`
+  - `min()`
+  - `max()`
+  - `mean()`
+  - `median()`
+  - `rootMeanSquareErr()`
+  - `meanBiasErr()`
+  - `standardDeviation()`
+
+Example:
+  [1, 2, 3, 4].fold(max)  // fold list into its max value
+  [1, 2, 3, 4].fold(avg)  // fold list into its average value
+  [1, 2, na(), 3].fold(sum) // => na()
+
+Example of writing your own custom fold function that
+used start/end values and has support for na():
+   average: (val, acc) => do
+     if (val == foldStart()) return {sum:0, count:0}
+     if (val == foldEnd()) return acc->sum / acc->count
+     if (val == na()) return na()
+     return {sum: acc->sum + val, count: acc->count + 1}
+   end
+Also see `reduce()` which is easier to use if doing your
+own simple rollup computation.
+
+-- foldCol(
+grid haystack::Grid
+colName sys::Str
+fn axon::Fn
+) sys::Obj?
+flags=const public static
+loc=:738/733
+@axon::Axon
+
+Fold the values of the given column into a single value.
+The folding function uses the same semantics as `fold`.
+
+Example:
+  readAll(site).foldCol("area", sum)
+
+-- foldCols(
+grid haystack::Grid
+colSelector sys::Obj
+newColName sys::Str
+fn axon::Fn
+) haystack::Grid
+flags=const public static
+loc=:781/754
+@axon::Axon
+
+Fold a set of columns in each row into a new folded column
+and return a new grid.  The columns to fold are selected by the
+'colSelector' function and removed from the result.  The selector
+may be a list of string names or a function which takes a Col
+and returns true to select it.  The folding function uses same
+semantics as `fold`.
+
+
+Example:
+  // consider grid 'g' with the following structure:
+  a    b    c
+  ---  ---  ---
+  1    10   100
+  2    20   200
+
+  // foldCols, add b and c together to create new bc column
+  g.foldCols(["b", "c"], "bc", sum)
+
+  // yields this grid:
+  a    bc
+  ---  ---
+  1    110
+  2    220
+
+  // we could also replace list of col names with a function
+  colSel: col => col.name == "b" or col.name == "c"
+  g.foldCols(colSel, "bc", sum)
+
+-- foldStart(
+) sys::Obj?
+flags=const public static
+loc=:815/814
+@axon::Axon
+
+The fold start marker value
+
+-- foldEnd(
+) sys::Obj?
+flags=const public static
+loc=:818/817
+@axon::Axon
+
+The fold end marker value
+
+-- count(
+val sys::Obj
+acc sys::Obj?
+) sys::Obj?
+flags=const public static
+loc=:825/823
+@axon::Axon{
+meta=["foldOn":"Obj"]
+}
+
+Fold multiple values into their total count
+Return zero if no values.
+
+-- sum(
+val sys::Obj?
+acc sys::Obj?
+) sys::Obj?
+flags=const public static
+loc=:835/833
+@axon::Axon{
+meta=["foldOn":"Number"]
+}
+
+Fold multiple values into their numeric sum.
+Return null if no values.
+
+-- min(
+val sys::Obj?
+acc sys::Obj?
+) sys::Obj?
+flags=const public static
+loc=:854/847
+@axon::Axon{
+meta=["foldOn":"Number"]
+}
+
+Compare two numbers and return the smaller one.  This function
+may also be used with `fold` to return the smallest number (or
+null if no values).
+
+Examples:
+  min(7, 4)            >>  4
+  [7, 2, 4].fold(min)  >>  2
+
+-- max(
+val sys::Obj?
+acc sys::Obj?
+) sys::Obj?
+flags=const public static
+loc=:872/865
+@axon::Axon{
+meta=["foldOn":"Number"]
+}
+
+Compare two numbers and return the larger one.  This function
+may also be used with `fold` to return the largest number (or
+null if no values).
+
+Examples:
+  max(7, 4)            >>  7
+  [7, 2, 4].fold(max)  >>  7
+
+-- avg(
+val sys::Obj?
+acc sys::Obj?
+) sys::Obj?
+flags=const public static
+loc=:890/884
+@axon::Axon{
+meta=["foldOn":"Number"]
+}
+
+Fold multiple values into their standard average or arithmetic
+mean.  This function is the same as [math::mean]`mean`.  Null
+values are ignored.  Return null if no values.
+
+Example:
+  [7, 2, 3].fold(avg)  >>  4
+
+-- spread(
+val sys::Obj?
+acc sys::Obj?
+) sys::Obj?
+flags=const public static
+loc=:910/905
+@axon::Axon{
+meta=["foldOn":"Number"]
+}
+
+Fold multiple values to compute the difference between
+the max and min value. Return null if no values.
+
+Example:
+  [7, 2, 3].fold(spread)  >>  5
+
+-- marker(
+) haystack::Marker
+flags=const public static
+loc=:937/936
+@axon::Axon
+
+Get the marker value singleton `haystack::Marker.val`
+
+-- removeMarker(
+) haystack::Remove
+flags=const public static
+loc=:940/939
+@axon::Axon
+
+Get the remove value singleton `haystack::Remove.val`
+
+-- na(
+) haystack::NA
+flags=const public static
+loc=:943/942
+@axon::Axon
+
+Get NA not-available singleton `haystack::NA.val`
+
+-- isTagName(
+n sys::Str
+) sys::Bool
+flags=const public static
+loc=:947/945
+@axon::Axon
+
+Return if the given string is legal tag name -
+see `haystack::Etc.isTagName`
+
+-- toTagName(
+n sys::Str
+) sys::Str
+flags=const public static
+loc=:951/949
+@axon::Axon
+
+Given arbitrary string, convert to a safe tag name -
+see `haystack::Etc.toTagName`
+
+-- names(
+dict haystack::Dict
+) sys::Obj?
+flags=const public static
+loc=:954/953
+@axon::Axon
+
+Get the list of names used by a given dict
+
+-- vals(
+dict haystack::Dict
+) sys::Obj?
+flags=const public static
+loc=:957/956
+@axon::Axon
+
+Get the list of values used by a given dict
+
+-- _trap(
+val sys::Obj?
+name sys::Str
+) sys::Obj?
+flags=const public static
+loc=:968/959
+@axon::Axon
+
+Function for the '->' operator.  If the given value is a dict,
+then get a value by name, or throw UnknownNameErr if name not mapped.
+If the value is a Ref, then perform a checked 'readById', then perform
+the name lookup.
+
+The trap function maybe be accessed using the '->' shortcut operator:
+   dict->foo  >>>  dict.trap("foo")
+
+See `docSkySpark::AxonLang#getAndTrap`.
+
+-- meta(
+val sys::Obj?
+) haystack::Dict
+flags=const public static
+loc=:979/978
+@axon::Axon
+
+Get the meta-data from a grid or col as a dict.
+
+-- cols(
+grid haystack::Grid
+) haystack::Col[]
+flags=const public static
+loc=:987/986
+@axon::Axon
+
+Get the columns from a grid as a list.
+
+-- col(
+grid haystack::Grid
+name sys::Str
+checked sys::Bool:=true
+) haystack::Col?
+flags=const public static
+loc=:991/989
+@axon::Axon
+
+Get a column by its name.  If not resolved then
+return null or throw UnknownNameErr based on checked flag.
+
+-- colNames(
+grid haystack::Grid
+) sys::Str[]
+flags=const public static
+loc=:994/993
+@axon::Axon
+
+Get the column names a list of strings.
+
+-- name(
+val sys::Obj?
+) sys::Str
+flags=const public static
+loc=:997/996
+@axon::Axon
+
+If val is a Col, get the column name.
+
+-- setMeta(
+grid sys::Obj
+meta haystack::Dict
+) sys::Obj
+flags=const public static
+loc=:1005/1003
+@axon::Axon
+
+Return new grid with grid level meta-data replaced by given
+meta Dict.  Also see `addMeta` and `docSkySpark::Streams#setMeta`.
+
+-- addMeta(
+grid sys::Obj
+meta haystack::Dict
+) sys::Obj
+flags=const public static
+loc=:1015/1012
+@axon::Axon
+
+Return new grid with additional grid level meta-data tags.
+Tags are added using `merge` conventions.  Also see `setMeta`
+and `docSkySpark::Streams#addMeta`.
+
+-- join(
+a haystack::Grid
+b haystack::Grid
+joinColName sys::Str
+) haystack::Grid
+flags=const public static
+loc=:1027/1022
+@axon::Axon
+
+Join two grids by column name.  Current implementation requires:
+ - grids cannot have conflicting col names (other than join col)
+ - each row in both grids must have a unique value for join col
+ - grid level meta is merged
+ - join column meta is merged
+
+-- joinAll(
+grids haystack::Grid[]
+joinColName sys::Str
+) haystack::Grid
+flags=const public static
+loc=:1033/1032
+@axon::Axon
+
+Join a list of grids into a single grid.  See `join`.
+
+-- addCol(
+grid haystack::Grid
+col sys::Obj?
+fn axon::Fn
+) haystack::Grid
+flags=const public static
+loc=:1047/1042
+@axon::Axon
+
+Add a column to a grid by mapping each row to a new cell value.
+The 'col' parameter may be a simple String name or may be a
+dictionary which must have a "name" tag (any other
+tags become column meta-data).  The mapping function takes
+'(row)' and returns the new cell values for the column.
+
+-- renameCol(
+grid haystack::Grid
+oldName sys::Str
+newName sys::Str
+) haystack::Grid
+flags=const public static
+loc=:1063/1059
+@axon::Axon
+
+Return a new grid with the given column renamed.
+
+Example:
+  readAll(site).renameCol("dis", "title")
+
+-- renameCols(
+grid haystack::Grid
+mapping haystack::Dict
+) haystack::Grid
+flags=const public static
+loc=:1074/1068
+@axon::Axon
+
+Return a new grid with multiple columns renamed.
+Mapping must be a dict of old to new names.  Old column names
+not found are ignored.
+
+Example:
+  readAll(site).renameCols({dis:"title", geoAddr:"subtitle"})
+
+-- reorderCols(
+grid sys::Obj
+colNames sys::Str[]
+) sys::Obj
+flags=const public static
+loc=:1088/1079
+@axon::Axon
+
+Return a new grid with the columns reordered.  The given list
+of names represents the new order and must contain the same current
+column names.  Any columns not specified are removed.  Also
+see `colNames`, `moveTo`, and `docSkySpark::Streams#reorderCols`.
+
+Example:
+  // move name to first col, and foo to last col
+  cols: grid.colNames.moveTo("name", 0).moveTo("foo", -1)
+  return grid.reorderCols(cols)
+
+-- setColMeta(
+grid sys::Obj
+name sys::Str
+meta haystack::Dict
+) sys::Obj
+flags=const public static
+loc=:1097/1095
+@axon::Axon
+
+Return a new grid with column meta-data replaced by given meta dict.
+Also see `addColMeta` and `docSkySpark::Streams#setColMeta`.
+
+-- addColMeta(
+grid sys::Obj
+name sys::Str
+meta haystack::Dict
+) sys::Obj
+flags=const public static
+loc=:1107/1104
+@axon::Axon
+
+Return a new grid with additional column meta-data.
+Column meta is added using `merge` conventions.  Also
+see `setColMeta` and `docSkySpark::Streams#addColMeta`.
+
+-- removeCol(
+grid sys::Obj
+col sys::Obj
+) sys::Obj
+flags=const public static
+loc=:1117/1114
+@axon::Axon
+
+Return a new grid with the given column removed.
+If the column doesn't exist, then return given grid.
+Also see `docSkySpark::Streams#removeCol`.
+
+-- removeCols(
+grid sys::Obj
+cols sys::Obj[]
+) sys::Obj
+flags=const public static
+loc=:1127/1124
+@axon::Axon
+
+Return a new grid with all the given columns removed.
+Columns can be Str names or Col instances.
+Also see `docSkySpark::Streams#removeCols`.
+
+-- keepCols(
+grid sys::Obj
+cols sys::Obj[]
+) sys::Obj
+flags=const public static
+loc=:1137/1134
+@axon::Axon
+
+Return a new grid with keeps the given columns, but removes
+all the others.  Columns can be Str names or Col instances.
+Also see `docSkySpark::Streams#keepCols`.
+
+-- addRow(
+grid haystack::Grid
+newRow haystack::Dict
+) haystack::Grid
+flags=const public static
+loc=:1145/1144
+@axon::Axon
+
+Add an additional Dict row to the end of a grid.
+
+-- addRows(
+grid haystack::Grid
+newRows sys::Obj
+) haystack::Grid
+flags=const public static
+loc=:1149/1147
+@axon::Axon
+
+Add an list of rows to the end of a grid.
+The newRows may be expressed as list of Dict or a Grid.
+
+-- colToList(
+grid haystack::Grid
+col sys::Obj
+) sys::Obj?[]
+flags=const public static
+loc=:1180/1179
+@axon::Axon
+
+Get a column as a list of the cell values ordered by row.
+
+-- transpose(
+grid haystack::Grid
+) haystack::Grid
+flags=const public static
+loc=:1185/1182
+@sys::NoDoc
+@axon::Axon
+
+Perform a matrix transpose on the grid.  The cells of the
+first column because the display names for the new columns.
+Columns 1..n become the new rows.
+
+-- swizzleRefs(
+grid haystack::Grid
+) haystack::Grid
+flags=const public static
+loc=:1192/1187
+@axon::Axon
+
+Given a grid of records, assign new ids and swizzle all internal
+ref tags.  Each row of the grid must have an 'id' tag.  A new id
+is generated for each row, and any Ref tags which used one of
+the old ids is replaced with the new id.  This function is handy
+for copying graphs of recs such as site/equip/point trees.
+
+-- swizzleRefsVal(
+oldToNewIds [haystack::Ref:haystack::Ref]
+v sys::Obj?
+) sys::Obj?
+flags=const public static
+loc=:1205/1204
+@sys::NoDoc
+
+Swizzle utility
+
+-- times(
+times haystack::Number
+fn axon::Fn
+) sys::Obj?
+flags=const public static
+loc=:1219/1217
+@axon::Axon
+
+Call the specified function the given number
+of times passing the counter.
+
+-- isOdd(
+val haystack::Number
+) sys::Obj?
+flags=const public static
+loc=:1228/1227
+@axon::Axon
+
+Return if an integer is an odd number.
+
+-- isEven(
+val haystack::Number
+) sys::Obj?
+flags=const public static
+loc=:1231/1230
+@axon::Axon
+
+Return if an integer is an even number.
+
+-- abs(
+val haystack::Number?
+) sys::Obj?
+flags=const public static
+loc=:1234/1233
+@axon::Axon
+
+Return absolute value of a number, if null return null
+
+-- isNaN(
+val sys::Obj?
+) sys::Bool
+flags=const public static
+loc=:1237/1236
+@axon::Axon
+
+Return if 'val' is the Number representation of not-a-number
+
+-- nan(
+) haystack::Number
+flags=const public static
+loc=:1240/1239
+@axon::Axon
+
+Return the Number representation of not-a-number
+
+-- posInf(
+) haystack::Number
+flags=const public static
+loc=:1243/1242
+@axon::Axon
+
+Return the Number representation positive infinity
+
+-- negInf(
+) haystack::Number
+flags=const public static
+loc=:1246/1245
+@axon::Axon
+
+Return the Number representation negative infinity
+
+-- today(
+) sys::Date
+flags=const public static
+loc=:1253/1252
+@axon::Axon
+
+Return today's Date according to context's time zone
+
+-- yesterday(
+) sys::Date
+flags=const public static
+loc=:1256/1255
+@axon::Axon
+
+Return yesterday's Date according to context's time zone
+
+-- now(
+) sys::DateTime
+flags=const public static
+loc=:1259/1258
+@axon::Axon
+
+Return current DateTime according to context's time zone.
+
+-- nowTicks(
+) haystack::Number
+flags=const public static
+loc=:1264/1261
+@axon::Axon
+
+Return current time as nanosecond ticks since 1 Jan 2000 UTC.
+Note that the 64-bit floating point representations of nanosecond
+ticks will loose accuracy below the microsecond.
+
+-- occurred(
+ts sys::Obj?
+range sys::Obj?
+) sys::Obj?
+flags=const public static
+loc=:1274/1266
+@axon::Axon
+
+Return if a timestamp is contained within a Date range.
+Range may be any value supported by `toDateSpan`.  Timestamp
+may be either a Date or a DateTime.  Also see `contains`.
+
+Examples:
+  ts.occurred(thisWeek)
+  ts.occurred(pastMonth())
+  ts.occurred(2010-01-01..2010-01-15)
+
+-- start(
+val sys::Obj?
+) sys::Obj?
+flags=const public static
+loc=:1289/1288
+@axon::Axon
+
+Start value of a DateSpan, Span or a range.
+
+-- end(
+val sys::Obj?
+) sys::Obj?
+flags=const public static
+loc=:1298/1297
+@axon::Axon
+
+End value of a DateSpan, Span, or a range.
+
+-- thisWeek(
+) haystack::DateSpan
+flags=const public static
+loc=:1307/1306
+@axon::Axon
+
+DateSpan for this week as 'sun..sat' (uses locale start of week)
+
+-- thisMonth(
+) haystack::DateSpan
+flags=const public static
+loc=:1310/1309
+@axon::Axon
+
+DateSpan for this month as '1st..28-31'
+
+-- thisYear(
+) haystack::DateSpan
+flags=const public static
+loc=:1313/1312
+@axon::Axon
+
+DateSpan for this year 'Jan-1..Dec-31'
+
+-- pastWeek(
+) haystack::DateSpan
+flags=const public static
+loc=:1316/1315
+@axon::Axon
+
+DateSpan for last 7 days as 'today-7days..today'
+
+-- pastMonth(
+) haystack::DateSpan
+flags=const public static
+loc=:1319/1318
+@axon::Axon
+
+DateSpan for last 30days 'today-30days..today'
+
+-- pastYear(
+) haystack::DateSpan
+flags=const public static
+loc=:1322/1321
+@axon::Axon
+
+DateSpan for this past 'today-365days..today'
+
+-- lastWeek(
+) haystack::DateSpan
+flags=const public static
+loc=:1325/1324
+@axon::Axon
+
+DateSpan for week previous to this week 'sun..sat' (uses locale start of week)
+
+-- lastMonth(
+) haystack::DateSpan
+flags=const public static
+loc=:1328/1327
+@axon::Axon
+
+DateSpan for month previous to this month '1..28-31'
+
+-- lastYear(
+) haystack::DateSpan
+flags=const public static
+loc=:1331/1330
+@axon::Axon
+
+DateSpan for year previous to this year 'Jan-1..Dec-31'
+
+-- toDateSpan(
+r sys::Obj?
+) haystack::DateSpan
+flags=const public static
+loc=:1351/1333
+@axon::Axon
+
+Convert the following objects into a `haystack::DateSpan`:
+  - 'Date..Date': starting and ending date
+  - 'Date..Number': starting date and num of days (day unit required)
+  - 'Date': one day range
+  - 'Number': convert as year
+  - 'Func': function which evaluates to date range
+  - 'DateTime..DateTime': use starting/ending dates; if end is midnight,
+    then use previous date
+  - 'Str': evaluates to `haystack::DateSpan.fromStr`
+  - null: use projMeta dateSpanDefault or default to today
+
+Examples:
+  toDateSpan(2010-07-01..2010-07-03)  >>  01-Jul-2010..03-Jul-2010
+  toDateSpan(2010-07-01..4)           >>  01-Jul-2010..04-Jul-2010
+  toDateSpan(2010-07-01..60day)       >>  01-Jul-2010..29-Aug-2010
+  toDateSpan(2010-07)                 >>  01-Jul-2010..31-Jul-2010
+  toDateSpan(2010)                    >>  01-Jan-2010..31-Dec-2010
+  toDateSpan(pastWeek) // on 9 Aug    >>  02-Aug-2010..09-Aug-2010
+
+-- toDateTimeSpan(
+a sys::Obj?
+b sys::Obj?:=null
+) haystack::Span
+flags=const public static
+loc=:1382/1381
+@sys::Deprecated{
+msg="Use toSpan"
+}
+@axon::Axon
+
+Use `toSpan`
+
+-- toSpan(
+a sys::Obj?
+b sys::Obj?:=null
+) haystack::Span
+flags=const public static
+loc=:1388/1385
+@axon::Axon
+
+Convert the following objects into a `haystack::Span`:
+  - 'DateSpan,tz': anything accepted by `toDateSpan` plus a Timezone string
+  - 'DateTime..DateTime': range of two DateTimes
+
+-- numDays(
+span sys::Obj?
+) haystack::Number
+flags=const public static
+loc=:1410/1409
+@axon::Axon
+
+Number of whole days in a span
+
+-- eachDay(
+dates sys::Obj
+fn axon::Fn
+) sys::Obj?
+flags=const public static
+loc=:1424/1415
+@axon::Axon
+
+Iterate the days of a span.  The 'dates' argument may be any object
+converted into a date range by `toDateSpan`.  The given function is
+called with a 'Date' argument for each iterated day.
+
+Example:
+  f: day => echo(day)
+  eachDay(2010-07-01..2010-07-03, f) >> iterate Jul 1st, 2nd, 3rd
+  eachDay(2010-07, f)                >> iterate each day of July 2010
+  eachDay(pastWeek, f)               >> iterate last 7 days
+
+-- eachMonth(
+dates sys::Obj
+fn axon::Fn
+) sys::Obj?
+flags=const public static
+loc=:1442/1432
+@axon::Axon
+
+Iterate the months of a span.  The 'dates' argument may be any object
+converted into a date range by `toDateSpan`.  The given function is
+called with a 'DateSpan' argument for each interated month.
+
+Examples:
+  // iterate each month in 2010, and echo data range
+  eachMonth(2010) d => echo(d)
+
+  // call f once for current method
+  eachMonth(today(), f)
+
+-- year(
+d sys::Obj
+) sys::Obj?
+flags=const public static
+loc=:1455/1454
+@axon::Axon
+
+Get year as integer such as 2010 from date or datetime
+
+-- month(
+d sys::Obj
+) sys::Obj?
+flags=const public static
+loc=:1461/1460
+@axon::Axon
+
+Get month as integer between 1 to 12 from date or datetime
+
+-- day(
+d sys::Obj
+) sys::Obj?
+flags=const public static
+loc=:1467/1466
+@axon::Axon
+
+Get day of month as integer between 1 to 31 from date or datetime.
+
+-- hour(
+t sys::Obj
+) sys::Obj?
+flags=const public static
+loc=:1473/1472
+@axon::Axon
+
+Get hour of day as integer between 0 to 23 from time or datetime
+
+-- minute(
+t sys::Obj
+) sys::Obj?
+flags=const public static
+loc=:1479/1478
+@axon::Axon
+
+Get minutes of the time as integer between 0 to 59 from time or datetime
+
+-- second(
+t sys::Obj
+) sys::Obj?
+flags=const public static
+loc=:1485/1484
+@axon::Axon
+
+Get seconds of the time as integer between 0 to 59 from time or datetime
+
+-- weekday(
+t sys::Obj
+) haystack::Number
+flags=const public static
+loc=:1492/1490
+@axon::Axon
+
+Get weekday as integer from 0 to 6 of Date or DateTime.
+Zero indicates Sunday and 6 indicates Saturday
+
+-- isWeekend(
+t sys::Obj
+) sys::Obj?
+flags=const public static
+loc=:1498/1497
+@axon::Axon
+
+Does the given Date or DateTime fall on Sat or Sun
+
+-- isWeekday(
+t sys::Obj
+) sys::Obj?
+flags=const public static
+loc=:1505/1504
+@axon::Axon
+
+Does the given Date or DateTime fall on Mon, Tue, Wed, Thu, or Fri
+
+-- tz(
+dt sys::DateTime?:=null
+) sys::Obj?
+flags=const public static
+loc=:1513/1511
+@axon::Axon
+
+Get timezone as city name string in tzinfo database from datetime.
+If the datetime is null then return the environment default timezone.
+
+-- dateTime(
+d sys::Date
+t sys::Time
+tz sys::Str?:=null
+) sys::Obj?
+flags=const public static
+loc=:1517/1515
+@axon::Axon
+
+Construct a DateTime from a date, time, and timezone name.
+If timezone is null, use system default.
+
+-- date(
+val sys::Obj
+month haystack::Number?:=null
+day haystack::Number?:=null
+) sys::Obj?
+flags=const public static
+loc=:1529/1523
+@axon::Axon
+
+If val is a DateTime: get date portion of the timestamp.
+If val is a Number: construct a date instance from year, month, day
+
+Examples:
+  now().date         // same as today()
+  date(2010, 12, 1)  // same as 2010-12-01
+
+-- time(
+val sys::Obj
+minutes haystack::Number?:=null
+secs haystack::Number:=Number.zero
+) sys::Obj?
+flags=const public static
+loc=:1543/1536
+@axon::Axon
+
+If val is a DateTime: get time portion of the timestamp.
+If val is a Number: construct a time instance from hour, minutes,
+secs (truncated to nearest second).
+
+Examples:
+  now().time      // current time
+  time(20, 45)    // same as 20:45
+
+-- toTimeZone(
+val sys::Obj
+tz sys::Str
+) sys::Obj?
+flags=const public static
+loc=:1553/1550
+@axon::Axon
+
+Convert a DateTime or Span to another timezone:
+   now().toTimeZone("Chicago")
+   now().toTimeZone("UTC")
+
+-- numDaysInMonth(
+month sys::Obj?:=null
+) haystack::Number
+flags=const public static
+loc=:1571/1560
+@axon::Axon
+
+Get the number of days in a given month.  The month parameter may be:
+  - Date: returns number of days in given month (uses month/year, ignores day)
+  - Number 1-12: returns days in month for current year
+  - null: returns day in current month
+
+Examples:
+  numDaysInMonth()            >>>  days in current month
+  numDaysInMonth(1)           >>>  31day (days in January)
+  numDaysInMonth(6)           >>>  30day (days in June)
+  numDaysInMonth(2)           >>>  28day or 29day (days for Feb this year)
+  numDaysInMonth(2012-02-13)  >>>  29day (days in Feb for leap year)
+
+-- isLeapYear(
+year haystack::Number
+) sys::Bool
+flags=const public static
+loc=:1582/1581
+@axon::Axon
+
+Return if a year is a leap year. Year must be four digit Number such as 2020.
+
+-- dst(
+dt sys::DateTime
+) sys::Bool
+flags=const public static
+loc=:1587/1584
+@axon::Axon
+
+Return if a DateTime is in daylight saving time.  For the given DateTime
+and its specific timezone, return true if the time is in daylight savings
+time or false if standard time.
+
+-- hoursInDay(
+dt sys::DateTime
+) haystack::Number
+flags=const public static
+loc=:1592/1589
+@axon::Axon
+
+Given a DateTime in a specific timezone, return the number of hours
+in the day.  Dates which transition to DST will be 23 hours and days
+which transition back to standard time will be 25 hours.
+
+-- dayOfYear(
+val sys::Obj
+) haystack::Number
+flags=const public static
+loc=:1596/1594
+@axon::Axon
+
+Given a DateTime or Date, return the day of the year.  The result
+is a number between 1 and 365 (or 1 to 366 if a leap year).
+
+-- weekOfYear(
+val sys::Obj
+startOfWeek haystack::Number?:=null
+) haystack::Number
+flags=const public static
+loc=:1601/1598
+@axon::Axon
+
+Given a DateTime or Date, return the week number of the year.  The
+result is a number between 1 and 53 using the given start of week weekday
+as number 0-6 (defaults start of week for current locale).
+
+-- startOfWeek(
+) haystack::Number
+flags=const public static
+loc=:1609/1607
+@axon::Axon
+
+Return current locale's start of weekday.  Weekday is
+returned as integer from 0 (Sunday) to 6 (Saturday).
+
+-- toJavaMillis(
+dt sys::DateTime
+) haystack::Number
+flags=const public static
+loc=:1616/1614
+@axon::Axon
+
+Given a DateTime return Number of milliseconds since Unix epoch.
+The epic is defined as 1-Jan-1970 UTC.  Also see `fromJavaMillis`.
+
+-- fromJavaMillis(
+millis haystack::Number
+tz sys::Str?:=null
+) sys::DateTime
+flags=const public static
+loc=:1621/1618
+@axon::Axon
+
+Given Number of milliseconds since Unix epoch return a DateTime.
+The epic is defined as 1-Jan-1970 UTC.  If timezone is null, use system
+default.  Also see `toJavaMillis`.
+
+-- isMetric(
+val sys::Obj?:=null
+) sys::Bool
+flags=const public static
+loc=:1645/1630
+@axon::Axon
+
+Given an optional value return true if the SI metric system should be
+used.  Return false if the United States customary unit system should be
+used.  The following rules are used:
+  - if val is a dict with `geoCountry` return return false if "US"
+  - if number or rec with `unit` and unit is known to be a US
+    customary unit return false (right now we only check
+    for °F and Δ°F)
+  - fallback to locale of hosting server, see `sys::Locale`
+
+Examples:
+   isMetric({geoCountry:"US"})  >>  false
+   isMetric({geoCountry:"FR"})  >>  true
+   isMetric(75°F)               >>  false
+   isMetric({unit:"Δ°C"})       >>  true
+   isMetric()                   >>  fallback to server locale
+
+-- unit(
+val haystack::Number?
+) sys::Str?
+flags=const public static
+loc=:1684/1682
+@axon::Axon
+
+Given a number return its unit string or null.
+If the val is null, then return null.
+
+-- unitsEq(
+a haystack::Number?
+b haystack::Number?
+) sys::Bool
+flags=const public static
+loc=:1688/1686
+@axon::Axon
+
+Return if the two numbers have the same unit.  If either
+of the numbers if null return false.
+
+-- to(
+val haystack::Number?
+unit sys::Obj?
+) haystack::Number?
+flags=const public static
+loc=:1706/1694
+@axon::Axon
+
+Convert a number to the given unit.  If the units are not
+of the same dimension then an exception is raised.  The
+target unit can be a string or a Number.  If target unit
+is a Number, then the scalar value is ignored, but by
+convention should be 1.  Also see `as()` function to set a
+unit without conversion.
+
+Examples:
+   10kWh.to(1BTU)
+   10kWh.to("BTU")
+   75°F.to(1°C)
+   to(75°F, 1°C)
+
+-- _as(
+val haystack::Number?
+unit sys::Obj?
+) haystack::Number?
+flags=const public static
+loc=:1725/1717
+@axon::Axon
+
+Set the unit of a number.  Unlike `to()` function, no conversion of
+the scalar of the number is performed.  The target unit can be a
+unit string or a number in which case the scalar value of the
+unit parameter is ignored (by convention should be 1).
+
+Examples:
+  75°F.as(1°C)
+  75°F.as("°C")
+
+-- def(
+symbol sys::Obj
+checked sys::Bool:=true
+) haystack::Def?
+flags=const public static
+loc=:1742/1738
+@axon::Axon
+
+Lookup a def by its symbol name (Str or Symbol).  If not
+found return null or raise UnknownDefErr based on checked flag.
+The result is returned as the definition's normalized dict
+representation.
+
+-- defs(
+) haystack::Def[]
+flags=const public static
+loc=:1748/1747
+@axon::Axon
+
+List all definitions in the context namespace as Def[].
+
+-- tags(
+) haystack::Def[]
+flags=const public static
+loc=:1754/1753
+@axon::Axon
+
+List tag definitions in the context namespace as Def[].
+
+-- terms(
+) haystack::Def[]
+flags=const public static
+loc=:1761/1760
+@axon::Axon
+
+List term definitions (tags and conjuncts) in the context namespace as Def[].
+
+-- conjuncts(
+) haystack::Def[]
+flags=const public static
+loc=:1768/1767
+@axon::Axon
+
+List conjunct definitions in the context namespace as Def[].
+
+-- libs(
+) haystack::Def[]
+flags=const public static
+loc=:1775/1774
+@sys::NoDoc
+@axon::Axon
+
+List the lib definitions in the context namespace as Def[].
+
+-- supertypes(
+d sys::Obj
+) haystack::Def[]
+flags=const public static
+loc=:1782/1780
+@sys::NoDoc
+@axon::Axon
+
+Return declared supertypes of the given def.  The result
+is effectively the resolved defs of the "is" meta tag.
+
+-- subtypes(
+d sys::Obj
+) haystack::Def[]
+flags=const public static
+loc=:1790/1787
+@sys::NoDoc
+@axon::Axon
+
+Return all declared subtypes of the given def.  This is
+effectively all defs which have a declared supertype of def.
+Feature keys are not included in results.
+
+-- hasSubtypes(
+d sys::Obj
+) sys::Bool
+flags=const public static
+loc=:1796/1795
+@sys::NoDoc
+@axon::Axon
+
+Return if the given def has subtypes.
+
+-- inheritance(
+d sys::Obj
+) haystack::Def[]
+flags=const public static
+loc=:1804/1801
+@sys::NoDoc
+@axon::Axon
+
+Return a flatten list of all supertypes of the given def.  This
+list always includes the def itself.   The result represents the
+complete set of all defs implemented by the given def.
+
+-- associations(
+parent sys::Obj
+association sys::Obj
+) haystack::Def[]
+flags=const public static
+loc=:1811/1809
+@sys::NoDoc
+@axon::Axon
+
+Return list of defs for given association on the parent.
+Association define ontological relationships between definitions.
+
+-- implement(
+d sys::Obj
+) haystack::Def[]
+flags=const public static
+loc=:1817/1816
+@sys::NoDoc
+@axon::Axon
+
+Return list of tags to apply to implement the given def
+
+-- reflect(
+dict haystack::Dict
+) haystack::Def[]
+flags=const public static
+loc=:1823/1822
+@sys::NoDoc
+@axon::Axon
+
+Reflect the given subject dict into the list of its implemented Def[]
+
+-- proto(
+parent haystack::Dict
+proto haystack::Dict
+) haystack::Dict
+flags=public
+loc=:1830/1828
+@sys::NoDoc
+@axon::Axon
+
+Generate a child prototype for the given parent dict.  This call
+will automatically apply childrenFlatten tags and parent refs.
+
+-- protos(
+parent haystack::Dict
+) haystack::Dict[]
+flags=const public static
+loc=:1837/1835
+@sys::NoDoc
+@axon::Axon
+
+Generate a list of children prototypes for the given parent
+dict based on all its reflected defs.
+
+-- debugType(
+val sys::Obj?
+) sys::Str
+flags=const public static
+loc=:1849/1846
+@axon::Axon
+
+Return a string of the given value's type.  No guarantee is made
+for the string's format.  Applications must **not** assume any
+specific format, this function is for human consumption only.
+
+-- isList(
+val sys::Obj?
+) sys::Bool
+flags=const public static
+loc=:1856/1855
+@axon::Axon
+
+Return if an object is a list type
+
+-- isDict(
+val sys::Obj?
+) sys::Bool
+flags=const public static
+loc=:1859/1858
+@axon::Axon
+
+Return if an object is a dict type
+
+-- isGrid(
+val sys::Obj?
+) sys::Bool
+flags=const public static
+loc=:1862/1861
+@axon::Axon
+
+Return if an object is a grid type
+
+-- isBool(
+val sys::Obj?
+) sys::Bool
+flags=const public static
+loc=:1865/1864
+@axon::Axon
+
+Return if an object is a boolean type
+
+-- isNumber(
+val sys::Obj?
+) sys::Bool
+flags=const public static
+loc=:1868/1867
+@axon::Axon
+
+Return if an object is a number type
+
+-- isRef(
+val sys::Obj?
+) sys::Bool
+flags=const public static
+loc=:1871/1870
+@axon::Axon
+
+Return if an object is a ref type
+
+-- isStr(
+val sys::Obj?
+) sys::Bool
+flags=const public static
+loc=:1874/1873
+@axon::Axon
+
+Return if an object is a str type
+
+-- isUri(
+val sys::Obj?
+) sys::Bool
+flags=const public static
+loc=:1877/1876
+@axon::Axon
+
+Return if an object is a Uri type
+
+-- isDate(
+val sys::Obj?
+) sys::Bool
+flags=const public static
+loc=:1880/1879
+@axon::Axon
+
+Return if an object is a Date type
+
+-- isTime(
+val sys::Obj?
+) sys::Bool
+flags=const public static
+loc=:1883/1882
+@axon::Axon
+
+Return if an object is a Time type
+
+-- isDateTime(
+val sys::Obj?
+) sys::Bool
+flags=const public static
+loc=:1886/1885
+@axon::Axon
+
+Return if an object is a DateTime type
+
+-- isFunc(
+val sys::Obj?
+) sys::Bool
+flags=const public static
+loc=:1889/1888
+@axon::Axon
+
+Return if an object is a function type
+
+-- isKeyword(
+val sys::Str
+) sys::Bool
+flags=const public static
+loc=:1892/1891
+@axon::Axon
+
+Return if given string is an Axon keyword
+
+-- toHex(
+val haystack::Number
+) sys::Obj?
+flags=const public static
+loc=:1899/1898
+@axon::Axon
+
+Convert a number to a hexadecimal string.
+
+-- toRadix(
+val haystack::Number
+radix haystack::Number
+width haystack::Number?:=null
+) sys::Obj?
+flags=const public static
+loc=:1908/1901
+@axon::Axon
+
+Convert a number to its string representation in the given radix (base).
+If width is non-null, then leading zeroes are prepended to ensure the
+specified width.
+
+Example:
+  6.toRadix(2) => "110"
+  255.toRadix(16, 4) => "00ff"
+
+-- _toStr(
+val sys::Obj?
+) sys::Obj?
+flags=const public static
+loc=:1911/1910
+@axon::Axon
+
+Convert an obj to its string representation
+
+-- toList(
+val sys::Obj?
+) sys::Obj?[]
+flags=const public static
+loc=:1914/1913
+@axon::Axon
+
+If val is a list return it, otherwise return '[val]'.
+
+-- toGrid(
+val sys::Obj?
+meta haystack::Dict?:=null
+) haystack::Grid
+flags=const public static
+loc=:1930/1916
+@axon::Axon
+
+Given an arbitrary object, translate it to a Grid via
+`haystack::Etc.toGrid`:
+  - if grid just return it
+  - if row in grid of size, return row.grid
+  - if scalar return 1x1 grid
+  - if dict return grid where dict is only
+  - if list of dict return grid where each dict is row
+  - if list of non-dicts, return one col grid with rows for each item
+
+Example:
+  // create simple grid with dis,age cols and 3 rows:
+  [{dis:"Bob", age:30},
+   {dis:"Ann", age:40},
+   {dis:"Dan", age:50}].toGrid
+
+-- colsToLocale(
+grid haystack::Grid
+) haystack::Grid
+flags=const public static
+loc=:1939/1936
+@axon::Axon
+
+Localize column display names.  For each col which does not have
+an explicit dislay name, add a 'dis' tag based on the column name.
+Also see `haystack::Grid.colsToLocale` and `docSkySpark::Localization#tags`.
+
+-- toLocale(
+key sys::Str
+) sys::Str
+flags=const public static
+loc=:1944/1941
+@axon::Axon
+
+Get the localized string for the given tag name or qualified name.
+If the key is formatted as "pod::name" then route to `sys::Env.locale`,
+otherwise to `haystack::Etc.tagToLocale`.
+
+-- localeUse(
+locale axon::Expr
+expr axon::Expr
+) sys::Obj?
+flags=const public static
+loc=:1963/1953
+@axon::Axon
+
+Evaluate an expression within a specific locale.  This enables
+formatting and parsing of localized text using a locale other than
+the default for the current context.
+
+Examples:
+  // format Date in German
+  localeUse("de", today().format)
+
+  // parse Date in German
+  localeUse("de", parseDate("01 Mär 2021", "DD MMM YYYY"))
+
+-- dis(
+dict haystack::Dict?
+name sys::Str?:=null
+def sys::Str?:=""
+) sys::Str
+flags=const public static
+loc=:1980/1975
+@axon::Axon
+
+Get display string for dict or the given tag.  If 'name'
+is null, then return display text for the entire dict
+using `haystack::Etc.dictToDis`.  If 'name' is non-null then format
+the tag value using its appropiate 'toLocale' method.
+Also see `haystack::Dict.dis`.
+
+-- relDis(
+parent sys::Obj
+child sys::Obj
+) sys::Str
+flags=const public static
+loc=:1989/1986
+@axon::Axon
+
+Get a relative display name.  If the child display name
+starts with the parent, then we can strip that as the
+common suffix.  Parent and child must be either a Dict or a Str.
+
+-- format(
+val sys::Obj?
+pattern sys::Str?:=null
+) sys::Str
+flags=const public static
+loc=:2004/1996
+@axon::Axon
+
+Format an object using the current locale and specified format
+pattern.  Formatting patterns follow Fantom toLocale conventions:
+  - `sys::Bool.toLocale`
+  - `haystack::Number.toLocale`
+  - `sys::Date.toLocale`
+  - `sys::Time.toLocale`
+  - `sys::DateTime.toLocale`
+If 'toLocale' method is found, then return 'val.toStr'
+
+-- parseBool(
+val sys::Str
+checked sys::Bool:=true
+) sys::Bool?
+flags=const public static
+loc=:2014/2012
+@axon::Axon
+
+Parse a Str into a Bool, legal formats are "true" or "false.  If invalid
+format and checked is false return null, otherwise throw ParseErr.
+
+-- parseInt(
+val sys::Str
+radix haystack::Number:=Number.ten
+checked sys::Bool:=true
+) haystack::Number?
+flags=const public static
+loc=:2020/2016
+@axon::Axon
+
+Parse a Str into a integer number using the specified radix.
+If invalid format and checked is false return null, otherwise
+throw ParseErr. This string value *cannot* include a unit (see
+parseNumber).
+
+-- parseFloat(
+val sys::Str
+checked sys::Bool:=true
+) haystack::Number?
+flags=const public static
+loc=:2031/2027
+@axon::Axon
+
+Parse a Str into a Float.  Representations for infinity and
+not-a-number are "-INF", "INF", "NaN".  If invalid format
+and checked is false return null, otherwise throw ParseErr.
+This string value *cannot* include a unit (see parseNumber).
+
+-- parseNumber(
+val sys::Str
+checked sys::Bool:=true
+) haystack::Number?
+flags=const public static
+loc=:2042/2038
+@axon::Axon
+
+Parse a Str into a number with an option unit.  If invalid
+format and checked is false return null, otherwise throw ParseErr.
+Also see `parseInt` and `parseFloat` to parse basic integers and
+floating point numbers without a unit.
+
+-- parseUri(
+val sys::Str
+checked sys::Bool:=true
+) sys::Uri?
+flags=const public static
+loc=:2064/2055
+@axon::Axon
+
+Parse a string into a Uri instance.  If the string cannot be parsed
+into a valid Uri and checked is false then return null, otherwise
+throw ParseErr.  This function converts an URI from *standard form*.
+Use `uriDecode` to convert a string from *escaped form*.  See `sys::Uri`
+for a detailed discussion on standard and escaped forms.
+
+Examples:
+  "foo bar".parseUri     >>  `foo bar`
+  "foo%20bar".uriDecode  >>  `foo bar`
+
+-- parseDate(
+val sys::Str
+pattern sys::Str:="YYYY-MM-DD"
+checked sys::Bool:=true
+) sys::Date?
+flags=const public static
+loc=:2072/2069
+@axon::Axon
+
+Parse a Str into a Date.  If the string cannot be parsed into a valid
+Date and checked is false then return null, otherwise throw ParseErr.
+See `sys::Date.toLocale` for pattern.
+
+-- parseTime(
+val sys::Str
+pattern sys::Str:="hh:mm:SS"
+checked sys::Bool:=true
+) sys::Time?
+flags=const public static
+loc=:2080/2077
+@axon::Axon
+
+Parse a Str into a Time.  If the string cannot be parsed into a valid
+Time and checked is false then return null, otherwise throw ParseErr.
+See `sys::Time.toLocale` for pattern.
+
+-- parseDateTime(
+val sys::Str
+pattern sys::Str:="YYYY-MM-DD'T'hh:mm:SS.FFFFFFFFFz zzzz"
+tz sys::Str:=TimeZone.cur().name()
+checked sys::Bool:=true
+) sys::DateTime?
+flags=const public static
+loc=:2124/2085
+@axon::Axon
+
+Parse a Str into a DateTime.  If the string cannot be parsed into a valid
+DateTime and checked is false then return null, otherwise throw ParseErr.
+See `sys::DateTime.toLocale` for pattern:
+
+  YY     Two digit year             07
+  YYYY   Four digit year            2007
+  M      One/two digit month        6, 11
+  MM     Two digit month            06, 11
+  MMM    Three letter abbr month    Jun, Nov
+  MMMM   Full month                 June, November
+  D      One/two digit day          5, 28
+  DD     Two digit day              05, 28
+  DDD    Day with suffix            1st, 2nd, 3rd, 24th
+  WWW    Three letter abbr weekday  Tue
+  WWWW   Full weekday               Tuesday
+  V      One/two digit week of year 1,52
+  VV     Two digit week of year     01,52
+  VVV    Week of year with suffix   1st,52nd
+  h      One digit 24 hour (0-23)   3, 22
+  hh     Two digit 24 hour (0-23)   03, 22
+  k      One digit 12 hour (1-12)   3, 11
+  kk     Two digit 12 hour (1-12)   03, 11
+  m      One digit minutes (0-59)   4, 45
+  mm     Two digit minutes (0-59)   04, 45
+  s      One digit seconds (0-59)   4, 45
+  ss     Two digit seconds (0-59)   04, 45
+  SS     Optional seconds (only if non-zero)
+  f*     Fractional secs trailing zeros
+  F*     Fractional secs no trailing zeros
+  a      Lower case a/p for am/pm   a, p
+  aa     Lower case am/pm           am, pm
+  A      Upper case A/P for am/pm   A, P
+  AA     Upper case AM/PM           AM, PM
+  z      Time zone offset           Z, +03:00 (ISO 8601, XML Schema)
+  zzz    Time zone abbr             EST, EDT
+  zzzz   Time zone name             New_York
+  'xyz'  Literal characters
+  ''     Single quote literal
+
+-- parseRef(
+val sys::Str
+dis sys::Obj?:=null
+checked sys::Bool:=true
+) haystack::Ref?
+flags=const public static
+loc=:2132/2129
+@axon::Axon
+
+Parse a Str into a Ref.  If the string is not a valid Ref identifier
+then raise ParseErr or return null based on checked flag.  The string
+must *not* include a leading "@".
+
+-- parseSymbol(
+val sys::Str
+checked sys::Bool:=true
+) haystack::Symbol?
+flags=const public static
+loc=:2149/2146
+@axon::Axon
+
+Parse a Str into a Symbol.  If the string is not a valid Symbol
+identifier then raise ParseErr or return null based on checked flag.
+The string must *not* include a leading "^".
+
+-- parseFilter(
+val sys::Str
+checked sys::Bool:=true
+) sys::Obj?
+flags=const public static
+loc=:2160/2154
+@axon::Axon
+
+Parse a string into a Filter expr which may be used
+with the `read` or `readAll` function.  Also see `filterToFunc`.
+
+Example:
+  str: "point and kw"
+  readAll(parseFilter(str))
+
+-- parseUnit(
+val sys::Str
+checked sys::Bool:=true
+) sys::Str?
+flags=const public static
+loc=:2168/2165
+@axon::Axon
+
+Parse a Str into a standardized unit name.  If the val is not
+a valid unit name from the standard database then return null
+or raise exception based on checked flag.
+
+-- xstr(
+type sys::Str
+val sys::Str
+) sys::Obj
+flags=const public static
+loc=:2174/2173
+@axon::Axon
+
+Construct decoded `haystack::XStr` instance
+
+-- upper(
+val sys::Obj
+) sys::Obj?
+flags=const public static
+loc=:2181/2180
+@axon::Axon
+
+Convert a char number or str to upper case
+
+-- lower(
+val sys::Obj
+) sys::Obj?
+flags=const public static
+loc=:2184/2183
+@axon::Axon
+
+Convert a char number or str to lower case
+
+-- isSpace(
+num haystack::Number
+) sys::Bool
+flags=const public static
+loc=:2187/2186
+@axon::Axon
+
+Is number is whitespace char: space \t \n \r \f
+
+-- isAlpha(
+num haystack::Number
+) sys::Bool
+flags=const public static
+loc=:2190/2189
+@axon::Axon
+
+Is number an ASCII alpha char: isUpper||isLower
+
+-- isAlphaNum(
+num haystack::Number
+) sys::Bool
+flags=const public static
+loc=:2193/2192
+@axon::Axon
+
+Is number an ASCII alpha-numeric char: isAlpha||isDigit
+
+-- isUpper(
+num haystack::Number
+) sys::Bool
+flags=const public static
+loc=:2196/2195
+@axon::Axon
+
+Is number an ASCII uppercase alphabetic char: A-Z
+
+-- isLower(
+num haystack::Number
+) sys::Bool
+flags=const public static
+loc=:2199/2198
+@axon::Axon
+
+Is number an ASCII lowercase alphabetic char: a-z
+
+-- isDigit(
+num haystack::Number
+radix haystack::Number:=Number.ten
+) sys::Bool
+flags=const public static
+loc=:2204/2201
+@axon::Axon
+
+Is number a digit in the specified radix.  A decimal radix of
+ten returns true for 0-9.  A radix of 16 also returns true
+for a-f and A-F.
+
+-- toChar(
+num haystack::Number
+) sys::Str
+flags=const public static
+loc=:2207/2206
+@axon::Axon
+
+Convert a unicode char number into a single char string
+
+-- split(
+val sys::Str
+sep sys::Str?:=null
+opts haystack::Dict?:=null
+) sys::Obj?
+flags=const public static
+loc=:2220/2213
+@axon::Axon
+
+Split a string by the given separator and trim whitespace.
+If 'sep' is null then split by any whitespace char; otherwise
+it must be exactly one char long.  See `sys::Str.split` for detailed
+behavior.
+
+Options:
+  - noTrim: disable auto-trim of whitespace from start and end of tokens
+
+-- capitalize(
+val sys::Str
+) sys::Str
+flags=const public static
+loc=:2231/2229
+@axon::Axon
+
+Return this string with the first character converted to
+uppercase.  The case conversion is for ASCII only.
+
+-- decapitalize(
+val sys::Str
+) sys::Str
+flags=const public static
+loc=:2235/2233
+@axon::Axon
+
+Return this string with the first character converted to
+lowercase.  The case conversion is for ASCII only.
+
+-- trim(
+val sys::Str
+) sys::Str
+flags=const public static
+loc=:2240/2237
+@axon::Axon
+
+Trim whitespace from the beginning and end of the string.  For the purposes
+of this function, whitespace is defined as any character equal to or less
+than the 0x20 space character (including ' ', '\r', '\n', and '\t').
+
+-- trimStart(
+val sys::Str
+) sys::Str
+flags=const public static
+loc=:2244/2242
+@axon::Axon
+
+Trim whitespace only from the beginning of the string.
+See `trim` for definition of whitespace.
+
+-- trimEnd(
+val sys::Str
+) sys::Str
+flags=const public static
+loc=:2248/2246
+@axon::Axon
+
+Trim whitespace only from the end of the string.
+See `trim` for definition of whitespace.
+
+-- startsWith(
+val sys::Str
+sub sys::Str
+) sys::Bool
+flags=const public static
+loc=:2251/2250
+@axon::Axon
+
+Return if Str starts with the specified Str.
+
+-- endsWith(
+val sys::Str
+sub sys::Str
+) sys::Bool
+flags=const public static
+loc=:2254/2253
+@axon::Axon
+
+Return if Str ends with the specified Str.
+
+-- replace(
+val sys::Str
+from sys::Str
+to sys::Str
+) sys::Str
+flags=const public static
+loc=:2262/2256
+@axon::Axon
+
+String replace of all occurrences of 'from' with 'to'.
+All three parameters must be strings.
+
+Examples:
+  "hello".replace("hell", "t")  >>  "to"
+  "aababa".replace("ab", "-")   >>  "a--a"
+
+-- padl(
+val sys::Str
+width haystack::Number
+char sys::Str:=" "
+) sys::Str
+flags=const public static
+loc=:2270/2264
+@axon::Axon
+
+Pad string to the left.  If size is less than width, then
+add the given char to the left to achieve the specified width.
+
+Examples:
+  "3".padl(3, "0")    >>  "003"
+  "123".padl(2, "0")  >>  "123"
+
+-- padr(
+val sys::Str
+width haystack::Number
+char sys::Str:=" "
+) sys::Str
+flags=const public static
+loc=:2280/2273
+@axon::Axon
+
+Pad string to the right.  If size is less than width, then add
+the given char to the left to acheive the specified with.
+
+Examples:
+  "xyz".padr(2, ".")  >>  "xyz"
+  "xyz".padr(5, "-")  >>  "xyz--"
+
+-- concat(
+list sys::List
+sep sys::Str:=""
+) sys::Str
+flags=const public static
+loc=:2287/2282
+@axon::Axon
+
+Concatenate a list of items into a string.
+
+Examples:
+  [1, 2, 3].concat       >>  "123"
+  [1, 2, 3].concat(",")  >>  "1,2,3"
+
+-- reMatches(
+regex sys::Obj
+s sys::Str
+) sys::Bool
+flags=const public static
+loc=:2299/2293
+@axon::Axon
+
+Return if regular expression matches entire region of 's'.
+See [AxonUsage]`docSkySpark::AxonUsage#regex`.
+
+Examples:
+  reMatches(r"\d+", "x123y")  >>  false
+  reMatches(r"\d+", "123")    >>  true
+
+-- reFind(
+regex sys::Obj
+s sys::Str
+) sys::Str?
+flags=const public static
+loc=:2311/2304
+@axon::Axon
+
+Find the first match of regular expression in 's'
+or return null if no matches.
+See [AxonUsage]`docSkySpark::AxonUsage#regex`.
+
+Examples:
+  reFind(r"\d+", "x123y")  >>  "123"
+  reFind(r"\d+", "xyz")    >>  null
+
+-- reGroups(
+regex sys::Obj
+s sys::Str
+) sys::Obj?
+flags=const public static
+loc=:2328/2318
+@axon::Axon
+
+Return a list of the substrings captured by matching the given
+regular operation against 's'.  Return null if no matches.  The
+first item in the list is the entire match, and each additional
+item is matched to '()' arguments in the regex pattern.
+See [AxonUsage]`docSkySpark::AxonUsage#regex`.
+
+Examples:
+  re: r"(RTU|AHU)-(\d+)"
+  reGroups(re, "AHU")    >> null
+  reGroups(re, "AHU-7")  >> ["AHU-7", "AHU", "7"]
+
+-- uriScheme(
+val sys::Uri
+) sys::Str?
+flags=const public static
+loc=:2342/2341
+@axon::Axon
+
+Get the scheme of a Uri as a string or null
+
+-- uriHost(
+val sys::Uri
+) sys::Str?
+flags=const public static
+loc=:2345/2344
+@axon::Axon
+
+Get the host Uri as a string or null
+
+-- uriPort(
+val sys::Uri
+) haystack::Number?
+flags=const public static
+loc=:2348/2347
+@axon::Axon
+
+Get the port of a Uri as a Number or null
+
+-- uriName(
+val sys::Uri
+) sys::Str?
+flags=const public static
+loc=:2351/2350
+@axon::Axon
+
+Get the name Str of a Uri (last item in path).
+
+-- uriPath(
+val sys::Uri
+) sys::Obj?
+flags=const public static
+loc=:2354/2353
+@axon::Axon
+
+Get the path segments of a Uri as a list of Strs.
+
+-- uriPathStr(
+val sys::Uri
+) sys::Str?
+flags=const public static
+loc=:2357/2356
+@axon::Axon
+
+Get the path a Uri as a string.
+
+-- uriBasename(
+val sys::Uri
+) sys::Str?
+flags=const public static
+loc=:2360/2359
+@axon::Axon
+
+Get the basename (last name in path without extension) of a Uri as a string.
+
+-- uriExt(
+val sys::Uri
+) sys::Str?
+flags=const public static
+loc=:2363/2362
+@axon::Axon
+
+Get the URI extension of a Uri as a string or null.
+
+-- uriIsDir(
+val sys::Uri
+) sys::Bool
+flags=const public static
+loc=:2366/2365
+@axon::Axon
+
+Return if the URI path ends in a slash.
+
+-- uriFrag(
+val sys::Uri
+) sys::Str?
+flags=const public static
+loc=:2369/2368
+@axon::Axon
+
+Return if the fragment identifier portion of the a URI after hash symbol
+
+-- uriQueryStr(
+val sys::Uri
+) sys::Str?
+flags=const public static
+loc=:2372/2371
+@axon::Axon
+
+Return if the query portion of the a URI after question mark
+
+-- uriPlusSlash(
+val sys::Uri
+) sys::Uri
+flags=const public static
+loc=:2375/2374
+@axon::Axon
+
+Adding trailing slash to the URI.  See `sys::Uri.plusSlash`
+
+-- uriEncode(
+val sys::Uri
+) sys::Str
+flags=const public static
+loc=:2384/2377
+@axon::Axon
+
+Return the percent encoded string for this Uri according to RFC 3986.
+Each section of the Uri is UTF-8 encoded into octects and then percent
+encoded according to its valid character set. Spaces in the query
+section are encoded as '+'.
+
+Examples:
+  `foo bar`.uriEncode  >>  "foo%20bar"
+
+-- uriDecode(
+val sys::Str
+checked sys::Bool:=true
+) sys::Uri
+flags=const public static
+loc=:2397/2386
+@axon::Axon
+
+Parse an ASCII percent encoded string into a Uri according to RFC 3986.
+All %HH escape sequences are translated into octects, and then the octect
+sequence is UTF-8 decoded into a Str. The '+' character in the query section
+is unescaped into a space. If checked if true then throw ParseErr if the
+string is a malformed URI or if not encoded correctly, otherwise return
+null.  Use `parseUri` to parse from standard form.  See `sys::Uri` for
+a detailed discussion on standard and encoded forms.
+
+Examples:
+  "foo bar".parseUri     >>  `foo bar`
+  "foo%20bar".uriDecode  >>  `foo bar`
+
+-- refGen(
+) haystack::Ref
+flags=const public static
+loc=:2404/2403
+@axon::Axon
+
+Generate a new unique Ref identifier
+
+-- refDis(
+ref haystack::Ref
+) sys::Str
+flags=const public static
+loc=:2407/2406
+@axon::Axon
+
+Given a ref return `haystack::Ref.dis`
+
+-- coord(
+lat haystack::Number
+lng haystack::Number
+) haystack::Coord
+flags=const public static
+loc=:2414/2413
+@axon::Axon
+
+Construct a Coord from two Numbers in decimal degrees
+
+-- coordLat(
+coord haystack::Coord
+) haystack::Number
+flags=const public static
+loc=:2417/2416
+@axon::Axon
+
+Latitude of a Coord as a Number
+
+-- coordLng(
+coord haystack::Coord
+) haystack::Number
+flags=const public static
+loc=:2420/2419
+@axon::Axon
+
+Longitude of a Coord as a Number
+
+-- coordDist(
+c1 haystack::Coord
+c2 haystack::Coord
+) haystack::Number
+flags=const public static
+loc=:2424/2422
+@axon::Axon
+
+Compute the great-circle distance between two Coords.
+The result is a distance in meters using the haversine forumula.
+
+-- noop(
+) sys::Obj?
+flags=const public static
+loc=:2431/2430
+@sys::NoDoc
+@axon::Axon
+
+Do nothing no-op
+
+-- _echo(
+x sys::Obj?
+) sys::Obj?
+flags=const public static
+loc=:2435/2434
+@axon::Axon{
+admin=true
+}
+
+Write the str represenation of 'x' to stdout and return 'x'.
+
+-- dump(
+x sys::Obj?
+) sys::Obj?
+flags=const public static
+loc=:2439/2438
+@sys::NoDoc
+@axon::Axon{
+admin=true
+}
+
+Dump respresentation of 'x' standard out.  Return 'x' as result.
+
+-- call(
+func sys::Obj
+args sys::Obj?[]?:=null
+) sys::Obj?
+flags=const public static
+loc=:2458/2448
+@axon::Axon
+
+Reflectively call a function with the given arguments.  The func
+may be a Str name or an expression that evaluates to a function.
+Args is a positional list for each argument.  Examples:
+
+  call("today")
+  call("replace", ["hi there", "hi", "hello"])
+  call("parseDate", ["2021-03-15"])
+  call("parseDate", ["15-Mar-21", "DD-MMM-YY"])
+  call(parseDate, ["15-Mar-21", "DD-MMM-YY"])
+  call(parseDate(_, "DD-MMM-YY"), ["15-Mar-21"])
+
+-- toAxonCode(
+val sys::Obj?
+) sys::Obj?
+flags=const public static
+loc=:2472/2467
+@axon::Axon
+
+Convert a scalar, list, or dict value to its Axon code representation
+
+  toAxonCode(123)        =>   "123"
+  toAxonCode([1, 2, 3])  =>   "[1, 2, 3]"
+  toAxonCode({x:123})    =>   "{x:123}"
+
+-- parseAst(
+src sys::Str
+) haystack::Dict
+flags=const public static
+loc=:2484/2474
+@axon::Axon
+
+Parse Axon source code into an abstract syntax tree modeled as a
+tree of dicts.  Each node has a 'type' tag which specified the node type.
+Common AST shapes:
+
+   123    =>  {type:"literal", val:123}
+   a      =>  {type:"var", name:"a"}
+   not a  =>  {type:"not", operand:{type:"var", name:"a"}}
+   a + b  =>  {type:"add", lhs:{type:"var", name:"a"}, rhs:{type:"var", name:"b"}}
+
+NOTE: the keys and structure of the AST is subject to change over time.
+
+-- trace(
+) sys::Obj?
+flags=const public static
+loc=:2490/2489
+@sys::NoDoc
+@axon::Axon{
+admin=true
+}
+
+Dump current context stack to standard out
+
+-- checkSyntax(
+src sys::Str
+) haystack::Grid
+flags=const public static
+loc=:2502/2499
+@sys::NoDoc
+@axon::Axon
+
+Given an axon expression, validate the syntax.  If there are no errors
+then return an empty grid.  If there are errors then return a grid
+with the "err" tag and a "line" and "dis" column for each error found.
+

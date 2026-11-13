@@ -1,0 +1,121 @@
+== FantomFn
+base=axon::Fn axon::Expr sys::Obj
+flags=const public
+loc=FantomFn.fan:16/13
+@sys::Js
+@sys::NoDoc
+
+FantomFn is an Axon function backed by a Fantom method
+
+-- reflectType(
+type sys::Type
+) [sys::Str:axon::FantomFn]
+flags=const public static
+loc=:24/23
+
+Reflect all the methods from a given type annotated with Axon facet
+
+-- reflectFuncFromType(
+type sys::Type
+name sys::Str
+meta haystack::Dict
+instanceRef concurrent::AtomicRef?
+) axon::FantomFn?
+flags=const public static
+loc=:42/41
+
+Reflect the given method
+
+-- reflectMethod(
+m sys::Method
+name sys::Str
+meta haystack::Dict
+instanceRef concurrent::AtomicRef?
+) axon::FantomFn
+flags=const public static
+loc=:54/53
+
+Reflect the given method
+
+-- toName(
+m sys::Method
+) sys::Str
+flags=const public static
+loc=:74/73
+
+Method to name
+
+-- method sys::Method
+flags=const public
+loc=:97/96
+
+Fantom method which backs the function
+
+-- instanceRef concurrent::AtomicRef?
+flags=const public
+loc=:100/99
+
+Instance to call method on if not static
+
+-- meta haystack::Dict
+flags=const public
+loc=:103/102
+
+Meta data tags
+
+-- isAdmin sys::Bool
+flags=const override public virtual
+loc=:106/105
+
+Is this function tagged as admin-only
+
+-- isSu sys::Bool
+flags=const override public virtual
+loc=:109/108
+
+Is this function tagged as superuser-only
+
+-- isDeprecated sys::Bool
+flags=const override public virtual
+loc=:112/111
+
+Return if this function has been deprecated
+
+-- isNative(
+) sys::Bool
+flags=override public virtual
+loc=:118
+
+-- callx(
+cx axon::AxonContext
+args sys::Obj?[]
+callLoc axon::Loc
+) sys::Obj?
+flags=override public virtual
+loc=:120
+
+-- doCall(
+cx axon::AxonContext
+args sys::Obj?[]
+) sys::Obj?
+flags=override public virtual
+loc=:138
+
+-- evalParamDef(
+cx axon::AxonContext
+param axon::FnParam
+) sys::Obj?
+flags=override public virtual
+loc=:146
+
+-- sig(
+) sys::Str
+flags=override public virtual
+loc=:152
+
+-- argsToStr(
+args sys::Obj?[]
+) sys::Str
+flags=public
+loc=:157
+

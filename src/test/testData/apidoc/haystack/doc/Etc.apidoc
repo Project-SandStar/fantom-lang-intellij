@@ -1,0 +1,832 @@
+== Etc
+base=sys::Obj
+flags=const public
+loc=Etc.fan:15/12
+@sys::Js
+
+Etc is the utility methods for Haystack.
+
+-- emptyDict(
+) haystack::Dict
+flags=const public static
+loc=:25/23
+
+Get the emtpy Dict instance.
+
+-- emptyTags [sys::Str:sys::Obj?]:=[Str:Obj?][:]
+flags=const public static
+loc=:30/28
+@sys::NoDoc
+
+Empty Str:Obj? map
+
+-- makeDict(
+val sys::Obj?
+) haystack::Dict
+flags=const public static
+loc=:39/33
+
+Make a Dict instance where 'val' is one of the following:
+  - Dict: return 'val'
+  - null: return `emptyDict`
+  - Str:Obj?: wrap map as Dict
+  - Str[]: dictionary of key/Marker value pairs
+
+-- makeDict1(
+n sys::Str
+v sys::Obj?
+) haystack::Dict
+flags=const public static
+loc=:73/71
+
+Make a Dict with one name/value pair
+
+-- makeDict2(
+n0 sys::Str
+v0 sys::Obj?
+n1 sys::Str
+v1 sys::Obj?
+) haystack::Dict
+flags=const public static
+loc=:81/79
+
+Make a Dict with two name/value pairs
+
+-- makeDict3(
+n0 sys::Str
+v0 sys::Obj?
+n1 sys::Str
+v1 sys::Obj?
+n2 sys::Str
+v2 sys::Obj?
+) haystack::Dict
+flags=const public static
+loc=:89/87
+
+Make a Dict with three name/value pairs
+
+-- makeDict4(
+n0 sys::Str
+v0 sys::Obj?
+n1 sys::Str
+v1 sys::Obj?
+n2 sys::Str
+v2 sys::Obj?
+n3 sys::Str
+v3 sys::Obj?
+) haystack::Dict
+flags=const public static
+loc=:97/95
+
+Make a Dict with four name/value pairs
+
+-- makeDict5(
+n0 sys::Str
+v0 sys::Obj?
+n1 sys::Str
+v1 sys::Obj?
+n2 sys::Str
+v2 sys::Obj?
+n3 sys::Str
+v3 sys::Obj?
+n4 sys::Str
+v4 sys::Obj?
+) haystack::Dict
+flags=const public static
+loc=:105/103
+
+Make a Dict with five name/value pairs
+
+-- makeDict6(
+n0 sys::Str
+v0 sys::Obj?
+n1 sys::Str
+v1 sys::Obj?
+n2 sys::Str
+v2 sys::Obj?
+n3 sys::Str
+v3 sys::Obj?
+n4 sys::Str
+v4 sys::Obj?
+n5 sys::Str
+v5 sys::Obj?
+) haystack::Dict
+flags=const public static
+loc=:113/111
+
+Make a Dict with six name/value pairs
+
+-- makeDicts(
+maps sys::Obj?[]
+) haystack::Dict[]
+flags=const public static
+loc=:121/119
+
+Make a list of Dict instances using `makeDict`.
+
+-- dictNames(
+d haystack::Dict
+) sys::Str[]
+flags=const public static
+loc=:129/127
+
+Get a read/write list of the dict's name keys.
+
+-- dictsNames(
+dicts haystack::Dict?[]
+) sys::Str[]
+flags=const public static
+loc=:141/137
+
+Given a list of dictionaries, find all the common names
+used.  Return the names in standard sorted order.  Any
+null dicts are skipped.
+
+-- dictVals(
+d haystack::Dict
+) sys::Obj[]
+flags=const public static
+loc=:171/169
+
+Get all the non-null values mapped by a dictionary.
+
+-- dictToMap(
+d haystack::Dict?
+) [sys::Str:sys::Obj?]
+flags=const public static
+loc=:182/179
+
+Convert a Dict to a read/write map.  This method is expensive,
+when possible you should instead use `Dict.each`.
+
+-- dictMap(
+d haystack::Dict
+f |sys::Obj?,sys::Str->sys::Obj?|
+) haystack::Dict
+flags=const public static
+loc=:193/190
+
+Apply the given map function to each name/value pair
+to construct a new Dict.
+
+-- dictFindAll(
+d haystack::Dict
+f |sys::Obj?,sys::Str->sys::Bool|
+) haystack::Dict
+flags=const public static
+loc=:205/201
+
+Return a new Dict containing the name/value pairs
+for which f returns true. If f returns false for
+every pair, then return an empty Dict.
+
+-- dictAny(
+d haystack::Dict
+f |sys::Obj?,sys::Str->sys::Bool|
+) sys::Bool
+flags=const public static
+loc=:216/213
+
+Return if any of the tag name/value pairs match
+the given function.
+
+-- dictAll(
+d haystack::Dict
+f |sys::Obj?,sys::Str->sys::Bool|
+) sys::Bool
+flags=const public static
+loc=:227/224
+
+Return if all of the tag name/value pairs match
+the given function.
+
+-- dictMerge(
+a haystack::Dict
+b sys::Obj?
+) haystack::Dict
+flags=const public static
+loc=:240/235
+
+Add/set all the name/value pairs in a with those defined
+in b.  If b defines a remove value then that name/value is
+removed from a.  The b parameter may be any value
+accepted by `makeDict`
+
+-- dictRemoveAllWithVal(
+d haystack::Dict
+val sys::Obj?
+) haystack::Dict
+flags=const public static
+loc=:275/273
+@sys::NoDoc
+
+Remove all keys with the given value
+
+-- dictSet(
+d haystack::Dict?
+name sys::Str
+val sys::Obj?
+) haystack::Dict
+flags=const public static
+loc=:293/290
+
+Set a name/val pair in an existing dict or d is null then
+create a new dict with given name/val pair.
+
+-- dictRemove(
+d haystack::Dict
+name sys::Str
+) haystack::Dict
+flags=const public static
+loc=:310/307
+
+Remove a name/val pair from an exisiting dict, or
+if the name isn't found then return original dict.
+
+-- dictRename(
+d haystack::Dict
+oldName sys::Str
+newName sys::Str
+) haystack::Dict
+flags=const public static
+loc=:322/320
+
+Rename given name if its defined in the dict, otherwise return original.
+
+-- dictHashKey(
+d haystack::Dict
+) sys::Obj
+flags=const public static
+loc=:341/334
+
+Construct an object which wraps a dict and is suitable to use
+for a hash key in a `sys::Map`.  The key provides implementations
+of `sys::Obj.hash` and `sys::Obj.equals` based on the
+the name/value pairs in the dict.  Hash keys do not support
+Dicts which contain anything but scalar values (nested lists,
+dicts, and grids are silently ignored for hash/equality purposes).
+
+-- dictEq(
+a haystack::Dict
+b haystack::Dict
+) sys::Bool
+flags=const public static
+loc=:348/344
+
+Return if two dicts are equal with same name/value pairs.
+Value are compared via the `sys::Obj.equals` method.  Ordering
+of the dict tags is not considered.
+
+-- dictDump(
+d haystack::Dict
+out sys::OutStream:=Env.cur().out()
+) sys::Void
+flags=const public static
+loc=:360/358
+@sys::NoDoc
+
+Dump dict name/value pairs to output stream
+
+-- dictToStr(
+d haystack::Dict
+) sys::Str
+flags=const public static
+loc=:377/375
+@sys::NoDoc
+
+Map dict tags to a string such as '{tag1:val1, ...}'
+
+-- dictGetDuration(
+d haystack::Dict
+name sys::Str
+def sys::Duration?:=null
+remove sys::Duration?:=def
+) sys::Duration?
+flags=const public static
+loc=:393/392
+@sys::NoDoc
+
+Get dict tag as Number duration
+
+-- dictGetInt(
+d haystack::Dict
+name sys::Str
+def sys::Int?:=null
+remove sys::Int?:=def
+) sys::Int?
+flags=const public static
+loc=:404/403
+@sys::NoDoc
+
+Get dict tag as Number int
+
+-- eq(
+a sys::Obj?
+b sys::Obj?
+) sys::Bool
+flags=const public static
+loc=:419/418
+@sys::NoDoc
+
+Return if two values are equal including Haystack collection types
+
+-- listEq(
+a sys::Obj?[]
+b sys::Obj?[]
+) sys::Bool
+flags=const public static
+loc=:428/427
+@sys::NoDoc
+
+Return if two lists are equal without considering type
+
+-- gridEq(
+a haystack::Grid
+b haystack::Grid
+) sys::Bool
+flags=const public static
+loc=:435/434
+@sys::NoDoc
+
+Return if two grids are equal
+
+-- dictToDis(
+dict haystack::Dict
+def sys::Str?:=""
+) sys::Str?
+flags=const public static
+loc=:478/469
+
+Given a dict, attempt to find the best display string:
+  1. 'dis' tag
+  2. 'disMacro' tag returns `macro` using dict as scope
+  3. 'disKey' maps to qname locale key
+  4. 'name' tag
+  5. 'tag' tag
+  6. 'id' tag
+  7. default
+
+-- relDis(
+parent sys::Str
+child sys::Str
+) sys::Str
+flags=const public static
+loc=:496/492
+
+Get a relative display name.  If the child display name
+starts with the parent, then we can strip that as the
+common suffix.
+
+-- compareDis(
+a sys::Str
+b sys::Str
+) sys::Int
+flags=const public static
+loc=:521/516
+
+Given two display strings, return 1, 0, or -1 if a is less
+than, equal to, or greater than b.  The comparison is case
+insensitive and takes into account trailing digits so that a
+dis str such as "Foo-10" is greater than "Foo-2".
+
+-- sortDictsByDis(
+dicts haystack::Dict[]
+) haystack::Dict[]
+flags=const public static
+loc=:557/555
+@sys::NoDoc
+
+Sort a list of dicts by their dis
+
+-- sortDis(
+list sys::Obj[]
+getDis |sys::Obj->sys::Str|?:=null
+) sys::Obj[]
+flags=const public static
+loc=:568/563
+@sys::NoDoc
+
+Sort a list by display name.  The 'getDis' name function
+is used to extract the display name from each item or if null
+then the list is assumed to be display names.  The sort
+is performed in-place mutating the list.
+
+-- sortCompare(
+a sys::Obj?
+b sys::Obj?
+) sys::Int
+flags=const public static
+loc=:588/587
+@sys::NoDoc
+
+Compare two values for sorting in a table
+
+-- macro(
+pattern sys::Str
+scope haystack::Dict
+) sys::Str
+flags=const public static
+loc=:626/614
+
+Process macro pattern with given scope of variable name/value pairs.
+The pattern is a Unicode string with embedded expressions:
+ - '$tag': resolve tag name from scope, variable name ends
+   with first non-tag character, see `Etc.isTagName`
+ - '${tag}': resolve tag name from scope
+ - '$<pod::key>': localization key
+
+Any variables which cannot be resolved in the scope are
+returned as-is (such '$name') in the result string.
+
+If a tag resolves to Ref, then we use Ref.dis for string.
+
+-- macroVars(
+pattern sys::Str
+) sys::Str[]
+flags=const public static
+loc=:639/635
+
+Return the list of variable tag names used in the given `macro`
+pattern.  This includes "$tag" and "${tag}" variables, but does
+not include "$<pod::key>" localization keys.
+
+-- disKey(
+key sys::Str
+) sys::Str
+flags=const public static
+loc=:650/648
+@sys::NoDoc
+
+Map display key to localized string
+
+-- valToDis(
+val sys::Obj?
+meta haystack::Dict?:=null
+clip sys::Bool:=true
+) sys::Str
+flags=const public static
+loc=:661/660
+@sys::NoDoc
+
+Convert arbitary value to dispaly using Kind.valToDis
+
+-- tsToDis(
+ts sys::DateTime?
+now sys::DateTime:=DateTime.now()
+) sys::Str
+flags=const public static
+loc=:673/672
+@sys::NoDoc
+
+Convert a timestamp in the past to localized age display string
+
+-- isKindName(
+n sys::Str
+) sys::Bool
+flags=const public static
+loc=:723/717
+
+Return if the given string is a legal kind name:
+  - first char must be ASCII upper case
+    letter: 'a' - 'z'
+  - rest of chars must be ASCII letter or
+    digit: 'a' - 'z', 'A' - 'Z', '0' - '9', or '_'
+
+-- isTagName(
+n sys::Str
+) sys::Bool
+flags=const public static
+loc=:736/730
+
+Return if the given string is a legal tag name:
+  - first char must be ASCII lower case
+    letter: 'a' - 'z'
+  - rest of chars must be ASCII letter or
+    digit: 'a' - 'z', 'A' - 'Z', '0' - '9', or '_'
+
+-- toTagName(
+n sys::Str
+) sys::Str
+flags=const public static
+loc=:747/743
+
+Take an arbitrary string and convert into a safe tag name.
+Do not assume any specific conversion algorithm as it might
+change in the future.
+
+-- tagToLocale(
+name sys::Str
+) sys::Str
+flags=const public static
+loc=:796/793
+
+Get the localized string for the given tag name for the
+current locale. See `docSkySpark::Localization#tags`.
+
+-- nameStartsWith(
+prefix sys::Str
+name sys::Str
+) sys::Bool
+flags=const public static
+loc=:810/804
+@sys::NoDoc
+
+Return if given name is/starts with prefix using camel
+case notation:
+  nameStartsWith("foo", "foo")     // true
+  nameStartsWith("foo", "fooBar")  // true
+  nameStartsWith("foo", "fool")    // false
+
+-- toAxon(
+val sys::Obj?
+) sys::Obj?
+flags=const public static
+loc=:821/820
+@sys::NoDoc
+
+Convert a scalar, list, or dict value to its Axon code representation
+
+-- discretePeriods(
+str sys::Str
+f |sys::Int,sys::Int->sys::Void|
+) sys::Void
+flags=const public static
+loc=:841/835
+
+Iterate a [discrete period]`discretePeriods()` string formatted in base64.
+Call the iterator function for each period where 'time' is offset in minutes
+from base timestamp and 'dur' is duration of period in minutes (assuming
+a minutely interval).  This method may also be used `discreteEnumPeriods()`
+in which case the 'dur' parameter will be the enum ordinal.
+
+-- toBase64 sys::Str:=...
+flags=const public static
+loc=:852
+@sys::NoDoc
+
+-- fromBase64 sys::Int[]
+flags=const public static
+loc=:853
+@sys::NoDoc
+
+-- discretePeriodsDis(
+rec haystack::Dict
+start sys::DateTime
+periods sys::Str
+max sys::Int:=5
+) sys::Str
+flags=const public static
+loc=:870/862
+@sys::NoDoc
+
+Return periods as human readable time/duration or time/enum pairs using
+current locale.  If the rec passed has an `enum` tag then we interpret
+the periods as enum values, otherwise binary on duration values.  If there are
+more than max pairs then show only max and add "...". This method assumes
+the all time offsets are minutes after given start time, unless the rec passed
+has the 'discreteInterval' tag in which case then it is used to determine
+the time/duration pairs.
+
+-- emptyGrid(
+) haystack::Grid
+flags=const public static
+loc=:921/919
+@sys::NoDoc
+
+Default empty grid instance
+
+-- toGrid(
+val sys::Obj?
+meta haystack::Dict?:=null
+) haystack::Grid
+flags=const public static
+loc=:940/930
+
+Given an arbitrary object, translate it to a Grid suitable
+for serizliation with Zinc:
+  - if grid just return it
+  - if row in grid of size, return row.grid
+  - if scalar return 1x1 grid
+  - if dict return grid where dict is only
+  - if list of dict return grid where each dict is row
+  - if list of non-dicts, return one col grid with rows for each item
+  - if non-zinc type return grid with cols val, type
+
+-- toCell(
+val sys::Obj?
+) sys::Obj?
+flags=const public static
+loc=:977/975
+@sys::NoDoc
+
+Get value as a grid cell
+
+-- gridToStrVal(
+grid haystack::Grid?
+def sys::Str?:=""
+) sys::Str?
+flags=const public static
+loc=:988/986
+@sys::NoDoc
+
+Return first cell as string or the default value.
+
+-- makeEmptyGrid(
+meta sys::Obj?:=null
+) haystack::Grid
+flags=const public static
+loc=:1000/997
+
+Construct an empty grid with just the given grid level meta-data.
+The meta parameter can be any `makeDict` value.
+
+-- makeErrGrid(
+e sys::Err
+meta sys::Obj?:=null
+) haystack::Grid
+flags=const public static
+loc=:1010/1008
+
+Construct a grid for an error response.
+
+-- toErrMeta(
+e sys::Err
+) haystack::Dict
+flags=const public static
+loc=:1025/1018
+
+Map an exception to its standard tags:
+  - 'dis': error display string
+  - 'err': marker
+  - 'errTrace': Str stack dump
+  - 'axonTrace': Axon stack dump (if applicable)
+  - 'errType': exception type qname
+
+-- toErrTrace(
+e sys::Err
+) sys::Str
+flags=const public static
+loc=:1050/1047
+@sys::NoDoc
+
+Get standardized error trace taking into account
+axon and remote call stack traces
+
+-- makeMapGrid(
+meta sys::Obj?
+row [sys::Str:sys::Obj?]
+) haystack::Grid
+flags=const public static
+loc=:1086/1084
+
+Convenience for `makeDictGrid`
+
+-- makeMapsGrid(
+meta sys::Obj?
+rows [sys::Str:sys::Obj?][]
+) haystack::Grid
+flags=const public static
+loc=:1094/1092
+
+Convenience for `makeDictsGrid`
+
+-- makeDictGrid(
+meta sys::Obj?
+row haystack::Dict
+) haystack::Grid
+flags=const public static
+loc=:1103/1100
+
+Construct a grid for a Dict row.
+The meta parameter can be any `makeDict` value.
+
+-- makeDictsGrid(
+meta sys::Obj?
+rows haystack::Dict?[]
+) haystack::Grid
+flags=const public static
+loc=:1126/1122
+
+Construct a grid for a list of Dict rows.  The meta parameter
+can be any `makeDict` value.  Any null dicts result in an empty
+row of all nulls.  If no non-null rows, then return `makeEmptyGrid`.
+
+-- makeListGrid(
+meta sys::Obj?
+colName sys::Str
+colMeta sys::Obj?
+rows sys::Obj?[]
+) haystack::Grid
+flags=const public static
+loc=:1148/1145
+
+Construct a grid with one column for a list.  The meta
+and colMeta parameters can be any `makeDict` value.
+
+-- makeListsGrid(
+meta sys::Obj?
+colNames sys::Str[]
+colMetas sys::Obj?[]?
+rows sys::Obj?[][]
+) haystack::Grid
+flags=const public static
+loc=:1162/1158
+
+Construct a grid for a list of rows, where each row is
+a list of cells.  The meta and colMetas parameters can
+be any `makeDict` value.
+
+-- gridFlatten(
+grids haystack::Grid[]
+) haystack::Grid
+flags=const public static
+loc=:1177/1172
+
+Flatten a list of grids into a single grid.  Each grid's rows are
+appended to a single grid in the order passed.  The resulting grid
+columns will be the intersection of all the individual grid columns.
+Grid meta and column merged together.
+
+-- debugDur(
+dur sys::Obj?
+) sys::Str
+flags=const public static
+loc=:1209/1204
+@sys::NoDoc
+
+Nullable Duration or Int ticks to debug string:
+  - null or zero: "never"
+  - positive is ticks in future: "3min"
+  - negative is ticks in past: "3min ago"
+  - over 3hr ago: "4hr ago [22:14 2014-09-05 EDT ]"
+
+-- debugErr(
+err sys::Err?
+flags sys::Str:="x<>"
+) sys::Str
+flags=const public static
+loc=:1222/1221
+@sys::NoDoc
+
+Format error trace with two char indention.
+
+-- indent(
+str sys::Str
+indent sys::Int:=2
+flags sys::Str:=">"
+) sys::Str
+flags=const public static
+loc=:1232/1228
+@sys::NoDoc
+
+Indent every line of the given string.  Flags:
+  - 'x': strip empty lines
+  - '<': add leading leading newline
+  - '>': add trailing newline
+
+-- debugMsg(
+type sys::Str
+id sys::Obj?
+a sys::Obj?
+b sys::Obj?:=null
+c sys::Obj?:=null
+d sys::Obj?:=null
+) sys::Str
+flags=const public static
+loc=:1246/1245
+@sys::NoDoc
+
+Format actor msg tuple as "type(id, a=a, b=b, ...)"
+
+-- addArg(
+b sys::StrBuf
+name sys::Str
+arg sys::Obj?
+) sys::Void
+flags=const public static
+loc=:1270
+
+-- formatMultiLine(
+str sys::Str
+lineLength sys::Int:=60
+) sys::Str[]
+flags=const public static
+loc=:1285/1284
+@sys::NoDoc
+
+Format long a long string as a series of lines
+
+-- tsKeyFormat sys::Str:="YYMMDDhhmmss"
+flags=const public static
+loc=:1302/1301
+@sys::NoDoc
+
+Timestamp format to match build.tsKey
+
+-- cxActorLocalsKey sys::Str:="cx"
+flags=const public static
+loc=:1305/1304
+@sys::NoDoc
+
+Actor.locals key for AxonContext, FolioContext, and Context
+

@@ -1,0 +1,23 @@
+== EvalErr
+base=axon::AxonErr sys::Err sys::Obj
+flags=const public
+loc=Errs.fan:45/42
+@sys::Js
+
+EvalErr is thrown during the evaluation phase.
+
+-- make(
+msg sys::Str?
+cx axon::AxonContext
+loc axon::Loc
+cause sys::Err?:=null
+) sys::Void
+flags=public new
+loc=:47
+
+-- axonTrace sys::Str
+flags=const public
+loc=:53/52
+
+Axon trace of call stack and scope variables
+

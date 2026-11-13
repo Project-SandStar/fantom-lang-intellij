@@ -1,0 +1,103 @@
+== Dict
+flags=abstract const mixin public
+loc=Dict.fan:20/10
+@sys::Js
+
+Dict is a map of name/value pairs.  It is used to model grid rows, grid
+meta-data, and name/value object literals.  Dict is characterized by:
+  - names must match `Etc.isTagName` rules
+  - values should be one valid Haystack kinds
+  - get '[]' access returns null if name not found
+  - trap '->' access throws exception if name not found
+
+Also see `Etc.emptyDict`, `Etc.makeDict`.
+
+-- isEmpty(
+) sys::Bool
+flags=abstract public virtual
+loc=:25/23
+
+Return if the there are no name/value pairs
+
+-- get(
+name sys::Str
+def sys::Obj?:=null
+) sys::Obj?
+flags=abstract public virtual
+loc=:30/28
+@sys::Operator
+
+Get the value for the given name or 'def' is not mapped
+
+-- has(
+name sys::Str
+) sys::Bool
+flags=abstract public virtual
+loc=:36/34
+
+Return true if the given name is mapped to a non-null value.
+
+-- missing(
+name sys::Str
+) sys::Bool
+flags=abstract public virtual
+loc=:41/39
+
+Return true if the given name is not mapped to a non-null value.
+
+-- each(
+f |sys::Obj?,sys::Str->sys::Void|
+) sys::Void
+flags=abstract public virtual
+loc=:46/44
+
+Iterate through the name/value pairs
+
+-- eachWhile(
+f |sys::Obj?,sys::Str->sys::Obj?|
+) sys::Obj?
+flags=abstract public virtual
+loc=:54/49
+
+Iterate through the name/value pairs until the given
+function returns non-null, then break the iteration and
+return resulting object.  Return null if function returns
+null for every name/value pair.
+
+-- trap(
+name sys::Str
+args sys::Obj?[]?:=null
+) sys::Obj?
+flags=abstract override public virtual
+loc=:60/57
+
+Get the value mapped by the given name.  If it is not
+mapped to a non-null value, then throw an UnknownNameErr.
+
+-- id(
+) haystack::Ref
+flags=public virtual
+loc=:65/63
+
+Get the 'id' tag as a Ref or raise CastErr/UnknownNameErr
+
+-- dis(
+name sys::Str?:=null
+def sys::Str?:=""
+) sys::Str?
+flags=public virtual
+loc=:77/71
+
+Get display string for dict or the given tag.  If 'name'
+is null, then return display text for the entire dict
+using `Etc.dictToDis`.  If 'name' is non-null then format
+the tag value using its appropiate 'toLocale' method.  If
+'name' is not defined by this dict, then return 'def'.
+
+-- toStr(
+) sys::Str
+flags=override public virtual
+loc=:91/90
+
+Return string for debugging only
+

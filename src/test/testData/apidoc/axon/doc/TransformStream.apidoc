@@ -1,0 +1,25 @@
+== TransformStream
+base=axon::MStream sys::Obj
+flags=abstract public
+loc=TransformStreams.fan:15/12
+@sys::NoDoc
+@sys::Js
+
+TransformStream is base class for 1-to-1 streams
+
+-- make(
+prev axon::MStream
+) sys::Void
+flags=public new
+loc=:17
+
+-- isSource(
+) sys::Bool
+flags=override public
+loc=:19
+
+-- isTerminal(
+) sys::Bool
+flags=override public
+loc=:21
+

@@ -1,0 +1,108 @@
+== CompDef
+base=axon::Fn axon::Expr sys::Obj
+flags=abstract const public
+loc=CompDef.fan:16/13
+@sys::Js
+
+CompDef data flow component definition
+
+-- make(
+loc axon::Loc
+name sys::Str
+body axon::Expr
+) sys::Void
+flags=public new
+loc=:24/23
+@sys::NoDoc
+
+Constructor
+
+-- type(
+) axon::ExprType
+flags=override public virtual
+loc=:31/30
+@sys::NoDoc
+
+Return compdef as type
+
+-- size(
+) sys::Int
+flags=abstract public virtual
+loc=:34/33
+@sys::NoDoc
+
+Number of cells
+
+-- cells(
+) axon::CellDef[]
+flags=abstract public virtual
+loc=:37/36
+
+List data cells for component
+
+-- cell(
+name sys::Str
+checked sys::Bool:=true
+) axon::CellDef?
+flags=abstract public virtual
+loc=:40/39
+
+Lookup a cell by name or raise UnknownCellErr
+
+-- instantiate(
+) axon::Comp
+flags=abstract public virtual
+loc=:43/42
+
+Create instance of this component definition
+
+-- isComp(
+) sys::Bool
+flags=override public
+loc=:50/49
+@sys::NoDoc
+
+Return true
+
+-- isNative(
+) sys::Bool
+flags=override public
+loc=:53/52
+@sys::NoDoc
+
+Return true because we process our own parameters
+
+-- callx(
+cx axon::AxonContext
+args sys::Obj?[]
+loc axon::Loc
+) sys::Obj?
+flags=override public
+loc=:56/55
+@sys::NoDoc
+
+Call the comp def as a function
+
+-- walk(
+f |sys::Str,sys::Obj?->sys::Void|
+) sys::Void
+flags=override public virtual
+loc=:85
+@sys::NoDoc
+
+-- print(
+out axon::Printer
+) axon::Printer
+flags=override public
+loc=:93
+@sys::NoDoc
+
+-- dump(
+out sys::OutStream:=Env.cur().out()
+) sys::Void
+flags=public
+loc=:105/104
+@sys::NoDoc
+
+Debug dump
+

@@ -1,0 +1,32 @@
+== Collector
+base=sys::Obj
+flags=abstract public
+loc=Collectors.fan:16/13
+@sys::NoDoc
+@sys::Js
+
+Collector is used to collect a stream into an in-memory List or Grid
+
+-- onStart(
+stream axon::MStream
+) sys::Void
+flags=public virtual
+loc=:18
+
+-- onSignal(
+signal axon::Signal
+) sys::Void
+flags=public virtual
+loc=:20
+
+-- onData(
+data sys::Obj?
+) sys::Void
+flags=abstract public virtual
+loc=:22
+
+-- onFinish(
+) sys::Obj?
+flags=abstract public virtual
+loc=:24
+

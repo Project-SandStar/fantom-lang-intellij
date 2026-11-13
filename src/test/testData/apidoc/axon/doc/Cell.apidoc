@@ -1,0 +1,25 @@
+== Cell
+base=sys::Obj
+mixins=sys::Facet
+flags=const facet final public
+loc=FCellDef.fan:16/13
+@sys::Js
+@sys::Serializable
+
+Cell facet to apply to AbstractComp slots
+
+-- meta sys::Obj?
+flags=const public
+loc=:19/18
+
+Meta data for the cell encoded as a Trio string
+
+-- decode(
+f |sys::Str,sys::Obj->sys::Void|
+) sys::Void
+flags=override public virtual
+loc=:22/21
+@sys::NoDoc
+
+Decode into meta tag name/value pairs
+

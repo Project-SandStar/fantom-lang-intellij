@@ -1,0 +1,189 @@
+== Fn
+base=axon::Expr sys::Obj
+flags=const public
+loc=Fn.fan:16/13
+@sys::Js
+
+Fn is a function definition
+
+-- make(
+loc axon::Loc
+name sys::Str
+params axon::FnParam[]
+body axon::Expr:=Literal.nullVal
+) sys::Void
+flags=public new
+loc=:18
+@sys::NoDoc
+
+-- type(
+) axon::ExprType
+flags=override public virtual
+loc=:26
+@sys::NoDoc
+
+-- loc axon::Loc
+flags=const override public virtual
+loc=:28
+@sys::NoDoc
+
+-- name sys::Str
+flags=const public
+loc=:31/30
+
+Top-level name or debug name if closure
+
+-- outer(
+) axon::Fn?
+flags=public
+loc=:34/33
+@sys::NoDoc
+
+Parent lexically scoped function
+
+-- params axon::FnParam[]
+flags=const public
+loc=:37
+@sys::NoDoc
+
+-- arity(
+) sys::Int
+flags=public
+loc=:39
+@sys::NoDoc
+
+-- requiredArity(
+) sys::Int
+flags=public
+loc=:41
+@sys::NoDoc
+
+-- body axon::Expr
+flags=const public
+loc=:49
+@sys::NoDoc
+
+-- eval(
+cx axon::AxonContext
+) sys::Obj?
+flags=override public virtual
+loc=:52/51
+
+Return this
+
+-- isComp(
+) sys::Bool
+flags=public virtual
+loc=:55/54
+@sys::NoDoc
+
+Return if this function is a component
+
+-- isNative(
+) sys::Bool
+flags=public virtual
+loc=:58/57
+@sys::NoDoc
+
+Return if this method is implemented in Fantom
+
+-- isSu(
+) sys::Bool
+flags=public virtual
+loc=:61/60
+@sys::NoDoc
+
+Return if this function requires superuser permission
+
+-- isAdmin(
+) sys::Bool
+flags=public virtual
+loc=:64/63
+@sys::NoDoc
+
+Return if this function requires admin permission
+
+-- isDeprecated(
+) sys::Bool
+flags=public virtual
+loc=:67/66
+@sys::NoDoc
+
+Return if this function has been deprecated
+
+-- call(
+cx axon::AxonContext
+args sys::Obj?[]
+) sys::Obj?
+flags=public
+loc=:71/69
+
+Invoke this function with the given arguments.
+Note: the 'args' parameter must be mutable and may be modified
+
+-- callLazy(
+cx axon::AxonContext
+args axon::Expr[]
+callLoc axon::Loc
+) sys::Obj?
+flags=public virtual
+loc=:73
+@sys::NoDoc
+
+-- callx(
+cx axon::AxonContext
+args sys::Obj?[]
+callLoc axon::Loc
+) sys::Obj?
+flags=public virtual
+loc=:78
+@sys::NoDoc
+
+-- doCall(
+cx axon::AxonContext
+args sys::Obj?[]
+) sys::Obj?
+flags=public virtual
+loc=:101
+@sys::NoDoc
+
+-- evalParamDef(
+cx axon::AxonContext
+param axon::FnParam
+) sys::Obj?
+flags=public virtual
+loc=:112
+@sys::NoDoc
+
+-- sig(
+) sys::Str
+flags=public virtual
+loc=:118
+@sys::NoDoc
+
+-- walk(
+f |sys::Str,sys::Obj?->sys::Void|
+) sys::Void
+flags=override public virtual
+loc=:120
+
+-- print(
+out axon::Printer
+) axon::Printer
+flags=override public virtual
+loc=:127/126
+@sys::NoDoc
+
+Print
+
+-- toFunc(
+) sys::Func
+flags=public
+loc=:144/140
+@sys::NoDoc
+
+Convert to Fantom function
+TODO: this is only used by hisExt/hisKitExt as part of its
+lazily evaluation of Axon closures; eventually we want to get
+rid of this, so don't use it anymore!!!
+

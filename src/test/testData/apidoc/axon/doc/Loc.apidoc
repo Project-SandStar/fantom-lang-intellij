@@ -1,0 +1,55 @@
+== Loc
+base=sys::Obj
+flags=const public
+loc=Loc.fan:13/10
+@sys::Js
+
+Source code location.
+
+-- unknown axon::Loc:=Loc.<ctor>("unknown", 0)
+flags=const public static
+loc=:16/15
+
+Unknown location
+
+-- eval axon::Loc:=Loc.<ctor>("eval", 0)
+flags=const public static
+loc=:19/18
+
+Generic eval location
+
+-- make(
+file sys::Str
+line sys::Int:=0
+) sys::Void
+flags=public new
+loc=:22/21
+
+Constructor
+
+-- toStr(
+) sys::Str
+flags=override public virtual
+loc=:29/28
+
+Location string
+
+-- isUnknown(
+) sys::Bool
+flags=public
+loc=:36/35
+
+Is this the unknown location
+
+-- file sys::Str
+flags=const public
+loc=:39/38
+
+File or func record name
+
+-- line sys::Int
+flags=const public
+loc=:42/41
+
+Line number (one based)
+

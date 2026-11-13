@@ -1,0 +1,24 @@
+== SourceStream
+base=axon::MStream sys::Obj
+flags=abstract public
+loc=SourceStreams.fan:15/12
+@sys::NoDoc
+@sys::Js
+
+SourceStream is base class streams which source data
+
+-- make(
+) sys::Void
+flags=public new
+loc=:17
+
+-- isSource(
+) sys::Bool
+flags=override public
+loc=:21
+
+-- isTerminal(
+) sys::Bool
+flags=override public
+loc=:23
+

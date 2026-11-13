@@ -1,0 +1,73 @@
+== ObjRange
+base=sys::Obj
+flags=const final public
+loc=ObjRange.fan:16/13
+@sys::Js
+@sys::NoDoc
+
+ObjRange models ".." range literals in Axon.
+
+-- make(
+start sys::Obj?
+end sys::Obj?
+) sys::Void
+flags=public new
+loc=:18
+
+-- start sys::Obj?
+flags=const public
+loc=:21/20
+
+Starting value
+
+-- end sys::Obj?
+flags=const public
+loc=:24/23
+
+Ending value
+
+-- hash(
+) sys::Int
+flags=override public virtual
+loc=:27/26
+
+Hash code based on start, end
+
+-- equals(
+that sys::Obj?
+) sys::Bool
+flags=override public virtual
+loc=:30/29
+
+Equality code based on start, end
+
+-- toStr(
+) sys::Str
+flags=override public virtual
+loc=:38/37
+
+String format is "start..end"
+
+-- contains(
+val sys::Obj?
+) sys::Bool
+flags=public
+loc=:41/40
+
+Does this range inclusively contain the value
+
+-- fromIntRange(
+r sys::Range
+) axon::ObjRange
+flags=const public static
+loc=:44/43
+
+Construct from inclusive sys::Range
+
+-- toIntRange(
+) sys::Range
+flags=public
+loc=:51/50
+
+Return as an inclusive sys::Range
+

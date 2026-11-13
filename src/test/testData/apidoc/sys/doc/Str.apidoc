@@ -1,0 +1,812 @@
+== Str
+base=sys::Obj
+flags=const final native public
+loc=Str.fan:12/10
+
+Str represents a sequence of Unicode characters.
+
+-- defVal sys::Str
+flags=const public static
+loc=:27/25
+
+Default value is "".
+
+-- fromChars(
+chars sys::Int[]
+) sys::Str
+flags=const public static
+loc=:33/30
+
+Construct a string from a list of unicode code points.
+Also see `chars`.
+
+-- equals(
+obj sys::Obj?
+) sys::Bool
+flags=override public virtual
+loc=:42/40
+
+Return true if a Str with exact same char sequence.
+
+-- equalsIgnoreCase(
+s sys::Str
+) sys::Bool
+flags=public
+loc=:50/45
+
+Convenience for 'compareIgnoreCase(s) == 0'.
+Only ASCII character case is taken into account.
+See `localeCompare` for localized case insensitive
+comparisions.
+
+-- compare(
+obj sys::Obj
+) sys::Int
+flags=override public virtual
+loc=:63/53
+
+Compare based on Unicode character values.  Case is not
+not taken into account - also see `compareIgnoreCase`
+and `localeCompare`.
+
+Examples:
+  "a".compare("b")    =>  -1
+  "hi".compare("hi")  =>  0
+  "hi".compare("HI")  =>  1
+  "b".compare("a")    =>  1
+
+-- compareIgnoreCase(
+s sys::Str
+) sys::Int
+flags=public
+loc=:76/66
+
+Compare two strings without regard to case and return -1, 0, or 1
+if this string is less than, equal to, or greater than the specified
+string.  Only ASCII character case is taken into account.
+See `localeCompare` for localized case insensitive comparisions.
+
+Examples:
+  "a".compareIgnoreCase("b")    =>  -1
+  "hi".compareIgnoreCase("HI")  =>  0
+  "b".compareIgnoreCase("a")    =>  1
+
+-- hash(
+) sys::Int
+flags=override public virtual
+loc=:81/79
+
+The hash for a Str is platform dependent.
+
+-- toStr(
+) sys::Str
+flags=override public virtual
+loc=:86/84
+
+Return this.
+
+-- toLocale(
+) sys::Str
+flags=public
+loc=:92/89
+
+Return this.  This method is used to enable 'toLocale' to
+be used with duck typing across most built-in types.
+
+-- isEmpty(
+) sys::Bool
+flags=public
+loc=:101/99
+
+Return if 'size() == 0'.
+
+-- size(
+) sys::Int
+flags=public
+loc=:106/104
+
+Return number of characters in this string.
+
+-- intern(
+) sys::Str
+flags=public
+loc=:113/109
+
+Internalize this Str such that two strings which are equal
+via the '==' operator will have the same reference such that
+'===' will be true.
+
+-- startsWith(
+s sys::Str
+) sys::Bool
+flags=public
+loc=:118/116
+
+Return if this Str starts with the specified Str.
+
+-- endsWith(
+s sys::Str
+) sys::Bool
+flags=public
+loc=:123/121
+
+Return if this Str ends with the specified Str.
+
+-- index(
+s sys::Str
+offset sys::Int:=0
+) sys::Int?
+flags=public
+loc=:138/126
+
+Return the first occurance of the specified substring searching
+forward, starting at the specified offset index.  A negative offset
+may be used to access from the end of string.  Return null if no
+occurences are found.
+
+Examples:
+  "abcabc".index("b")     => 1
+  "abcabc".index("b", 1)  => 1
+  "abcabc".index("b", 3)  => 4
+  "abcabc".index("b", -3) => 4
+  "abcabc".index("x")     => null
+
+-- indexr(
+s sys::Str
+offset sys::Int:=-1
+) sys::Int?
+flags=public
+loc=:151/141
+
+Reverse index - return the first occurance of the specified
+substring searching backward, starting at the specified offset
+index.  A negative offset may be used to access from the end
+of string.  Return null if no occurences are found.
+
+Examples:
+  "abcabc".indexr("b")     => 4
+  "abcabc".indexr("b", -3) => 1
+  "abcabc".indexr("b", 0)  => null
+
+-- indexIgnoreCase(
+s sys::Str
+offset sys::Int:=0
+) sys::Int?
+flags=public
+loc=:157/154
+
+Find the index just like `index`, but ignoring case for
+ASCII chars only.
+
+-- indexrIgnoreCase(
+s sys::Str
+offset sys::Int:=-1
+) sys::Int?
+flags=public
+loc=:163/160
+
+Find the index just like `indexr`, but ignoring case for
+ASCII chars only.
+
+-- contains(
+s sys::Str
+) sys::Bool
+flags=public
+loc=:169/166
+
+Return if this string contains the specified string.
+Convenience for index(s) != null
+
+-- containsChar(
+ch sys::Int
+) sys::Bool
+flags=public
+loc=:174/172
+
+Return if this string contains the specified character.
+
+-- get(
+index sys::Int
+) sys::Int
+flags=public
+loc=:186/181
+@sys::Operator
+
+Get the character at the zero based index as a Unicode code point.
+Negative indexes may be used to access from the end of the string.
+This method is accessed via the [] operator.  Throw IndexErr if the
+index is out of range.
+
+-- getSafe(
+index sys::Int
+def sys::Int:=0
+) sys::Int
+flags=public
+loc=:194/189
+
+Get the character at the zero based index as a Unicode code point.
+Negative indexes may be used to access from the end of the string.
+Unlike `get`, this method does not throw IndexErr when the index
+is out or range, instead it returns 'def'.
+
+-- getRange(
+range sys::Range
+) sys::Str
+flags=public
+loc=:209/197
+@sys::Operator
+
+Return a substring based on the specified range.  Negative indexes
+may be used to access from the end of the string.  This method
+is accessed via the [] operator.  Throw IndexErr if range illegal.
+
+Examples:
+  "abcd"[0..2]   => "abc"
+  "abcd"[3..3]   => "d"
+  "abcd"[-2..-1] => "cd"
+  "abcd"[0..<2]  => "ab"
+  "abcd"[1..-2]  => "bc"
+  "abcd"[4..-1]  => ""
+
+-- plus(
+obj sys::Obj?
+) sys::Str
+flags=public
+loc=:214/212
+@sys::Operator
+
+Concat the value of obj.toStr
+
+-- mult(
+times sys::Int
+) sys::Str
+flags=public
+loc=:223/217
+@sys::Operator
+
+Duplicate this string the given number of times.  Any integer
+less than or equal to zero returns an empty string.
+
+Examples:
+  "x" * 4  =>  "xxxx"
+
+-- chars(
+) sys::Int[]
+flags=public
+loc=:233/230
+
+Get the characters in this string as a list of integer code points.
+Also see `fromChars`.
+
+-- each(
+c |sys::Int,sys::Int->sys::Void|
+) sys::Void
+flags=public
+loc=:242/236
+
+Call the specified function for every char in the starting
+with index 0 and incrementing up to size-1.
+
+Example:
+  "abc".each |Int c| { echo(c.toChar) }
+
+-- eachr(
+c |sys::Int,sys::Int->sys::Void|
+) sys::Void
+flags=public
+loc=:252/245
+
+Reverse each - call the specified function for every char in
+the string starting with index size-1 and decrementing down
+to 0.
+
+Example:
+  "abc".eachr |Int c| { echo(c.toChar) }
+
+-- any(
+c |sys::Int,sys::Int->sys::Bool|
+) sys::Bool
+flags=public
+loc=:262/255
+
+Return true if c returns true for any of the characters in
+this string.  If this string is empty, return false.
+
+Example:
+  "Foo".any |c| { c.isUpper } => true
+  "foo".any |c| { c.isUpper } => false
+
+-- all(
+c |sys::Int,sys::Int->sys::Bool|
+) sys::Bool
+flags=public
+loc=:272/265
+
+Return true if c returns true for all of the characters in
+this string.  If this string is empty, return true.
+
+Example:
+  "Bar".all |c| { c.isUpper } => false
+  "BAR".all |c| { c.isUpper } => true
+
+-- spaces(
+n sys::Int
+) sys::Str
+flags=const public static
+loc=:286/279
+
+Get the a Str containing the specified number of spaces.  Also
+see `justl` and `justr` to justify an existing string.
+
+Examples:
+  Str.spaces(1)  =>  " "
+  Str.spaces(2)  =>  "  "
+
+-- lower(
+) sys::Str
+flags=public
+loc=:296/289
+
+Return this string with all uppercase characters replaced
+to lowercase.  The case conversion is for ASCII only.
+Also see `upper`, `localeLower`, `Int.lower`, `Int.localeLower`.
+
+Example:
+  "Apple".lower => "apple"
+
+-- upper(
+) sys::Str
+flags=public
+loc=:306/299
+
+Return this string with all lowercase characters replaced
+to uppercase.  The case conversion is for ASCII only.
+Also see `lower`, `localeUpper`, `Int.upper`, `Int.localeUpper`.
+
+Example:
+  "Foo Bar".upper => "FOO BAR"
+
+-- capitalize(
+) sys::Str
+flags=public
+loc=:316/309
+
+Return this string with the first character converted
+uppercase.  The case conversion is for ASCII only.
+Also see `decapitalize` and `localeCapitalize`.
+
+Example:
+  "foo".capitalize => "Foo"
+
+-- decapitalize(
+) sys::Str
+flags=public
+loc=:326/319
+
+Return this string with the first character converted
+lowercase.  The case conversion is for ASCII only.
+Also see `capitalize` and `localeDecapitalize`.
+
+Example:
+  "Foo".decapitalize => "foo"
+
+-- toDisplayName(
+) sys::Str
+flags=public
+loc=:344/329
+
+Translate a programmer name like "fooBar" to "Foo Bar".
+This method capitalizes the first letter, then walks
+the string looking for ASCII capital letters and inserting
+a space.  Any underbars are replaced with a space.  Also
+see `fromDisplayName`.
+
+Examples:
+  "foo".toDisplayName       ->  "Foo
+  "fooBar".toDisplayName    ->  "Foo Bar"
+  "fooBarBaz".toDisplayName ->  "Foo Bar Baz"
+  "foo33".toDisplayName     ->  "Foo 33"
+  "fooXML".toDisplayName    ->  "Foo XML"
+  "Foo".toDisplayName       ->  "Foo"
+  "foo_bar".toDisplayName   ->  "Foo Bar"
+
+-- fromDisplayName(
+) sys::Str
+flags=public
+loc=:359/347
+
+Translate a display name like "Foo Bar" to a programmatic
+name "fooBar".  This method decapitalizes the first letter,
+then walks the string removing spaces.  Also see `toDisplayName`.
+
+Examples:
+  "Foo".fromDisplayName         ->  "foo"
+  "Foo Bar".fromDisplayName     ->  "fooBar"
+  "Foo Bar Baz".fromDisplayName ->  "fooBarBaz"
+  "Foo 33 Bar".fromDisplayName  ->  "foo33Bar"
+  "Foo XML".fromDisplayName     ->  "fooXML"
+  "foo bar".fromDisplayName     ->  "fooBar"
+
+-- justl(
+width sys::Int
+) sys::Str
+flags=public
+loc=:369/362
+
+If size is less than width, then add spaces to the right
+to create a left justified string.  Also see `padr`.
+
+Examples:
+  "xyz".justl(2) => "xyz"
+  "xyz".justl(4) => "xyz "
+
+-- justr(
+width sys::Int
+) sys::Str
+flags=public
+loc=:379/372
+
+If size is less than width, then add spaces to the left
+to create a right justified string.  Also see `padl`.
+
+Examples:
+  "xyz".justr(2) => "xyz"
+  "xyz".justr(4) => " xyz"
+
+-- padl(
+width sys::Int
+char sys::Int:=32
+) sys::Str
+flags=public
+loc=:389/382
+
+If size is less than width, then add the given char to the
+left to achieve the specified width.  Also see `justr`.
+
+Examples:
+  "3".padl(3, '0') => "003"
+  "123".padl(2, '0') => "123"
+
+-- padr(
+width sys::Int
+char sys::Int:=32
+) sys::Str
+flags=public
+loc=:399/392
+
+If size is less than width, then add the given char to
+the left to acheive the specified with.  Also see `justl`.
+
+Examples:
+  "xyz".padr(2, '.') => "xyz"
+  "xyz".padr(5, '-') => "xyz--"
+
+-- reverse(
+) sys::Str
+flags=public
+loc=:407/402
+
+Reverse the contents of this string.
+
+Example:
+  "stressed".reverse => "desserts"
+
+-- trim(
+) sys::Str
+flags=public
+loc=:421/410
+
+Trim whitespace from the beginning and end of the string.  For the purposes
+of this method, whitespace is defined as any character equal to or less
+than the 0x20 space character (including ' ', '\r', '\n', and '\t').
+
+Examples:
+   "foo".trim      =>  "foo"
+   "  foo".trim    =>  "foo"
+   " foo ".trim    =>  "foo"
+   "  foo\n".trim  =>  "foo"
+   "   ".trim      =>  ""
+
+-- trimToNull(
+) sys::Str?
+flags=public
+loc=:437/424
+
+Trim whitespace from the beginning and end of the string.
+Should the resultant string be empty, 'null' is returned.
+
+For the purposes of this method, whitespace is defined as any character
+equal to or less than the 0x20 space character (including ' ', '\r', '\n',
+and '\t').
+
+Examples:
+   "foo".trimToNull      =>  "foo"
+   "  foo  ".trimToNull  =>  "foo"
+   "".trimToNull         =>  null
+   "   ".trimToNull      =>  null
+
+-- trimStart(
+) sys::Str
+flags=public
+loc=:447/440
+
+Trim whitespace only from the beginning of the string.
+See `trim` for definition of whitespace.
+
+Examples:
+   "foo".trim    =>  "foo"
+   " foo ".trim  =>  "foo "
+
+-- trimEnd(
+) sys::Str
+flags=public
+loc=:457/450
+
+Trim whitespace only from the end of the string.
+See `trim` for definition of whitespace.
+
+Examples:
+   "foo".trim    =>  "foo"
+   " foo ".trim  =>  " foo"
+
+-- split(
+separator sys::Int?:=null
+trim sys::Bool:=true
+) sys::Str[]
+flags=public
+loc=:493/460
+
+Split a string into a list of substrings using the
+given separator character.  If there are contiguous separators,
+then they are split into empty strings.  If trim is true,
+then whitespace is trimmed from the beginning and end of
+the results.
+
+If separator is null, then the string is split according
+to any sequence of whitespace characters (any character equal
+to or less than the 0x20 space character including ' ', '\r', '\n',
+and '\t').
+
+If this is the empty string or there are no splits return a
+list of one item.
+
+Examples:
+  // split on whitespace
+  "".split                   =>  [""]
+  "x".split                  =>  ["x"]
+  "x y".split                =>  ["x", "y"]
+  " x y ".split              =>  ["x", "y"]
+  " x \n y \n z ".split      =>  ["x", "y", "z"]
+
+  // split on sep with trim
+  "".split('|')              =>  [""]
+  "22".split(';')            =>  ["22"]
+  "22;33".split(';')         =>  ["22","33"]
+  "22, 33".split(',')        =>  ["22","33"]
+  " 22 ; 33 ".split(';')     =>  ["22","33"]
+
+  // split on sep with no trim
+  "22#33".split('#', false)  =>  ["22","33"]
+  " x ; y".split(';', false) =>  [" x "," y"]
+
+-- splitLines(
+) sys::Str[]
+flags=public
+loc=:507/496
+
+Split this string into individual lines where lines are
+terminated by \n, \r\n, or \r.  The returned strings
+do not contain the newline character.
+
+Examples:
+  "x\ny".splitLines  => ["x", "y"]
+  "".splitLines      => [""]
+  "x".splitLines     => ["x"]
+  "\r\n".splitLines  => ["", ""]
+  "x\n".splitLines   => ["x", ""]
+
+-- replace(
+from sys::Str
+to sys::Str
+) sys::Str
+flags=public
+loc=:516/510
+
+Replace all occurrences of 'from' with 'to'.
+
+Examples:
+  "hello".replace("hell", "t")  =>  "to"
+  "aababa".replace("ab", "-")   =>  "a--a"
+
+-- numNewlines(
+) sys::Int
+flags=public
+loc=:521/519
+
+Count the number of newline combinations: "\n", "\r", or "\r\n".
+
+-- isAscii(
+) sys::Bool
+flags=public
+loc=:527/524
+
+Return if every character in this Str is a US-ASCII character
+less than 128.
+
+-- isSpace(
+) sys::Bool
+flags=public
+loc=:532/530
+
+Return if every character in this Str is whitespace: space \t \n \r \f
+
+-- isUpper(
+) sys::Bool
+flags=public
+loc=:537/535
+
+Return if every character in this Str is ASCII uppercase: 'A'-'Z'.
+
+-- isLower(
+) sys::Bool
+flags=public
+loc=:542/540
+
+Return if every character in this Str is ASCII lowercase: 'a'-'z'.
+
+-- isAlpha(
+) sys::Bool
+flags=public
+loc=:547/545
+
+Return if every char is an ASCII [letter]`Int.isAlpha`.
+
+-- isAlphaNum(
+) sys::Bool
+flags=public
+loc=:552/550
+
+Return if every char is an ASCII [alpha-numeric]`Int.isAlphaNum`.
+
+-- localeCompare(
+s sys::Str
+) sys::Int
+flags=public
+loc=:568/559
+
+Compare two strings without regard to case according to the
+current locale.  Return -1, 0, or 1 if this string is less
+than, equal to, or greater than the specified string.
+
+Examples (assuming English locale):
+  "a".localeCompare("b")   =>  -1
+  "hi".localeCompare("HI") =>  0
+  "b".localeCompare("A")   =>  1
+
+-- localeLower(
+) sys::Str
+flags=public
+loc=:575/571
+
+Return this string with all uppercase characters
+replaced to lowercase using the current locale.
+Also see `localeUpper`, `lower`, and `Int.localeLower`.
+
+-- localeUpper(
+) sys::Str
+flags=public
+loc=:582/578
+
+Return this string with all lowercase characters
+replaced to uppercase using the current locale.
+Also see `localeLower`, `upper`, and `Int.localeUpper`.
+
+-- localeCapitalize(
+) sys::Str
+flags=public
+loc=:589/585
+
+Return this string with the first character
+converted to uppercase using the current locale.
+Also see `localeDecapitalize` and `capitalize`.
+
+-- localeDecapitalize(
+) sys::Str
+flags=public
+loc=:596/592
+
+Return this string with the first character
+converted to lowercase using the current locale.
+Also see `localeCapitalize` and `decapitalize`.
+
+-- toBool(
+checked sys::Bool:=true
+) sys::Bool?
+flags=public
+loc=:605/603
+
+Convenience for `Bool.fromStr` using this string.
+
+-- toInt(
+radix sys::Int:=10
+checked sys::Bool:=true
+) sys::Int?
+flags=public
+loc=:610/608
+
+Convenience for `Int.fromStr` using this string.
+
+-- toFloat(
+checked sys::Bool:=true
+) sys::Float?
+flags=public
+loc=:615/613
+
+Convenience for `Float.fromStr` using this string.
+
+-- toDecimal(
+checked sys::Bool:=true
+) sys::Decimal?
+flags=public
+loc=:620/618
+
+Convenience for `Decimal.fromStr` using this string.
+
+-- toCode(
+quote sys::Int?:=34
+escapeUnicode sys::Bool:=false
+) sys::Str
+flags=public
+loc=:632/623
+
+Return this string as its Fantom source code and serialization
+representation surrounded by the specified quote character (which
+defaults to '"').  If quote is null then the return is unquoted.
+This method will backslash escape the following characters:
+'\n \r \f \t \\ $'.  If the quote character is the double quote,
+single quote, or backtick then it is escaped too.  Control chars
+less than 0x20 are escaped as '\uXXXX'.  If 'escapeUnicode' is
+true then any char over 0x7F it is escaped as '\uXXXX'.
+
+-- toXml(
+) sys::Str
+flags=public
+loc=:641/635
+
+Return this string as valid XML text.  The special control
+characters amp, lt, apos and quot are always escaped.  The
+gt char is escaped only if it is the first char or if preceeded
+by the ']' char.  Also see `OutStream.writeXml` which is more
+efficient if streaming.
+
+-- toUri(
+) sys::Uri
+flags=public
+loc=:646/644
+
+Convenience for `Uri.fromStr` using this string.
+
+-- toRegex(
+) sys::Regex
+flags=public
+loc=:651/649
+
+Convenience for `Regex.fromStr` using this string.
+
+-- in(
+) sys::InStream
+flags=public
+loc=:658/654
+
+Create an input stream to read characters from the this string.
+The input stream is designed only to read character data.  Attempts
+to perform binary reads will throw UnsupportedErr.
+
+-- toBuf(
+charset sys::Charset:=Charset.utf8()
+) sys::Buf
+flags=public
+loc=:663/661
+
+Get this string encoded into a buffer of bytes.
+

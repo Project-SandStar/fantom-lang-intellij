@@ -1,0 +1,150 @@
+== Expr
+base=sys::Obj
+flags=abstract const public
+loc=Expr.fan:16/12
+@sys::Js
+
+Expr is the base class for Axon AST nodes.  All expressions
+are immutable classes safe to share between threads once parsed.
+
+-- type(
+) axon::ExprType
+flags=abstract public virtual
+loc=:20/19
+@sys::NoDoc
+
+Get type enum
+
+-- loc(
+) axon::Loc
+flags=abstract public virtual
+loc=:23/22
+
+Location of this expression in source code or 'Loc.unknown'.
+
+-- eval(
+cx axon::AxonContext
+) sys::Obj?
+flags=abstract public virtual
+loc=:26/25
+
+Evaluate this expression.
+
+-- encode(
+) haystack::Dict
+flags=public
+loc=:29/28
+
+Encode the AST into a tree of dicts.  See `parseAst()`.
+
+-- walk(
+f |sys::Str,sys::Obj?->sys::Void|
+) sys::Void
+flags=abstract public virtual
+loc=:46/45
+@sys::NoDoc
+
+Walk through the AST tree to encode into dict/maps
+
+-- print(
+out axon::Printer
+) axon::Printer
+flags=abstract public virtual
+loc=:49/48
+@sys::NoDoc
+
+Print this expr which must parse back to same expr
+
+-- toStr(
+) sys::Str
+flags=override public virtual
+loc=:52/51
+
+Print to string
+
+-- evalToFunc(
+cx axon::AxonContext
+) axon::Fn
+flags=public
+loc=:60/59
+@sys::NoDoc
+
+Evaluate this expression to a function.
+
+-- evalToFilter(
+cx axon::AxonContext
+checked sys::Bool:=true
+) haystack::Filter?
+flags=public
+loc=:90/89
+@sys::NoDoc
+
+Evaluate this expression to a filter.
+
+-- summary(
+obj sys::Obj?
+) sys::Str
+flags=const public static
+loc=:96/95
+@sys::NoDoc
+
+Get summary string
+
+-- err(
+msg sys::Str
+cx axon::AxonContext
+) axon::EvalErr
+flags=public
+loc=:165/164
+@sys::NoDoc
+
+Return EvalErr with this expression's location.
+
+-- foldConst(
+) axon::Expr
+flags=public virtual
+loc=:168/167
+@sys::NoDoc
+
+Perform constant folding if we can, otherwise return this
+
+-- isConst(
+) sys::Bool
+flags=public virtual
+loc=:171/170
+@sys::NoDoc
+
+Return if this is a constant literal
+
+-- constVal(
+) sys::Obj?
+flags=public virtual
+loc=:174/173
+@sys::NoDoc
+
+Return constant literal or raise exception otherwise
+
+-- isNull(
+) sys::Bool
+flags=public
+loc=:181/180
+@sys::NoDoc
+
+Is this the null literal
+
+-- isMarker(
+) sys::Bool
+flags=public
+loc=:184/183
+@sys::NoDoc
+
+Is this the marker literal
+
+-- asCallFuncName(
+) sys::Str?
+flags=public
+loc=:187/186
+@sys::NoDoc
+
+If this expr is a call return the func name being called, otherwise null
+

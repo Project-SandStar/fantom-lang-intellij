@@ -1,0 +1,20 @@
+== ListCollector
+base=axon::Collector sys::Obj
+flags=public
+loc=Collectors.fan:32/28
+@sys::NoDoc
+@sys::Js
+
+ListCollector
+
+-- onData(
+data sys::Obj?
+) sys::Void
+flags=override public virtual
+loc=:34
+
+-- onFinish(
+) sys::Obj?
+flags=override public virtual
+loc=:36
+

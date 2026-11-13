@@ -1,0 +1,21 @@
+== PassThruStream
+base=axon::TransformStream axon::MStream sys::Obj
+flags=abstract public
+loc=TransformStreams.fan:29/25
+@sys::NoDoc
+@sys::Js
+
+PassThruStream
+
+-- make(
+prev axon::MStream
+) sys::Void
+flags=public new
+loc=:31
+
+-- onData(
+data sys::Obj?
+) sys::Void
+flags=override public virtual
+loc=:33
+

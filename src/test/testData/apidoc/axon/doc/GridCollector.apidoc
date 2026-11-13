@@ -1,0 +1,36 @@
+== GridCollector
+base=axon::Collector sys::Obj
+flags=public
+loc=Collectors.fan:103/99
+@sys::NoDoc
+@sys::Js
+
+GridCollector
+
+-- onStart(
+stream axon::MStream
+) sys::Void
+flags=override public virtual
+loc=:105
+
+-- onData(
+data sys::Obj?
+) sys::Void
+flags=override public virtual
+loc=:122
+
+-- onSignal(
+signal axon::Signal
+) sys::Void
+flags=override public virtual
+loc=:134
+
+-- onFinish(
+) haystack::Grid?
+flags=override public virtual
+loc=:161
+
+-- meta axon::DictCollector:=DictCollector.<ctor>()
+flags=public
+loc=:198
+

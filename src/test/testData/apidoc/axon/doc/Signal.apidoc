@@ -1,0 +1,59 @@
+== Signal
+base=sys::Obj
+flags=const public
+loc=Signal.fan:15/12
+@sys::NoDoc
+@sys::Js
+
+Signal is used to pass out-of-band events across streams
+
+-- start axon::Signal:=Signal.<ctor>(SignalType.start)
+flags=const public static
+loc=:18
+
+-- complete axon::Signal:=Signal.<ctor>(SignalType.complete)
+flags=const public static
+loc=:19
+
+-- make(
+type axon::SignalType
+a sys::Obj?:=null
+b sys::Obj?:=null
+) sys::Void
+flags=public new
+loc=:22/21
+
+Constructor
+
+-- type axon::SignalType
+flags=const public
+loc=:30/29
+
+Signal type enum
+
+-- a sys::Obj?
+flags=const public
+loc=:33/32
+
+First optional argument
+
+-- b sys::Obj?
+flags=const public
+loc=:36/35
+
+Second optional argument
+
+-- isComplete(
+) sys::Bool
+flags=public
+loc=:39/38
+
+Does this signal stream completion
+
+-- toStr(
+) sys::Str
+flags=override public virtual
+loc=:42/41
+
+Debug string
+

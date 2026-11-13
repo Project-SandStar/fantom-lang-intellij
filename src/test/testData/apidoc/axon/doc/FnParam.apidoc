@@ -1,0 +1,66 @@
+== FnParam
+base=sys::Obj
+flags=const public
+loc=Fn.fan:169/165
+@sys::NoDoc
+@sys::Js
+
+Function parameter
+
+-- makeNum(
+num sys::Int
+) axon::FnParam[]
+flags=const public static
+loc=:171
+
+-- cells axon::FnParam[]:=FnParam[FnParam.make("cells")]
+flags=const public static
+loc=:173
+
+-- makeFanList(
+f sys::Func
+) axon::FnParam[]
+flags=const public static
+loc=:175
+
+-- makeFan(
+p sys::Param
+) sys::Void
+flags=public new
+loc=:180
+
+-- make(
+name sys::Str
+def axon::Expr?:=null
+) sys::Void
+flags=public new
+loc=:199
+
+-- name sys::Str
+flags=const public
+loc=:206
+
+-- def axon::Expr?
+flags=const public
+loc=:208
+
+-- hasDef sys::Bool
+flags=const public
+loc=:210
+
+-- encode(
+) haystack::Dict
+flags=public
+loc=:212
+
+-- print(
+out axon::Printer
+) sys::Void
+flags=public
+loc=:217
+
+-- toStr(
+) sys::Str
+flags=override public virtual
+loc=:223
+

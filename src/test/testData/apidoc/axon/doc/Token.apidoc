@@ -1,0 +1,255 @@
+== Token
+base=sys::Enum sys::Obj
+flags=const enum final public
+loc=Token.fan:13/10
+@sys::NoDoc
+@sys::Js
+@sys::Serializable{
+simple=true
+}
+
+Token types for Axon grammar.
+
+-- id axon::Token:=...
+flags=const enum public static
+loc=:21
+
+-- val axon::Token:=...
+flags=const enum public static
+loc=:22
+
+-- colon axon::Token:=...
+flags=const enum public static
+loc=:25
+
+-- doubleColon axon::Token:=...
+flags=const enum public static
+loc=:26
+
+-- dot axon::Token:=...
+flags=const enum public static
+loc=:27
+
+-- semicolon axon::Token:=...
+flags=const enum public static
+loc=:28
+
+-- comma axon::Token:=...
+flags=const enum public static
+loc=:29
+
+-- plus axon::Token:=...
+flags=const enum public static
+loc=:30
+
+-- minus axon::Token:=...
+flags=const enum public static
+loc=:31
+
+-- star axon::Token:=...
+flags=const enum public static
+loc=:32
+
+-- slash axon::Token:=...
+flags=const enum public static
+loc=:33
+
+-- bang axon::Token:=...
+flags=const enum public static
+loc=:34
+
+-- caret axon::Token:=...
+flags=const enum public static
+loc=:35
+
+-- assign axon::Token:=...
+flags=const enum public static
+loc=:36
+
+-- fnEq axon::Token:=...
+flags=const enum public static
+loc=:37
+
+-- eq axon::Token:=...
+flags=const enum public static
+loc=:38
+
+-- notEq axon::Token:=...
+flags=const enum public static
+loc=:39
+
+-- lt axon::Token:=...
+flags=const enum public static
+loc=:40
+
+-- ltEq axon::Token:=...
+flags=const enum public static
+loc=:41
+
+-- gt axon::Token:=...
+flags=const enum public static
+loc=:42
+
+-- gtEq axon::Token:=...
+flags=const enum public static
+loc=:43
+
+-- cmp axon::Token:=...
+flags=const enum public static
+loc=:44
+
+-- lbrace axon::Token:=...
+flags=const enum public static
+loc=:45
+
+-- rbrace axon::Token:=...
+flags=const enum public static
+loc=:46
+
+-- lparen axon::Token:=...
+flags=const enum public static
+loc=:47
+
+-- rparen axon::Token:=...
+flags=const enum public static
+loc=:48
+
+-- lbracket axon::Token:=...
+flags=const enum public static
+loc=:49
+
+-- rbracket axon::Token:=...
+flags=const enum public static
+loc=:50
+
+-- pipe axon::Token:=...
+flags=const enum public static
+loc=:51
+
+-- underbar axon::Token:=...
+flags=const enum public static
+loc=:52
+
+-- arrow axon::Token:=...
+flags=const enum public static
+loc=:53
+
+-- dotDot axon::Token:=...
+flags=const enum public static
+loc=:54
+
+-- andKeyword axon::Token:=...
+flags=const enum public static
+loc=:57
+
+-- catchKeyword axon::Token:=...
+flags=const enum public static
+loc=:58
+
+-- defcompKeyword axon::Token:=...
+flags=const enum public static
+loc=:59
+
+-- deflinksKeyword axon::Token:=...
+flags=const enum public static
+loc=:60
+
+-- doKeyword axon::Token:=...
+flags=const enum public static
+loc=:61
+
+-- elseKeyword axon::Token:=...
+flags=const enum public static
+loc=:62
+
+-- endKeyword axon::Token:=...
+flags=const enum public static
+loc=:63
+
+-- falseKeyword axon::Token:=...
+flags=const enum public static
+loc=:64
+
+-- ifKeyword axon::Token:=...
+flags=const enum public static
+loc=:65
+
+-- notKeyword axon::Token:=...
+flags=const enum public static
+loc=:66
+
+-- nullKeyword axon::Token:=...
+flags=const enum public static
+loc=:67
+
+-- orKeyword axon::Token:=...
+flags=const enum public static
+loc=:68
+
+-- returnKeyword axon::Token:=...
+flags=const enum public static
+loc=:69
+
+-- throwKeyword axon::Token:=...
+flags=const enum public static
+loc=:70
+
+-- trueKeyword axon::Token:=...
+flags=const enum public static
+loc=:71
+
+-- tryKeyword axon::Token:=...
+flags=const enum public static
+loc=:72
+
+-- eof axon::Token:=...
+flags=const enum public static
+loc=:75
+
+-- vals axon::Token[]:=...
+flags=const public static
+loc=:13/13
+
+List of Token values indexed by ordinal
+
+-- toStr(
+) sys::Str
+flags=override public virtual
+loc=:103
+
+-- isKeyword(
+val sys::Str
+) sys::Bool
+flags=const public static
+loc=:110/109
+
+Return if given string is a keyword
+
+-- keywords [sys::Str:axon::Token]
+flags=const public static
+loc=:113/112
+
+Get a map of the keywords
+
+-- symbol sys::Str
+flags=const public
+loc=:129/128
+
+Get string used to display token to user in error messages
+
+-- keyword sys::Bool
+flags=const public
+loc=:132/131
+
+Is this a keyword token such as "null"
+
+-- fromStr(
+name sys::Str
+checked sys::Bool:=true
+) axon::Token?
+flags=const public static new
+loc=:13/13
+
+Return the Token instance for the specified name.  If not a
+valid name and checked is false return null, otherwise throw ParseErr.
+

@@ -1,0 +1,83 @@
+== Literal
+base=axon::Expr sys::Obj
+flags=const public
+loc=Literal.fan:16/12
+@sys::NoDoc
+@sys::Js
+
+Literal
+
+-- bool(
+val sys::Bool
+) axon::Literal
+flags=const public static
+loc=:18
+
+-- trueVal axon::Literal:=Literal.<ctor>(((Obj?)true))
+flags=const public static
+loc=:19
+
+-- falseVal axon::Literal:=Literal.<ctor>(((Obj?)false))
+flags=const public static
+loc=:20
+
+-- nullVal axon::Literal:=Literal.<ctor>(null)
+flags=const public static
+loc=:21
+
+-- markerVal axon::Literal:=Literal.<ctor>(Marker.val)
+flags=const public static
+loc=:22
+
+-- removeVal axon::Literal:=Literal.<ctor>(Remove.val)
+flags=const public static
+loc=:23
+
+-- make(
+val sys::Obj?
+) sys::Void
+flags=public new
+loc=:25
+
+-- type(
+) axon::ExprType
+flags=override public virtual
+loc=:27
+
+-- loc(
+) axon::Loc
+flags=override public virtual
+loc=:29
+
+-- val sys::Obj?
+flags=const public
+loc=:31
+
+-- isConst(
+) sys::Bool
+flags=override public virtual
+loc=:33
+
+-- constVal(
+) sys::Obj?
+flags=override public virtual
+loc=:35
+
+-- eval(
+cx axon::AxonContext
+) sys::Obj?
+flags=override public virtual
+loc=:37
+
+-- walk(
+f |sys::Str,sys::Obj?->sys::Void|
+) sys::Void
+flags=override public virtual
+loc=:39
+
+-- print(
+out axon::Printer
+) axon::Printer
+flags=override public virtual
+loc=:41
+
