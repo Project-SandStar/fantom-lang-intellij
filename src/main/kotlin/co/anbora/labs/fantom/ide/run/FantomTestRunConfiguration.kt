@@ -1,5 +1,6 @@
 package co.anbora.labs.fantom.ide.run
 
+import co.anbora.labs.fantom.ide.run.test.FantomDebuggableTestProfile
 import co.anbora.labs.fantom.ide.run.test.FantomTestRunState
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.Executor
@@ -19,7 +20,7 @@ import java.io.File
 
 /** Runs `fant <pod>[::Class[.method]]`. */
 class FantomTestRunConfiguration(project: Project, factory: ConfigurationFactory, name: String) :
-    LocatableConfigurationBase<Element>(project, factory, name) {
+    LocatableConfigurationBase<Element>(project, factory, name), FantomDebuggableTestProfile {
 
     var pod: String = ""
     var testClass: String = ""
@@ -58,6 +59,30 @@ class FantomTestRunConfiguration(project: Project, factory: ConfigurationFactory
         specs: List<String> = listOf(testSpec()),
     ): GeneralCommandLine =
         FantomCommandLine.build(project, home, "fant", specs, workingDir, envs, passParentEnvs)
+
+    /**
+     * The `java` command that `bin/fant` would exec, with a JDWP agent that waits on [port] and
+     * `FAN_DEBUG=true` so the runtime keeps Fantom local names (see [FantomRunConfiguration.buildDebugCommandLine]).
+     * The main class comes from the script: `Fant` or `Fan util::TestRunner`; see [FantomCommandLine.fantLauncher].
+     */
+    @Throws(ExecutionException::class)
+    fun buildDebugCommandLine(
+        port: Int,
+        home: File? = FantomCommandLine.home(project),
+        specs: List<String> = listOf(testSpec()),
+    ): GeneralCommandLine {
+        val fantomHome = home ?: throw ExecutionException(FantomCommandLine.NO_HOME)
+        val (mainClass, leading) = FantomCommandLine.fantLauncher(fantomHome)
+        val debugEnvs = LinkedHashMap<String, String>().apply { put(FantomRunConfiguration.FAN_DEBUG, "true"); putAll(envs) }
+        return FantomCommandLine.buildJava(
+            project, fantomHome, leading + specs, workingDir, debugEnvs, passParentEnvs,
+            listOf(FantomRunConfiguration.jdwpAgent(port)), mainClass,
+        )
+    }
+
+    /** The state the Debug runner starts: [buildDebugCommandLine] with the results in the test tree. */
+    override fun debugState(environment: ExecutionEnvironment, port: Int): RunProfileState =
+        FantomTestRunState(environment, this, listOf(testSpec())) { specs -> buildDebugCommandLine(port, specs = specs) }
 
     /** Results go to the test tree; see [FantomTestRunState]. */
     override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState =

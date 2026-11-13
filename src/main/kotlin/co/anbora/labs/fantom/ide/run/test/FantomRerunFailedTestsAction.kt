@@ -22,9 +22,12 @@ class FantomRerunFailedTestsAction(
         val configuration = myConsoleProperties.configuration as? FantomTestRunConfiguration ?: return null
         val specs = specsFor(getFailedTests(configuration.project))
         if (specs.isEmpty()) return null
-        return object : MyRunProfile(configuration) {
+        return object : MyRunProfile(configuration), FantomDebuggableTestProfile {
             override fun getState(executor: Executor, env: ExecutionEnvironment): RunProfileState =
                 FantomTestRunState(env, configuration, specs)
+
+            override fun debugState(environment: ExecutionEnvironment, port: Int): RunProfileState =
+                FantomTestRunState(environment, configuration, specs) { configuration.buildDebugCommandLine(port, specs = it) }
         }
     }
 

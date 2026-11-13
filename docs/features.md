@@ -73,14 +73,18 @@ Debug needs the Java plugin, so it works in IntelliJ IDEA. In IDEs without
 Java the plugin still loads, but Debug is not there.
 
 Click in the gutter of a `.fan` file to set a breakpoint, then start a Fantom
-run configuration with Debug. The IDE starts `java` with a JDWP agent and
-`fanx.tools.Fan` directly (the same program `bin/fan` runs) and attaches the
-Java debugger.
+run or test configuration with Debug. The IDE starts `java` with a JDWP agent
+and the program that `bin/fan` or `bin/fant` runs, and attaches the Java
+debugger.
 
 What works:
 
 - Line breakpoints in the `.fan` files of a pod. The pod must be built
   (Build Pod) before you debug.
+- Debug on a Fantom Test configuration. Breakpoints in `test*` methods stop,
+  and the test tree still shows which tests pass and fail.
+- Line breakpoints in scripts (a run target that is a `.fan` path), when the
+  script is not inside a pod folder (no `build.fan` with a `podName` above it).
 - The stack shows `Foo.fan` lines.
 - The Variables view shows Fantom names for parameters and locals. The
   debugger sets `FAN_DEBUG=true` for this; set it to `false` in the run
@@ -96,9 +100,7 @@ What does not work:
   Expressions use Java syntax, and arithmetic on Fantom locals (`x + 1`)
   fails because the IDE does not know their Java type.
 - Values show as Java objects (`fan.sys.List`, `Long`), not in Fantom form.
-- Fantom Test configurations have no Debug yet.
-- Breakpoints in scripts (a run target that is a `.fan` path) do not stop.
-  Scripts compile in memory into a pod with a generated name.
+- Breakpoints in a script inside a pod folder, such as `build.fan` itself.
 - Hot swap of changed code. Rebuild the pod and start again.
 - Breakpoints in `sys` sources: `sys` runs as Java (`fan.sys`), not from
   `.fan` files.

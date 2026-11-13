@@ -6,6 +6,7 @@ import com.intellij.execution.ExecutionException
 import com.intellij.execution.ExecutionResult
 import com.intellij.execution.Executor
 import com.intellij.execution.configurations.CommandLineState
+import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.KillableColoredProcessHandler
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessTerminatedListener
@@ -24,11 +25,13 @@ class FantomTestRunState(
     environment: ExecutionEnvironment,
     private val configuration: FantomTestRunConfiguration,
     private val specs: List<String>,
+    /** Builds the process for [specs]; the Debug runner passes a JDWP command line here. */
+    private val commandLine: (List<String>) -> GeneralCommandLine = { configuration.buildCommandLine(specs = it) },
 ) : CommandLineState(environment) {
 
     @Throws(ExecutionException::class)
     override fun startProcess(): ProcessHandler {
-        val cmd = configuration.buildCommandLine(specs = specs).withRedirectErrorStream(true)
+        val cmd = commandLine(specs).withRedirectErrorStream(true)
         val handler = KillableColoredProcessHandler(cmd)
         ProcessTerminatedListener.attach(handler)
         return handler

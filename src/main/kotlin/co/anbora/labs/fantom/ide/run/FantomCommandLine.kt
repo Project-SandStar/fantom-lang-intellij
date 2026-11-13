@@ -14,6 +14,8 @@ import java.io.File
 
 /** Command line building shared by both Fantom run configurations. */
 object FantomCommandLine {
+    /** The main class of `bin/fan`. */
+    const val FAN_MAIN = "fanx.tools.Fan"
     const val NO_HOME = "No Fantom installation configured. Set it in Settings | Languages & Frameworks | Fantom"
 
     /**
@@ -62,6 +64,7 @@ object FantomCommandLine {
         envs: Map<String, String>,
         passParentEnvs: Boolean,
         jvmArgs: List<String>,
+        mainClass: String = FAN_MAIN,
     ): GeneralCommandLine {
         val fantomHome = home ?: throw ExecutionException(NO_HOME)
         fun env(name: String): String? =
@@ -79,9 +82,27 @@ object FantomCommandLine {
         cmd.parametersList.clearAll()
         cmd.addParameters(configJavaOptions(fantomHome))
         cmd.addParameters(jvmArgs)
-        cmd.addParameters("-cp", classPath, "-Dfan.home=${fantomHome.path}", "fanx.tools.Fan")
+        cmd.addParameters("-cp", classPath, "-Dfan.home=${fantomHome.path}", mainClass)
         cmd.addParameters(params)
         return cmd
+    }
+
+    /**
+     * The main class and leading arguments that `<home>/bin/fant` passes to `fanlaunch`:
+     * `fanx.tools.Fant` up to Fantom 1.0.80, `fanx.tools.Fan util::TestRunner` from 1.0.81.
+     * Read from the last `fanlaunch <Tool> [args] "$@"` line of the script; `Fant` when the
+     * script is missing or has no such line.
+     */
+    fun fantLauncher(home: File): Pair<String, List<String>> {
+        val script = File(home, "bin/fant")
+        val line = runCatching { script.readLines() }.getOrDefault(emptyList())
+            .map { it.trim() }
+            .lastOrNull { it.startsWith("fanlaunch ") }
+            ?: return "fanx.tools.Fant" to emptyList()
+        val words = com.intellij.util.execution.ParametersListUtil.parse(line.removePrefix("fanlaunch "))
+            .filter { it != "\$@" }
+        val tool = words.firstOrNull()?.takeIf { it.isNotBlank() } ?: return "fanx.tools.Fant" to emptyList()
+        return "fanx.tools.$tool" to words.drop(1)
     }
 
     /** `FAN_JAVA`, then `JAVA_HOME/bin/java`, then `java` on the PATH, as `fanlaunch` does. */
