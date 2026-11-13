@@ -113,6 +113,20 @@ class FantomEvaluatorTest : BasePlatformTestCase() {
         assertEquals("a\nb", eval("\"a\\nb\""))
     }
 
+    /** The Evaluate box opens an editor on the fragment; the plugin's annotators must not fail on it. */
+    fun testFragmentInEditorHighlightsWithoutErrors() {
+        val file = myFixture.configureByText("Foo.fan", "class Foo { Void m() { x := 3; <caret>echo(x) } }")
+        val context = file.findElementAt(myFixture.caretOffset)
+        for (text in listOf("x + 1", "list[0].upper ?: \"none\"", "x +", "a->b", "\"v=\$x\"")) {
+            val fragment = FantomCodeFragmentFactory().createPsiCodeFragment(
+                com.intellij.debugger.engine.evaluation.TextWithImportsImpl(
+                    com.intellij.debugger.engine.evaluation.CodeFragmentKind.EXPRESSION, text), context, project)
+            myFixture.openFileInEditor(fragment.virtualFile)
+            myFixture.doHighlighting()
+        }
+        assertTrue(FantomCodeFragmentFactory().isContextAccepted(context))
+    }
+
     fun testUnsupportedConstructsGiveAMessage() {
         val prefix = "Not supported in the Fantom evaluator: "
         for ((text, construct) in listOf(
