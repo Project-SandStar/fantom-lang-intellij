@@ -69,38 +69,61 @@ object FantomSourceScan {
 
     private fun key(roots: List<File>) = roots.joinToString("|") { it.path }
 
-    private val SKIP = setOf("node_modules", "build", "lib", "out", "target", "gen")
+    private val SKIP = setOf(
+        "node_modules", "build", "lib", "out", "target", "gen", "dist", "vendor", "venv", "__pycache__",
+        "site-packages", "bower_components", "coverage", "Pods", "DerivedData", "tmp", "temp", "logs",
+    )
+
+    /** Names that are files, so the walk needs no stat for them. */
+    private val FILE_EXT = Regex(
+        """.*\.(fan|fwt|fog|axon|trio|js|mjs|cjs|ts|tsx|jsx|json|md|txt|html?|css|scss|less|xml|ya?ml|toml|props|csv|""" +
+            """png|jpe?g|gif|svg|ico|webp|bmp|pdf|zip|gz|tgz|7z|pod|jar|class|java|kt|kts|py|pyc|php|rb|go|rs|c|h|cpp|""" +
+            """sh|bat|cmd|ps1|log|lock|map|woff2?|ttf|eot|otf|mp4|mov|mp3|wav|sql|db|sqlite|doc|docx|xls|xlsx|ppt|pptx|""" +
+            """bin|dat|o|a|so|dylib|dll|exe|iml|gradle|properties|cfg|ini|conf|env|bak|old|orig|rst|tex|swift|m|cs)""",
+        RegexOption.IGNORE_CASE,
+    )
 
     fun scanNow(roots: List<File>): Result {
         val start = System.currentTimeMillis()
-        val out = ArrayList<Pod>()
-        var count = 0
-        val gitCache = HashMap<String, GitInfo?>()
-        fun visit(dir: File, depth: Int) {
-            if (depth > 12) return
-            val build = File(dir, FantomBuildFile.FILE_NAME)
-            if (build.isFile) {
-                count++
-                val info = runCatching { readBuildFile(build.readText()) }.getOrNull()
-                if (info?.podName != null) {
-                    val git = gitRootOf(dir)?.let { root -> gitCache.getOrPut(root.path) { readGit(root) } }
-                    val rel = git?.root?.let { dir.relativeTo(it).path } ?: dir.name
-                    out += Pod(info.podName, dir, info.version, info.depends, git?.root,
-                        git?.remote?.let(::remoteKey) ?: git?.root?.let(::canonical) ?: canonical(dir),
-                        git?.remote, git?.branch, git?.tags ?: emptyList(), rel)
-                    return
+        val out = java.util.concurrent.ConcurrentLinkedQueue<Pod>()
+        val count = java.util.concurrent.atomic.AtomicInteger()
+        val gitCache = ConcurrentHashMap<String, java.util.Optional<GitInfo>>()
+
+        class Visit(val dir: File, val depth: Int) : java.util.concurrent.RecursiveAction() {
+            override fun compute() {
+                if (depth > 12) return
+                val names = dir.list() ?: return
+                if ("build.fan" in names) {
+                    count.incrementAndGet()
+                    val info = runCatching { readBuildFile(File(dir, FantomBuildFile.FILE_NAME).readText()) }.getOrNull()
+                    if (info?.podName != null) {
+                        val git = gitRootOf(dir)?.let { root ->
+                            gitCache.computeIfAbsent(root.path) { java.util.Optional.ofNullable(readGit(root)) }.orElse(null)
+                        }
+                        val rel = git?.root?.let { dir.relativeTo(it).path } ?: dir.name
+                        out += Pod(info.podName, dir, info.version, info.depends, git?.root,
+                            git?.remote?.let(::remoteKey) ?: git?.root?.let(::canonical) ?: canonical(dir),
+                            git?.remote, git?.branch, git?.tags ?: emptyList(), rel)
+                        return
+                    }
                 }
-            }
-            val children = dir.listFiles() ?: return
-            for (c in children.sortedBy { it.name }) {
-                if (c.name.startsWith(".") || c.name in SKIP) continue
-                if (Files.isSymbolicLink(c.toPath())) continue
-                if (!Files.isDirectory(c.toPath(), LinkOption.NOFOLLOW_LINKS)) continue
-                visit(c, depth + 1)
+                val subs = ArrayList<Visit>()
+                for (name in names) {
+                    if (name.startsWith(".") || name in SKIP || FILE_EXT.matches(name)) continue
+                    val c = File(dir, name)
+                    if (!Files.isDirectory(c.toPath(), LinkOption.NOFOLLOW_LINKS)) continue
+                    subs += Visit(c, depth + 1)
+                }
+                invokeAll(subs)
             }
         }
-        for (root in roots) if (root.isDirectory) visit(root, 0)
-        return Result(out, count, System.currentTimeMillis() - start)
+        val pool = java.util.concurrent.ForkJoinPool(8)
+        try {
+            for (root in roots) if (root.isDirectory) pool.invoke(Visit(root, 0))
+        } finally {
+            pool.shutdown()
+        }
+        return Result(out.sortedBy { it.dir.path }, count.get(), System.currentTimeMillis() - start)
     }
 
     /** What the scan reads from a `build.fan`. */
@@ -155,6 +178,8 @@ object FantomSourceScan {
             u.substring(scheme + 3).substringAfter('/', "")
         } else if (u.contains(':') && !u.startsWith("/")) {
             u.substringAfter(':')
+        } else if (!u.startsWith("/") && u.substringBefore('/').contains('.')) {
+            u.substringAfter('/', "") // host/path with no scheme
         } else u
         return u.trim('/').removeSuffix(".git").trim('/').lowercase()
     }
