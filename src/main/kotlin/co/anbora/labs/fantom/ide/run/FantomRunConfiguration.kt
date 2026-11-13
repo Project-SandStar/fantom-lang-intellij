@@ -53,6 +53,24 @@ class FantomRunConfiguration(project: Project, factory: ConfigurationFactory, na
     override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState =
         FantomCommandLine.state(environment) { buildCommandLine() }
 
+    /**
+     * `java <jdwp agent> ... fanx.tools.Fan <target> <args>`: the same program as [buildCommandLine],
+     * with the JVM waiting for a debugger on `127.0.0.1:<port>`.
+     *
+     * `FAN_DEBUG=true` turns on `Sys.debug`, which makes the runtime emitter write a
+     * `LocalVariableTable`, so the Variables view shows Fantom local names instead of `slot_N`.
+     * A value the user set in the configuration wins.
+     */
+    @Throws(ExecutionException::class)
+    fun buildDebugCommandLine(port: Int, home: File? = FantomCommandLine.home(project)): GeneralCommandLine {
+        val debugEnvs = LinkedHashMap<String, String>().apply { put(FAN_DEBUG, "true"); putAll(envs) }
+        return FantomCommandLine.buildJava(project, home, parameters(), workingDir, debugEnvs, passParentEnvs, listOf(jdwpAgent(port)))
+    }
+
+    /** The state the Debug runner starts: [buildDebugCommandLine] in a console. */
+    fun debugState(environment: ExecutionEnvironment, port: Int): RunProfileState =
+        FantomCommandLine.state(environment) { buildDebugCommandLine(port) }
+
     override fun writeExternal(element: Element) {
         super.writeExternal(element)
         JDOMExternalizerUtil.writeField(element, TARGET, target)
@@ -79,10 +97,16 @@ class FantomRunConfiguration(project: Project, factory: ConfigurationFactory, na
         return copy
     }
 
-    private companion object {
-        const val TARGET = "target"
-        const val ARGS = "programArgs"
-        const val WORK_DIR = "workingDir"
-        const val PASS_PARENT = "passParentEnvs"
+    companion object {
+        /** The JDWP agent option: the JVM listens on [port] and waits for the debugger before `main`. */
+        fun jdwpAgent(port: Int): String = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=127.0.0.1:$port"
+
+        /** Read by `fan.sys.Sys.debug` (as `FAN_` + config name); turns on local variable tables. */
+        const val FAN_DEBUG = "FAN_DEBUG"
+
+        private const val TARGET = "target"
+        private const val ARGS = "programArgs"
+        private const val WORK_DIR = "workingDir"
+        private const val PASS_PARENT = "passParentEnvs"
     }
 }

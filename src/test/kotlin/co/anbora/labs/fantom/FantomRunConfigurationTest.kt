@@ -137,6 +137,19 @@ class FantomRunConfigurationTest : BasePlatformTestCase() {
         assertEquals("1", runCmd.environment["FOO"])
         assertTrue(runCmd.environment["PATH"]!!.startsWith(File(home, "bin").path))
 
+        // Debug: a direct java command, JDWP agent before the class path, same program after fanx.tools.Fan.
+        val debugCmd = run.buildDebugCommandLine(5005, home)
+        val debugParams = debugCmd.parametersList.list
+        assertTrue(debugCmd.exePath, File(debugCmd.exePath).name.startsWith("java"))
+        val agent = debugParams.indexOf(FantomRunConfiguration.jdwpAgent(5005))
+        val main = debugParams.indexOf("fanx.tools.Fan")
+        assertTrue(debugParams.toString(), agent >= 0 && agent < debugParams.indexOf("-cp") && debugParams.indexOf("-cp") < main)
+        assertTrue(debugParams.contains("-Dfan.home=${home.path}"))
+        assertEquals(listOf("mypod::Foo.main", "a", "b c"), debugParams.subList(main + 1, debugParams.size))
+        assertEquals("true", debugCmd.environment[FantomRunConfiguration.FAN_DEBUG])
+        assertEquals("1", debugCmd.environment["FOO"])
+        assertTrue(FantomRunConfiguration.jdwpAgent(5005).contains("server=y,suspend=y,address=127.0.0.1:5005"))
+
         val test = FantomTestRunConfiguration(project, type.testFactory, "FooTest.testBar").apply {
             pod = "mypod"; testClass = "FooTest"; testMethod = "testBar"
             workingDir = home.path

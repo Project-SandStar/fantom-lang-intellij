@@ -67,6 +67,42 @@ A green arrow appears next to `static Void main`, next to each `Test`
 subclass, and next to each `test*` method. Run configurations call `fan` and
 `fant` from the configured Fantom installation.
 
+## Debug
+
+Debug needs the Java plugin, so it works in IntelliJ IDEA. In IDEs without
+Java the plugin still loads, but Debug is not there.
+
+Click in the gutter of a `.fan` file to set a breakpoint, then start a Fantom
+run configuration with Debug. The IDE starts `java` with a JDWP agent and
+`fanx.tools.Fan` directly (the same program `bin/fan` runs) and attaches the
+Java debugger.
+
+What works:
+
+- Line breakpoints in the `.fan` files of a pod. The pod must be built
+  (Build Pod) before you debug.
+- The stack shows `Foo.fan` lines.
+- The Variables view shows Fantom names for parameters and locals. The
+  debugger sets `FAN_DEBUG=true` for this; set it to `false` in the run
+  configuration to turn it off.
+- Step Over stays in `.fan` code. Step Into skips the Fantom runtime
+  (`fan.sys`, `fanx`) and goes into a closure body from `list.each |v| {...}`.
+- Evaluate Expression takes a single variable or a Java-style call, such as
+  `x` or `args.size()`.
+
+What does not work:
+
+- Fantom expressions in Evaluate Expression and in breakpoint conditions.
+  Expressions use Java syntax, and arithmetic on Fantom locals (`x + 1`)
+  fails because the IDE does not know their Java type.
+- Values show as Java objects (`fan.sys.List`, `Long`), not in Fantom form.
+- Fantom Test configurations have no Debug yet.
+- Breakpoints in scripts (a run target that is a `.fan` path) do not stop.
+  Scripts compile in memory into a pod with a generated name.
+- Hot swap of changed code. Rebuild the pod and start again.
+- Breakpoints in `sys` sources: `sys` runs as Java (`fan.sys`), not from
+  `.fan` files.
+
 ## Axon and other files
 
 | File or place | What you get |

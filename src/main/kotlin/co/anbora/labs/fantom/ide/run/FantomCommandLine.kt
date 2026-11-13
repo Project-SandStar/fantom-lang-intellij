@@ -47,6 +47,62 @@ object FantomCommandLine {
         return cmd
     }
 
+    /**
+     * The `java` command that `bin/fanlaunch` would exec for `fan <params>`, with [jvmArgs] added
+     * before the class path. `fanlaunch` reads `JAVA_OPTIONS` from `etc/sys/config.props` and
+     * overwrites any value in the environment, so JVM options (such as a JDWP agent) only get in
+     * through a direct command line like this one.
+     */
+    @Throws(ExecutionException::class)
+    fun buildJava(
+        project: Project,
+        home: File?,
+        params: List<String>,
+        workingDir: String?,
+        envs: Map<String, String>,
+        passParentEnvs: Boolean,
+        jvmArgs: List<String>,
+    ): GeneralCommandLine {
+        val fantomHome = home ?: throw ExecutionException(NO_HOME)
+        fun env(name: String): String? =
+            envs[name]?.takeIf { it.isNotBlank() } ?: (if (passParentEnvs) EnvironmentUtil.getValue(name) else null)?.takeIf { it.isNotBlank() }
+
+        val java = javaExecutable(::env) ?: throw ExecutionException(
+            "Cannot find java. Set JAVA_HOME or FAN_JAVA, or put java on the PATH"
+        )
+        val fanCp = env("FAN_CP")?.takeIf { File(it).isDirectory }
+            ?: listOf("sys.jar", "jline.jar").joinToString(File.pathSeparator) { File(fantomHome, "lib/java/$it").path }
+        val classPath = listOfNotNull(fanCp, env("CLASSPATH")).joinToString(File.pathSeparator)
+
+        val cmd = build(project, home, "fan", params, workingDir, envs, passParentEnvs)
+        cmd.exePath = java
+        cmd.parametersList.clearAll()
+        cmd.addParameters(configJavaOptions(fantomHome))
+        cmd.addParameters(jvmArgs)
+        cmd.addParameters("-cp", classPath, "-Dfan.home=${fantomHome.path}", "fanx.tools.Fan")
+        cmd.addParameters(params)
+        return cmd
+    }
+
+    /** `FAN_JAVA`, then `JAVA_HOME/bin/java`, then `java` on the PATH, as `fanlaunch` does. */
+    private fun javaExecutable(env: (String) -> String?): String? {
+        env("FAN_JAVA")?.let { return it }
+        val exe = if (com.intellij.openapi.util.SystemInfo.isWindows) "java.exe" else "java"
+        env("JAVA_HOME")?.let { File(it, "bin/$exe") }?.takeIf { it.canExecute() }?.let { return it.path }
+        val path = env("PATH") ?: return null
+        return path.split(File.pathSeparator).map { File(it, exe) }.firstOrNull { it.canExecute() }?.path
+    }
+
+    /** The last `java.options=` line of `<home>/etc/sys/config.props`, split like a shell would. */
+    fun configJavaOptions(home: File): List<String> {
+        val props = File(home, "etc/sys/config.props")
+        if (!props.isFile) return emptyList()
+        val line = runCatching { props.readLines() }.getOrDefault(emptyList())
+            .filterNot { it.startsWith("#") || it.startsWith("//") }
+            .lastOrNull { it.trimStart().startsWith("java.options=") } ?: return emptyList()
+        return com.intellij.util.execution.ParametersListUtil.parse(line.substringAfter('=').trim())
+    }
+
     /** The home as the project settings see it. */
     fun home(project: Project): File? = FantomSettings.getInstance(project).effectiveHome()
 
