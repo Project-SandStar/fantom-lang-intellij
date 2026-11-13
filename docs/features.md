@@ -91,15 +91,25 @@ What works:
   configuration to turn it off.
 - Step Over stays in `.fan` code. Step Into skips the Fantom runtime
   (`fan.sys`, `fanx`) and goes into a closure body from `list.each |v| {...}`.
-- Evaluate Expression takes a single variable or a Java-style call, such as
-  `x` or `args.size()`.
+- Evaluate Expression, Watches and breakpoint conditions take Fantom
+  expressions, such as `x + 1`, `list.size`, `list[0]`, `s.upper`,
+  `x > 2 && y != null` or `f?.name ?: "none"`. A breakpoint with the
+  condition `x == 3` stops only when `x` is 3. You can use:
+  - locals, fields, `this` and slots of `this` without `this.`;
+  - Int, Float, Str, Bool and null literals, and list literals `[a, b]`;
+  - `a.b`, `a?.b`, calls `a.m(x, y)` and static calls `Type.m()`;
+  - index `a[i]` on a List, Map or Str;
+  - `+ - * / % == != < <= > >= <=>`, `&& || !`, `?:`, `a ? b : c`,
+    `is`, `isnot` and `as`.
+- The Variables view shows a Fantom List and Map with their elements, and
+  other Fantom objects with their type name (`pod::Type`) and fields.
 
 What does not work:
 
-- Fantom expressions in Evaluate Expression and in breakpoint conditions.
-  Expressions use Java syntax, and arithmetic on Fantom locals (`x + 1`)
-  fails because the IDE does not know their Java type.
-- Values show as Java objects (`fan.sys.List`, `Long`), not in Fantom form.
+- Other expressions give "Not supported in the Fantom evaluator", for
+  example assignment, closures, `->` calls, ranges, map literals and Str
+  interpolation (`"$x"`). Static calls find only types the program has
+  loaded. There is no completion in the Evaluate box.
 - Breakpoints in a script inside a pod folder, such as `build.fan` itself.
 - Hot swap of changed code. Rebuild the pod and start again.
 - Breakpoints in `sys` sources: `sys` runs as Java (`fan.sys`), not from
