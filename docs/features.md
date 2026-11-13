@@ -45,7 +45,7 @@ classes:
   as `c.`, it lists all public members.
 - `fanx.interop` comes from `lib/java/sys.jar` of the configured Fantom
   installation.
-- Jars a pod bundles also count: every `.jar` in the pod's `jar/` or
+- Jars a pod bundles also count: every `.jar` in the pod's `jar/`, `jars/` or
   `lib/java/` folder, and every jar its `build.fan` names.
 - A name imported with `pkg::Type` wins over a Fantom type of the same name.
   With a package import, a Fantom type from your `using` lines wins.

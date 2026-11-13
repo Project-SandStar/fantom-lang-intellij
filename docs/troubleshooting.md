@@ -20,7 +20,7 @@ Inspections | Fantom if it bothers you.
 Java FFI needs the Java plugin. Without it, `[java]` names stay plain and
 show no warning. With it, check these points:
 - The class is in the JDK, in a project library, in `fanx.interop` or in a
-  jar in the pod's `jar/` or `lib/java/` folder.
+  jar in the pod's `jar/`, `jars/` or `lib/java/` folder.
 - For `fanx.interop`, the Fantom installation has `lib/java/sys.jar`.
 - A method on a Java object resolves only when the plugin knows the object's
   type. Declare the type on the local (`Cipher c := ...`).
