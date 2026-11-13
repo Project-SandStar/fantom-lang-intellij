@@ -54,6 +54,12 @@
                                               isEnabledByDefault="true" group="TYPES_GROUP" providerId="fantom.types"
                                               bundle="messages.FantomBundle"
                                               nameKey="inlay.fantom.types.name" descriptionKey="inlay.fantom.types.description"/>
+        <!-- Parameter names before call arguments, like Kotlin and Java; same settings node as the type hints -->
+        <codeInsight.declarativeInlayProvider language="fantom_lang"
+                                              implementationClass="co.anbora.labs.fantom.ide.hints.FantomParameterHintsProvider"
+                                              isEnabledByDefault="true" group="TYPES_GROUP" providerId="fantom.parameters"
+                                              bundle="messages.FantomBundle"
+                                              nameKey="inlay.fantom.parameters.name" descriptionKey="inlay.fantom.parameters.description"/>
         <!-- Ctrl+Space: slots of the receiver type, names in scope, types, keywords -->
         <completion.contributor language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.completion.FantomCompletionContributor"/>
         <!-- Live templates (main, if, for, each, ...) and postfix templates (expr.if, .not, .each, .echo, .var, ...) -->
