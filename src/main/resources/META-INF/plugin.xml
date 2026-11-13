@@ -141,6 +141,10 @@
         <codeInsight.lineMarkerProvider language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.compiler.FantomBuildPodLineMarkerProvider"/>
         <!-- rename a slot with its override family -->
         <renamePsiElementProcessor implementation="co.anbora.labs.fantom.ide.refactoring.FantomRenameSlotProcessor"/>
+        <!-- Surround With and Unwrap/Remove -->
+        <lang.surroundDescriptor language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.refactoring.FantomStatementSurroundDescriptor"/>
+        <lang.surroundDescriptor language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.refactoring.FantomExpressionSurroundDescriptor"/>
+        <lang.unwrapDescriptor language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.refactoring.FantomUnwrapDescriptor"/>
     </extensions>
     <applicationListeners>
         <listener class="co.anbora.labs.fantom.ide.compiler.FantomCompileOnSaveListener"
