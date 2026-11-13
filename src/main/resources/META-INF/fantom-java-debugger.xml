@@ -5,5 +5,7 @@
         <programRunner implementation="co.anbora.labs.fantom.ide.debugger.FantomDebugRunner"/>
         <debugger.javaDebugAware implementation="co.anbora.labs.fantom.ide.debugger.FantomJavaDebugAware"/>
         <debugger.positionManagerFactory implementation="co.anbora.labs.fantom.ide.debugger.FantomPositionManagerFactory"/>
+        <debugger.extraSteppingFilter implementation="co.anbora.labs.fantom.ide.debugger.FantomClosureSteppingFilter"/>
+        <debuggerClassFilterProvider implementation="co.anbora.labs.fantom.ide.debugger.FantomDebuggerClassFilterProvider"/>
     </extensions>
 </idea-plugin>
