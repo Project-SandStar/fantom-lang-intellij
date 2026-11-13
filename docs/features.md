@@ -70,6 +70,26 @@ target's `bin/fan` against the target's pods.
 - You cannot build for an install whose Fantom is missing until you pick one
   in the settings.
 
+Picking a target in this menu also makes it the default build target. The
+status bar shows it ("Fantom: SkySpark 4.0.7"); click it to switch without a
+build.
+
+## Dependencies from source
+
+Navigation, completion and docs use source where it exists, so you see real
+code and comments, not stubs:
+
+- SkySpark pods such as `haystack`, `folio` and `axon` come from the source of
+  the paired Haxall of the same version.
+- Pods from your own repositories, such as `bassgCommon`, come from the
+  release tag that matches the build target, for example
+  `bassgCommon/4.0.6.2.2`. The plugin copies the tag into a read-only cache and
+  never touches your working copy.
+- Pods with no source anywhere, such as `skyarcd`, come from stubs.
+
+Switch the build target and every dependency is picked again. See
+[Settings](settings.md#source-roots-for-project-pods) for the rules.
+
 The IDE reads `podName`, `version`, `depends`, `srcDirs` and `resDirs` from
 `build.fan` when they are written as plain values, such as
 `depends = ["sys 1.0", "concurrent 1.0"]`. When `depends` comes from a variable
