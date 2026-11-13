@@ -28,6 +28,15 @@ data class FantomInstall(
     val custom: Boolean = false,
     /** For Haxall: the SkySpark of the same version, whose pods a build can borrow. */
     val skysparkPath: String? = null,
+    /**
+     * For SkySpark: the Haxall checkout whose sources stand in for SkySpark's compiled pods
+     * (haystack, folio, axon, ...). Matched by equal version, else the nearest lower one
+     * with [haxallWarning]; or chosen by the user ([haxallChosen]). Null when there is none.
+     */
+    val haxallPath: String? = null,
+    val haxallChosen: Boolean = false,
+    /** Set when [haxallPath] is not the same version: "no Haxall 4.0.8; using Haxall 4.0.7". */
+    val haxallWarning: String? = null,
 ) {
     enum class Pairing {
         /** A Fantom install, paired with itself. */
@@ -109,7 +118,23 @@ object FantomInstalls {
     )
 
     /** What the user set for one install, see [FantomSettings.InstallEntry]. */
-    data class Choice(val enabled: Boolean, val chosenFantom: String?, val custom: Boolean)
+    data class Choice(val enabled: Boolean, val chosenFantom: String?, val custom: Boolean, val chosenHaxall: String? = null)
+
+    /** The Haxall paired with a SkySpark of [version], and a warning when it is not the same version. */
+    data class HaxallMatch(val haxall: Found?, val warning: String?)
+
+    /**
+     * The Haxall for a SkySpark of [version]: the one of equal version, else the nearest
+     * lower one with a warning, else none. A SkySpark 3.x has no Haxall at or below it.
+     */
+    fun haxallFor(version: String?, haxalls: List<Found>): HaxallMatch {
+        if (version == null) return HaxallMatch(null, null)
+        val withVersion = haxalls.filter { it.kind == FantomHome.Kind.HAXALL && it.version != null }
+        withVersion.firstOrNull { compareVersions(it.version, version) == 0 }?.let { return HaxallMatch(it, null) }
+        val lower = withVersion.filter { compareVersions(it.version, version) < 0 }
+            .maxWithOrNull { a, b -> compareVersions(a.version, b.version) } ?: return HaxallMatch(null, null)
+        return HaxallMatch(lower, "no Haxall $version; using Haxall ${lower.version}")
+    }
 
     private val sysVersionCache = ConcurrentHashMap<String, Pair<Long, String?>>()
 
@@ -194,6 +219,7 @@ object FantomInstalls {
         val fantoms = found.filter { it.kind == FantomHome.Kind.FANTOM }
         fun fantomFor(version: String?): Found? = version?.let { v -> fantoms.firstOrNull { it.version == v } }
         val skysparks = found.filter { it.kind == FantomHome.Kind.SKYSPARK }
+        val haxalls = found.filter { it.kind == FantomHome.Kind.HAXALL }
         return found.map { f ->
             val choice = choices[f.dir.path]
             val custom = f.custom || choice?.custom == true
@@ -221,7 +247,12 @@ object FantomInstalls {
                 auto.copy(fantomPath = chosen.path, pairing = FantomInstall.Pairing.CHOSEN,
                     fantomVersion = read(chosen)?.version ?: auto.fantomVersion)
             } else auto
-            paired.copy(enabled = choice?.enabled ?: false, custom = custom, skysparkPath = skyspark?.dir?.path)
+            val withHaxall = if (f.kind != FantomHome.Kind.SKYSPARK) paired else {
+                val pick = choice?.chosenHaxall?.let(::File)?.takeIf { FantomHome.kindOf(it) == FantomHome.Kind.HAXALL }
+                if (pick != null) paired.copy(haxallPath = pick.path, haxallChosen = true)
+                else haxallFor(f.version, haxalls).let { m -> paired.copy(haxallPath = m.haxall?.dir?.path, haxallWarning = m.warning) }
+            }
+            withHaxall.copy(enabled = choice?.enabled ?: false, custom = custom, skysparkPath = skyspark?.dir?.path)
         }
     }
 
@@ -242,9 +273,14 @@ object FantomInstalls {
     fun choices(persisted: List<FantomInstall>, migration: FantomSettings.Migration?): Map<String, Choice> =
         if (persisted.isNotEmpty()) {
             persisted.associate { p ->
-                p.path to Choice(p.enabled, p.fantomPath.takeIf { p.pairing == FantomInstall.Pairing.CHOSEN }, p.custom)
+                p.path to Choice(p.enabled, p.fantomPath.takeIf { p.pairing == FantomInstall.Pairing.CHOSEN }, p.custom,
+                    p.haxallPath.takeIf { p.haxallChosen })
             }
         } else migration?.choices ?: emptyMap()
+
+    /** The Haxall installs among [installs], for the Haxall dropdown of a SkySpark row. */
+    fun haxallChoices(installs: List<FantomInstall>): List<FantomInstall> =
+        installs.filter { it.kind == FantomHome.Kind.HAXALL }
 
     /** The Fantom installs among [installs], for the pairing dropdown. */
     fun fantomChoices(installs: List<FantomInstall>): List<FantomInstall> =
