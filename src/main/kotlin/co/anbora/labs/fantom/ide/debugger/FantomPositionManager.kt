@@ -32,7 +32,7 @@ import java.util.concurrent.ConcurrentHashMap
 class FantomPositionManager(private val process: DebugProcess) : PositionManager {
     private val files = ConcurrentHashMap<Pair<String, String>, VirtualFile>()
 
-    override fun getAcceptedFileTypes(): Set<FileType> = setOf(FantomFileType)
+    override fun isAcceptedFileType(fileType: FileType): Boolean = fileType == FantomFileType
 
     override fun getSourcePosition(location: Location?): SourcePosition? {
         if (location == null) throw NoDataException.INSTANCE
@@ -44,7 +44,7 @@ class FantomPositionManager(private val process: DebugProcess) : PositionManager
         }
         if (!source.endsWith(".fan")) throw NoDataException.INSTANCE
         val line = location.lineNumber()
-        val psi = ReadAction.compute<PsiFile?, RuntimeException> { findFile(pod, source) } ?: throw NoDataException.INSTANCE
+        val psi = ReadAction.computeBlocking<PsiFile?, RuntimeException> { findFile(pod, source) } ?: throw NoDataException.INSTANCE
         return SourcePosition.createFromLine(psi, (line - 1).coerceAtLeast(0))
     }
 
@@ -78,7 +78,7 @@ class FantomPositionManager(private val process: DebugProcess) : PositionManager
         val file = position.file
         if (file.fileType != FantomFileType) throw NoDataException.INSTANCE
         val vf = file.virtualFile ?: file.originalFile.virtualFile ?: throw NoDataException.INSTANCE
-        val pod = ReadAction.compute<String?, RuntimeException> { FantomPodResolver.podNameFor(vf, file.project) }
+        val pod = ReadAction.computeBlocking<String?, RuntimeException> { FantomPodResolver.podNameFor(vf, file.project) }
             ?: throw NoDataException.INSTANCE
         return pod to vf.name
     }
