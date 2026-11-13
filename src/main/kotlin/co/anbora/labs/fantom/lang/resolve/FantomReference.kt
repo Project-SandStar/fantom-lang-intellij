@@ -144,7 +144,9 @@ class FantomReference(
      */
     private fun slotsInTypeChain(start: FantomNamedElement, name: String, scope: GlobalSearchScope): List<FantomNamedElement> {
         val project = element.project
-        val seen = HashSet<String>()
+        // By declaration, not by name: two pods may each declare a `Conn`, and only one is the base.
+        val seen = HashSet<FantomNamedElement>()
+        val seenNames = HashSet<String>()
         val queue = ArrayDeque<FantomNamedElement>().apply { add(start) }
         var implicitDone = false
         while (true) {
@@ -152,18 +154,17 @@ class FantomReference(
                 if (implicitDone) return emptyList()
                 implicitDone = true
                 for (root in FantomScope.implicitSuperTypeNames(start)) {
-                    if (root !in seen) queue += FantomDeclarationIndex.findDeclarations(root, project, scope) { it.isType }
+                    if (root !in seenNames) queue += FantomDeclarationIndex.findDeclarations(root, project, scope) { it.isType }
                 }
                 if (queue.isEmpty()) return emptyList()
             }
             val type = queue.removeFirst()
             val typeName = type.name ?: continue
-            if (!seen.add(typeName)) continue
+            if (!seen.add(type)) continue
+            seenNames += typeName
             val hit = FantomScope.ownSlots(type).filter { it.name == name }
             if (hit.isNotEmpty()) return hit
-            for (superName in FantomScope.superTypeNames(type)) {
-                queue += FantomDeclarationIndex.findDeclarations(superName, project, scope) { it.isType }
-            }
+            queue += FantomScope.superTypes(type, project, scope)
         }
     }
 

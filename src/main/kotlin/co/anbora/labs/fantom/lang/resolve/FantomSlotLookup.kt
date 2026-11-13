@@ -4,6 +4,7 @@ import co.anbora.labs.fantom.lang.core.psi.FantomNamedElement
 import co.anbora.labs.fantom.lang.index.FantomDeclarationIndex
 import co.anbora.labs.fantom.lang.types.FantomTypeInference
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.psi.search.GlobalSearchScope
 
 /**
@@ -18,7 +19,9 @@ object FantomSlotLookup {
      */
     fun typeChain(start: FantomNamedElement, project: Project, scope: GlobalSearchScope): List<FantomNamedElement> {
         val out = ArrayList<FantomNamedElement>()
-        val seen = HashSet<String>()
+        // By declaration, not by name: two pods may each declare a `Conn`, and only one is the base.
+        val seen = HashSet<FantomNamedElement>()
+        val seenNames = HashSet<String>()
         val queue = ArrayDeque<FantomNamedElement>().apply { add(start) }
         var implicitDone = false
         while (true) {
@@ -26,18 +29,28 @@ object FantomSlotLookup {
                 if (implicitDone) return out
                 implicitDone = true
                 for (root in FantomScope.implicitSuperTypeNames(start)) {
-                    if (root !in seen) queue += FantomTypeInference.typeDefinitions(root, project)
+                    if (root !in seenNames) queue += FantomTypeInference.typeDefinitions(root, project)
                 }
                 if (queue.isEmpty()) return out
             }
             val type = queue.removeFirst()
             val name = type.name ?: continue
-            if (!seen.add(name)) continue
+            if (!seen.add(type)) continue
+            seenNames += name
             out += type
-            for (superName in FantomScope.superTypeNames(type)) {
-                queue += FantomTypeInference.typeDefinitions(superName, project)
+            queue += FantomScope.superTypes(type, project, scope).let { supers ->
+                // A project copy of a library type still wins, as in typeDefinitions.
+                supers.groupBy { it.name }.values.flatMap { same -> if (same.size < 2) same else preferProject(same, project) }
             }
         }
+    }
+
+    private fun preferProject(types: List<FantomNamedElement>, project: Project): List<FantomNamedElement> {
+        val index = ProjectFileIndex.getInstance(project)
+        return types.filter { t ->
+            val vf = t.containingFile?.virtualFile ?: return@filter false
+            index.isInContent(vf) && !index.isInLibrary(vf)
+        }.ifEmpty { types }
     }
 
     /**
