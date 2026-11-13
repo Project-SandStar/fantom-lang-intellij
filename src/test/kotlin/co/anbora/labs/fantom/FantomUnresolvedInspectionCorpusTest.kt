@@ -88,5 +88,9 @@ class FantomUnresolvedInspectionCorpusTest : BasePlatformTestCase() {
         println("$tag top names: $top")
         println("$tag examples: $examples")
         assertTrue("$total unresolved warnings on $podName, limit 100; top: $top", total < 100)
+        // The default `util` pod is clean since it-block field assignment resolves (r23).
+        if (System.getProperty("fantom.pod.dir").isNullOrBlank()) {
+            assertEquals("unresolved warnings on util; top: $top", 0, total)
+        }
     }
 }

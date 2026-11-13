@@ -1,8 +1,13 @@
 package co.anbora.labs.fantom.lang.resolve
 
+import co.anbora.labs.fantom.lang.core.psi.FantomAssignExpr
+import co.anbora.labs.fantom.lang.core.psi.FantomField
+import co.anbora.labs.fantom.lang.core.psi.FantomFieldDef
+import co.anbora.labs.fantom.lang.core.psi.FantomLocal
 import co.anbora.labs.fantom.lang.core.psi.FantomNamedElement
 import co.anbora.labs.fantom.lang.index.FantomDeclarationIndex
 import co.anbora.labs.fantom.lang.index.FantomDeclarationKind
+import co.anbora.labs.fantom.lang.types.FantomItScope
 import co.anbora.labs.fantom.lang.types.FantomTypeInference
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.TextRange
@@ -12,13 +17,15 @@ import com.intellij.psi.PsiElementResolveResult
 import com.intellij.psi.ResolveResult
 import com.intellij.psi.impl.source.tree.LeafElement
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.util.PsiTreeUtil
 
 /**
  * Reference from an identifier use to its declaration.
  *
  * [kind] says where the identifier sits, which picks the resolve order:
- * - [Kind.BARE]: `x` alone or `x(...)`. Locals and params first, then slots of the
- *   enclosing type and its supertypes, then a type by short name.
+ * - [Kind.BARE]: `x` alone or `x(...)`. Locals and params first, then (for `x = v`
+ *   inside an it-block) fields of `it`, then slots of the enclosing type and its
+ *   supertypes, then a type by short name.
  * - [Kind.SLOT]: `recv.x` or `Type.x`. Slots named x anywhere in scope (the receiver
  *   type is unknown until layer 5), narrowed to the receiver's type when [ownerName]
  *   is known.
@@ -65,7 +72,9 @@ class FantomReference(
         return when (kind) {
             Kind.BARE -> {
                 FantomScope.localsVisibleAt(element).filter { it.name == name }.take(1).ifEmpty {
-                    slotsInEnclosingTypeChain(name, scope).ifEmpty { types(name, project, scope) }
+                    itBlockFields(name, scope).ifEmpty {
+                        slotsInEnclosingTypeChain(name, scope).ifEmpty { types(name, project, scope) }
+                    }
                 }
             }
             Kind.SLOT -> {
@@ -90,6 +99,27 @@ class FantomReference(
             // lines make visible; when none is, keep them all.
             Kind.TYPE -> FantomUsingScope.preferVisible(types(name, project, scope), element.containingFile)
         }
+    }
+
+    /**
+     * `Foo { bar = 1 }`, `Str:Obj?[:] { ordered = true }`: a bare name on the left of `=`
+     * inside an it-block sets a field of `it`, so it resolves to that field of the
+     * it-block's receiver type before the enclosing type's slots.
+     */
+    private fun itBlockFields(name: String, scope: GlobalSearchScope): List<FantomNamedElement> {
+        if (!isAssignTarget()) return emptyList()
+        val owner = FantomItScope.typeOfIt(element)?.slotOwnerName ?: return emptyList()
+        return FantomTypeInference.typeDefinitions(owner, element.project)
+            .flatMap { slotsInTypeChain(it, name, scope) }
+            .filter { it is FantomFieldDef }
+    }
+
+    // True when this bare name is the whole left side of a plain `=`.
+    private fun isAssignTarget(): Boolean {
+        if (element.parent !is FantomLocal && element.parent !is FantomField) return false
+        val assign = PsiTreeUtil.getParentOfType(element, FantomAssignExpr::class.java) ?: return false
+        if (assign.assignOp?.text != "=") return false
+        return assign.ifExpr?.textRange == element.textRange
     }
 
     private fun types(name: String, project: com.intellij.openapi.project.Project, scope: GlobalSearchScope) =
