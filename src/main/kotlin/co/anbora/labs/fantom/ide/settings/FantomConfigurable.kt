@@ -2,179 +2,266 @@ package co.anbora.labs.fantom.ide.settings
 
 import co.anbora.labs.fantom.ide.imports.FantomUsingCandidates
 import co.anbora.labs.fantom.lang.library.FantomHome
+import co.anbora.labs.fantom.lang.library.FantomInstall
+import co.anbora.labs.fantom.lang.library.FantomInstalls
 import co.anbora.labs.fantom.lang.library.FantomSettings
 import co.anbora.labs.fantom.lang.pod.FantomPodStubActivity
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.BoundConfigurable
-import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.EmptyRunnable
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.JBUI
+import java.awt.Component
 import java.io.File
-import javax.swing.JLabel
+import javax.swing.DefaultCellEditor
+import javax.swing.DefaultComboBoxModel
+import javax.swing.JTable
 import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
+import javax.swing.table.AbstractTableModel
+import javax.swing.table.DefaultTableCellRenderer
 
 /**
  * Settings | Languages & Frameworks | Fantom.
  *
- * - Fantom home: a Fantom, Haxall or SkySpark home ([FantomHome.kindOf]). Empty means
- *   "detect it" ([FantomHome.detect]).
- * - Fantom sources: a plain Fantom install that supplies `sys` and the core pods when
- *   the home is Haxall or SkySpark. Empty means the newest `~/fantom/fantom-*`.
+ * ```
+ * Roots
+ *   Fantom root    [ ~/fantom   ] [Browse]
+ *   Haxall root    [ ~/haxall   ] [Browse]
+ *   SkySpark root  [ ~/skyspark ] [Browse]
+ * Installs found                                    [+ Add folder]
+ *   [x] SkySpark 4.0.7        Fantom 1.0.84 (auto)  v     sys.pod
+ * Default build target  [ SkySpark 4.0.7 v ]
+ * [x] Compile on save
+ * ```
  *
- * An invalid non-empty field makes [apply] throw and nothing is stored. On a successful
- * apply that changed a path, the roots change event is fired so
+ * Every install directly under the three roots, plus the custom folders, is a row
+ * ([FantomInstalls.scan]). Each Haxall and SkySpark row is paired with a Fantom install
+ * ([FantomInstalls.pair]); its dropdown picks another. Ticked rows feed the index.
+ *
+ * Before the first Apply the rows come from the old single-home settings
+ * ([FantomSettings.migrate]): that home is the one ticked row, and the page counts as
+ * unmodified, so opening it changes nothing. On an Apply that changes the indexed pods,
+ * the roots change event is fired so
  * [co.anbora.labs.fantom.lang.library.FantomLibraryRootsProvider] is asked again.
  */
 class FantomConfigurable(private val project: Project) : BoundConfigurable("Fantom") {
 
-    /** Built in [createPanel]; read it only after `createComponent()`. */
-    internal lateinit var homeField: TextFieldWithBrowseButton
-    internal lateinit var sourcesField: TextFieldWithBrowseButton
+    /** Built in [createPanel]; read them only after `createComponent()`. */
+    internal lateinit var fantomRootField: TextFieldWithBrowseButton
+    internal lateinit var haxallRootField: TextFieldWithBrowseButton
+    internal lateinit var skysparkRootField: TextFieldWithBrowseButton
+    internal lateinit var table: JBTable
+    internal lateinit var defaultTargetBox: ComboBox<FantomInstall>
     internal lateinit var compileOnSaveBox: JBCheckBox
-    internal lateinit var homeLabel: JLabel
-    internal lateinit var sourcesLabel: JLabel
+
+    internal val model = InstallTableModel()
+
+    /** What the last [reset] showed, to tell whether the page is modified. */
+    private var shown: Snapshot? = null
+    private var found: List<FantomInstalls.Found> = emptyList()
+    private val choices = LinkedHashMap<String, FantomInstalls.Choice>()
+    private val customFolders = ArrayList<File>()
+    private var defaultPath: String? = null
+    private var refreshing = false
 
     private val settings: FantomSettings get() = FantomSettings.getInstance(project)
 
+    private data class Snapshot(val roots: List<String>, val rows: List<FantomInstall>, val defaultTarget: String?, val compileOnSave: Boolean)
+
     override fun createPanel(): DialogPanel {
-        homeField = TextFieldWithBrowseButton()
-        sourcesField = TextFieldWithBrowseButton()
-        homeLabel = hintLabel()
-        sourcesLabel = hintLabel()
-        homeField.addBrowseFolderListener(
-            project,
-            FileChooserDescriptorFactory.createSingleFolderDescriptor()
-                .withTitle("Fantom Home")
-                .withDescription("Fantom, Haxall or SkySpark home")
-        )
-        sourcesField.addBrowseFolderListener(
-            project,
-            FileChooserDescriptorFactory.createSingleFolderDescriptor()
-                .withTitle("Fantom Sources")
-                .withDescription("Plain Fantom install with src/sys/fan")
-        )
-        onChange(homeField) { updateLabels() }
-        onChange(sourcesField) { updateLabels() }
-        updateLabels()
+        fantomRootField = rootField("Fantom Root")
+        haxallRootField = rootField("Haxall Root")
+        skysparkRootField = rootField("SkySpark Root")
+        table = JBTable(model).apply {
+            setShowGrid(false)
+            rowSelectionAllowed = true
+            columnModel.getColumn(ENABLED).maxWidth = JBUI.scale(30)
+            columnModel.getColumn(FANTOM).cellRenderer = FantomCellRenderer()
+            columnModel.getColumn(FANTOM).cellEditor = DefaultCellEditor(fantomCombo())
+            visibleRowCount = 8
+        }
+        defaultTargetBox = ComboBox<FantomInstall>().apply {
+            renderer = SimpleListCellRenderer.create("") { it.name }
+            addActionListener { if (!refreshing) defaultPath = (selectedItem as? FantomInstall)?.path }
+        }
+        reset()
         return panel {
-            row("Fantom home:") {
-                cell(homeField)
-                    .align(AlignX.FILL)
-                    .validationOnInput { field -> validateHome(field.text)?.let { error(it) } }
-                    .validationOnApply { field -> validateHome(field.text)?.let { error(it) } }
+            group("Roots") {
+                row("Fantom root:") { cell(fantomRootField).align(AlignX.FILL) }
+                row("Haxall root:") { cell(haxallRootField).align(AlignX.FILL) }
+                row("SkySpark root:") { cell(skysparkRootField).align(AlignX.FILL) }
             }
-            row("") { cell(homeLabel) }
-            row("Fantom sources:") {
-                cell(sourcesField)
-                    .align(AlignX.FILL)
-                    .comment("Optional. Supplies sys and the core pods when the home is Haxall or SkySpark.")
-                    .validationOnInput { field -> validateSources(field.text)?.let { error(it) } }
-                    .validationOnApply { field -> validateSources(field.text)?.let { error(it) } }
+            row("Installs found") {
+                button("Add Folder…") { chooseFolder() }.align(AlignX.RIGHT)
             }
-            row("") { cell(sourcesLabel) }
             row {
-                compileOnSaveBox = checkBox("Compile the pod on save and show compiler errors in the editor")
-                    .comment("Runs bin/fan build.fan compile into a temp folder; the Fantom install is not changed.")
+                cell(JBScrollPane(table)).align(Align.FILL)
+                    .comment("Ticked installs feed the index. Haxall and SkySpark are paired with the Fantom install " +
+                        "that supplies sys and the compiler; pick another in the Fantom column.")
+            }.resizableRow()
+            row("Default build target:") {
+                cell(defaultTargetBox).align(AlignX.FILL)
+                    .comment("The install run configurations, tests and compile-on-save use.")
+            }
+            row {
+                compileOnSaveBox = checkBox("Compile on save")
+                    .comment("Runs bin/fan build.fan compile into a temp folder; it never writes into an install.")
                     .component
                 compileOnSaveBox.isSelected = settings.compileOnSave
             }
         }
     }
 
-    private fun hintLabel() = JLabel().apply {
-        foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
-        font = JBUI.Fonts.smallFont()
-    }
-
-    private fun onChange(field: TextFieldWithBrowseButton, block: () -> Unit) {
-        field.textField.document.addDocumentListener(object : DocumentListener {
-            override fun insertUpdate(e: DocumentEvent) = block()
-            override fun removeUpdate(e: DocumentEvent) = block()
-            override fun changedUpdate(e: DocumentEvent) = block()
+    private fun rootField(title: String) = TextFieldWithBrowseButton().apply {
+        addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(title))
+        textField.document.addDocumentListener(object : DocumentListener {
+            override fun insertUpdate(e: DocumentEvent) = rescan()
+            override fun removeUpdate(e: DocumentEvent) = rescan()
+            override fun changedUpdate(e: DocumentEvent) = rescan()
         })
     }
 
-    /** The home the fields describe: the typed one if valid, else the detected one. */
-    private fun shownHome(): File? {
-        val text = homeField.text.trim()
-        if (text.isNotEmpty()) return File(text).takeIf(FantomHome::isHome)
-        return FantomHome.detect()
+    private fun fantomCombo() = ComboBox<FantomOption>().apply {
+        renderer = SimpleListCellRenderer.create("") { it.label }
     }
 
-    private fun updateLabels() {
-        if (!::sourcesLabel.isInitialized) return
-        val home = shownHome()
-        val kind = home?.let(FantomHome::kindOf)
-        homeLabel.text = when {
-            home == null && homeField.text.isBlank() -> "Not found; set ${FantomHome.ENV} or pick a folder"
-            home == null -> " "
-            else -> {
-                val prefix = if (homeField.text.isBlank()) "Detected: ${home.path} (${kind?.label})" else "${kind?.label} home"
-                when (kind) {
-                    FantomHome.Kind.SKYSPARK -> "$prefix. $SKYSPARK_HINT"
-                    FantomHome.Kind.HAXALL ->
-                        if (FantomHome.hasLauncher(home)) "$prefix. Its pods are indexed; sys comes from the Fantom sources."
-                        else "$prefix. It has no bin/fan; builds and tests use the Fantom sources' bin/fan."
-                    else -> prefix
-                }
-            }
+    /** One choice of the Fantom column: a Fantom install, or "(auto)" when [path] is null. */
+    data class FantomOption(val path: String?, val label: String) {
+        override fun toString() = label
+    }
+
+    private val hasUi: Boolean get() = ::fantomRootField.isInitialized
+
+    private fun rootTexts(): List<String> = if (!hasUi) emptyList()
+        else listOf(fantomRootField, haxallRootField, skysparkRootField).map { it.text.trim() }
+
+    /** Scans the roots again, keeping the ticks and choices made so far. */
+    internal fun rescan() {
+        if (!hasUi || refreshing) return
+        found = FantomInstalls.scan(rootTexts().filter { it.isNotEmpty() }.map(::File), customFolders)
+        refresh()
+    }
+
+    /** Pairs [found] with [choices] and shows the result. */
+    private fun refresh() {
+        refreshing = true
+        try {
+            model.setRows(FantomInstalls.pair(found, choices))
+            val combo = (table.columnModel.getColumn(FANTOM).cellEditor as DefaultCellEditor).component as ComboBox<*>
+            @Suppress("UNCHECKED_CAST")
+            (combo as ComboBox<FantomOption>).model = DefaultComboBoxModel(
+                (listOf(FantomOption(null, "(auto)")) + FantomInstalls.fantomChoices(model.rows).map { FantomOption(it.path, it.name) })
+                    .toTypedArray()
+            )
+            val targets = model.rows.filter { it.enabled }
+            defaultTargetBox.model = DefaultComboBoxModel(targets.toTypedArray())
+            defaultTargetBox.selectedItem = targets.firstOrNull { it.path == defaultPath } ?: targets.firstOrNull()
+        } finally {
+            refreshing = false
         }
-        val sourcesText = sourcesField.text.trim()
-        sourcesLabel.text = when {
-            kind == FantomHome.Kind.FANTOM -> "Not used: the Fantom home has its own sources."
-            sourcesText.isNotEmpty() -> " "
-            else -> FantomHome.detectSources()?.let { "Detected: ${it.path}" }
-                ?: "Not found; pick a Fantom install (fantom-1.0.x with src/sys)"
-        }
     }
 
-    private fun validateHome(text: String): String? {
-        if (text.isBlank()) return null
-        return if (FantomHome.isHome(File(text.trim()))) null else NOT_A_HOME
+    /** The rows as they would be stored. */
+    internal fun currentRows(): List<FantomInstall> = model.rows
+
+    /** The default target as it would be stored: the chosen one if ticked, else the first ticked row. */
+    internal fun currentDefault(): String? {
+        val ticked = model.rows.filter { it.enabled }
+        return ticked.firstOrNull { it.path == defaultPath }?.path ?: ticked.firstOrNull()?.path
     }
 
-    private fun validateSources(text: String): String? {
-        if (text.isBlank()) return null
-        return if (FantomHome.isSources(File(text.trim()))) null else NOT_SOURCES
+    internal fun setEnabled(path: String, enabled: Boolean) {
+        val c = choices[path] ?: FantomInstalls.Choice(false, null, false)
+        choices[path] = c.copy(enabled = enabled)
+        refresh()
     }
 
-    private val hasUi: Boolean get() = ::homeField.isInitialized
+    /** Pairs the row at [path] with the Fantom at [fantomPath]; null goes back to the automatic match. */
+    internal fun choose(path: String, fantomPath: String?) {
+        val c = choices[path] ?: FantomInstalls.Choice(false, null, false)
+        choices[path] = c.copy(chosenFantom = fantomPath)
+        refresh()
+    }
 
-    override fun isModified(): Boolean = hasUi &&
-        (homeField.text.trim() != (settings.homePath ?: "") ||
-            sourcesField.text.trim() != (settings.sourcesPath ?: "") ||
-            compileOnSaveBox.isSelected != settings.compileOnSave)
+    internal fun selectDefault(path: String) {
+        defaultPath = path
+        refresh()
+    }
+
+    private fun chooseFolder() {
+        val vf = FileChooser.chooseFile(
+            FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle("Add Fantom, Haxall or SkySpark Folder"),
+            project, null,
+        ) ?: return
+        addFolder(VfsUtilCore.virtualToIoFile(vf))?.let { Messages.showErrorDialog(project, it, "Add Folder") }
+    }
+
+    /** Adds [dir] as a custom, ticked row. Returns an error text when it is not an install. */
+    internal fun addFolder(dir: File): String? {
+        if (FantomHome.kindOf(dir) == null) return NOT_A_HOME
+        if (customFolders.none { it.path == dir.path }) customFolders += dir
+        choices[dir.path] = (choices[dir.path] ?: FantomInstalls.Choice(true, null, true)).copy(enabled = true, custom = true)
+        rescan()
+        return null
+    }
+
+    private fun snapshot() = Snapshot(rootTexts(), currentRows(), currentDefault(), compileOnSaveBox.isSelected)
+
+    override fun isModified(): Boolean = hasUi && snapshot() != shown
 
     override fun reset() {
         if (!hasUi) return
-        homeField.text = settings.homePath ?: ""
-        sourcesField.text = settings.sourcesPath ?: ""
-        compileOnSaveBox.isSelected = settings.compileOnSave
-        updateLabels()
+        val persisted = settings.installs
+        val migration = if (persisted.isEmpty()) settings.migrate() else null
+        refreshing = true
+        try {
+            fantomRootField.text = settings.fantomRoot
+            haxallRootField.text = settings.haxallRoot
+            skysparkRootField.text = settings.skysparkRoot
+        } finally {
+            refreshing = false
+        }
+        choices.clear()
+        choices.putAll(FantomInstalls.choices(persisted, migration))
+        customFolders.clear()
+        customFolders.addAll(FantomInstalls.customFolders(persisted, migration))
+        defaultPath = settings.defaultTarget ?: migration?.defaultTarget
+        if (::compileOnSaveBox.isInitialized) compileOnSaveBox.isSelected = settings.compileOnSave
+        rescan()
+        shown = if (::compileOnSaveBox.isInitialized) snapshot() else null
     }
 
-    @Throws(ConfigurationException::class)
     override fun apply() {
         if (!hasUi) return
-        val home = homeField.text.trim()
-        val sources = sourcesField.text.trim()
-        validateHome(home)?.let { throw ConfigurationException(it) }
-        validateSources(sources)?.let { throw ConfigurationException(it) }
+        val before = indexKey()
+        val (fantom, haxall, skyspark) = rootTexts()
+        settings.fantomRoot = fantom
+        settings.haxallRoot = haxall
+        settings.skysparkRoot = skyspark
+        settings.installs = currentRows()
+        settings.defaultTarget = currentDefault()
         settings.compileOnSave = compileOnSaveBox.isSelected
-        if (home == (settings.homePath ?: "") && sources == (settings.sourcesPath ?: "")) return
-        settings.homePath = home.ifBlank { null }
-        settings.sourcesPath = sources.ifBlank { null }
+        shown = snapshot()
         FantomSettings.clearPodCache()
+        if (indexKey() == before) return
         FantomUsingCandidates.reset()
         WriteAction.runAndWait<RuntimeException> {
             ProjectRootManagerEx.getInstanceEx(project)
@@ -183,12 +270,83 @@ class FantomConfigurable(private val project: Project) : BoundConfigurable("Fant
         FantomPodStubActivity.schedule(project)
     }
 
+    /** What the index depends on: the pod folders, the runtime jars and the runner. */
+    private fun indexKey(): List<String> =
+        settings.podSources().map { it.podDir.path } + settings.runtimeJars().map { it.path } +
+            listOf(settings.effectiveHome()?.path ?: "", settings.podsNeedingStubs().size.toString())
+
+    /** The install table: tick, name, paired Fantom, source of the match. */
+    inner class InstallTableModel : AbstractTableModel() {
+        var rows: List<FantomInstall> = emptyList()
+            private set
+
+        fun setRows(value: List<FantomInstall>) {
+            rows = value
+            fireTableDataChanged()
+        }
+
+        override fun getRowCount() = rows.size
+        override fun getColumnCount() = 4
+        override fun getColumnName(column: Int) = when (column) {
+            ENABLED -> ""
+            NAME -> "Install"
+            FANTOM -> "Fantom"
+            else -> "Match"
+        }
+
+        override fun getColumnClass(column: Int): Class<*> =
+            if (column == ENABLED) java.lang.Boolean::class.java else String::class.java
+
+        override fun isCellEditable(row: Int, column: Int) =
+            column == ENABLED || (column == FANTOM && rows[row].kind != FantomHome.Kind.FANTOM)
+
+        override fun getValueAt(row: Int, column: Int): Any {
+            val r = rows[row]
+            return when (column) {
+                ENABLED -> r.enabled
+                NAME -> r.name + if (r.custom) "   (custom folder)" else ""
+                FANTOM -> fantomText(r)
+                else -> r.matchSource
+            }
+        }
+
+        override fun setValueAt(value: Any?, row: Int, column: Int) {
+            val r = rows.getOrNull(row) ?: return
+            when (column) {
+                ENABLED -> setEnabled(r.path, value == true)
+                FANTOM -> if (value is FantomOption) choose(r.path, value.path)
+            }
+        }
+    }
+
+    /** "(itself)", "Fantom 1.0.84 (auto)", "Fantom 1.0.84" or the warning. */
+    private fun fantomText(r: FantomInstall): String = when (r.pairing) {
+        FantomInstall.Pairing.SELF -> "(itself)"
+        FantomInstall.Pairing.AUTO -> "Fantom ${r.fantomVersion} (auto)"
+        FantomInstall.Pairing.CHOSEN -> r.fantomPath?.let { p ->
+            model.rows.firstOrNull { it.path == p }?.name ?: File(p).name
+        } ?: ""
+        FantomInstall.Pairing.MISSING -> r.warning ?: ""
+    }
+
+    private inner class FantomCellRenderer : DefaultTableCellRenderer() {
+        override fun getTableCellRendererComponent(
+            table: JTable, value: Any?, isSelected: Boolean, hasFocus: Boolean, row: Int, column: Int,
+        ): Component {
+            val c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column)
+            val r = model.rows.getOrNull(table.convertRowIndexToModel(row))
+            icon = if (r?.pairing == FantomInstall.Pairing.MISSING) AllIcons.General.Warning else null
+            return c
+        }
+    }
+
     companion object {
         const val ID = "co.anbora.labs.fantom.settings"
-        const val NOT_A_HOME = "Not a home. Fantom needs bin/fan and src/sys/fan; " +
+        const val NOT_A_HOME = "Not an install. Fantom needs bin/fan and src/sys/fan; " +
             "Haxall needs src/core; SkySpark needs lib/fan/skyarcd.pod and bin/fan"
-        const val NOT_SOURCES = "Not a Fantom install: needs src/sys/fan"
-        const val SKYSPARK_HINT = "SkySpark ships compiled pods only; pod browsing comes in a later version. " +
-            "Only the Fantom sources are indexed; run configurations and the compiler use its bin/fan."
+        const val ENABLED = 0
+        const val NAME = 1
+        const val FANTOM = 2
+        const val MATCH = 3
     }
 }

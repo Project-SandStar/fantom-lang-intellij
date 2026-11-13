@@ -231,16 +231,20 @@ object FantomInstalls {
      * from [persisted]; when no row was ever saved they come from [migration] instead, so the
      * single home the project had shows as the one ticked row.
      */
-    fun rows(roots: List<File>, persisted: List<FantomInstall>, migration: FantomSettings.Migration?): List<FantomInstall> {
-        val customs = persisted.filter { it.custom }.map { it.dir } + listOfNotNull(migration?.custom)
-        val found = scan(roots, customs)
-        val choices: Map<String, Choice> = if (persisted.isNotEmpty()) {
+    fun rows(roots: List<File>, persisted: List<FantomInstall>, migration: FantomSettings.Migration?): List<FantomInstall> =
+        pair(scan(roots, customFolders(persisted, migration)), choices(persisted, migration))
+
+    /** The custom folders to scan: the persisted custom rows, else the migrated home outside the roots. */
+    fun customFolders(persisted: List<FantomInstall>, migration: FantomSettings.Migration?): List<File> =
+        persisted.filter { it.custom }.map { it.dir } + listOfNotNull(migration?.custom)
+
+    /** The user's choices by path: from [persisted] rows, else from [migration] when nothing was saved yet. */
+    fun choices(persisted: List<FantomInstall>, migration: FantomSettings.Migration?): Map<String, Choice> =
+        if (persisted.isNotEmpty()) {
             persisted.associate { p ->
                 p.path to Choice(p.enabled, p.fantomPath.takeIf { p.pairing == FantomInstall.Pairing.CHOSEN }, p.custom)
             }
         } else migration?.choices ?: emptyMap()
-        return pair(found, choices)
-    }
 
     /** The Fantom installs among [installs], for the pairing dropdown. */
     fun fantomChoices(installs: List<FantomInstall>): List<FantomInstall> =
