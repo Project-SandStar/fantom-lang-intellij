@@ -29,7 +29,7 @@ import static co.anbora.labs.fantom.lang.axon.AxonTokenTypes.*;
 %eof{  return;
 %eof}
 
-%state BLOCK_COMMENT
+%state IN_BLOCK_COMMENT
 
 NL = \r|\n|\r\n
 WS = [ \t\f\u00A0]+
@@ -62,7 +62,7 @@ SYMBOL = "^" {ID_CHAR}+
   {NL}                 { return WHITE_SPACE; }
 
   "//" [^\r\n]*        { return LINE_COMMENT; }
-  "/*"                 { commentDepth = 1; commentStart = zzStartRead; yybegin(BLOCK_COMMENT); }
+  "/*"                 { commentDepth = 1; commentStart = zzStartRead; yybegin(IN_BLOCK_COMMENT); }
 
   "and"                { return KEYWORD; }
   "catch"              { return KEYWORD; }
@@ -117,7 +117,7 @@ SYMBOL = "^" {ID_CHAR}+
   [^]                  { return BAD_CHARACTER; }
 }
 
-<BLOCK_COMMENT> {
+<IN_BLOCK_COMMENT> {
   "/*"                 { commentDepth++; }
   "*/"                 { if (--commentDepth == 0) { yybegin(YYINITIAL); zzStartRead = commentStart; return BLOCK_COMMENT; } }
   <<EOF>>              { yybegin(YYINITIAL); zzStartRead = commentStart; return BLOCK_COMMENT; }
