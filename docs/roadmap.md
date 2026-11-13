@@ -62,4 +62,20 @@ full debugger (item 16) ships in the next release.
     interpolation in the evaluator; breakpoints in a script inside a pod
     folder.
 
+## 3.1: many installs and build targets
+
+17. **Install table and build targets.** The Fantom settings page gets three
+    root folders (Fantom, Haxall, SkySpark). The plugin lists every install
+    under them in a table with a check box; ticked installs feed the index.
+    Each Haxall and SkySpark row is paired with a Fantom install: matched
+    automatically from the install's `sys.pod` version (SkySpark 4.0.7 ships
+    `sys` 1.0.84.4007, so it pairs with Fantom 1.0.84), with a dropdown to
+    choose another. A custom folder can be added, such as a SkySpark dev
+    build. Build Pod gets a target menu ("Build for SkySpark 4.0.7 / Haxall
+    4.0.6 / Fantom 1.0.84"); it compiles with the paired Fantom against the
+    target's pods. Writing the built pod into the target's `lib/fan` is an
+    explicit choice per build; a running server loads it after a restart.
+
+The promotional video follows these items.
+
 Ideas and votes: <https://github.com/Project-SandStar/fantom-lang-intellij/discussions>.
