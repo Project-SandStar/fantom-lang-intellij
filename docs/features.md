@@ -49,3 +49,13 @@ Each one has a quick fix under Alt+Enter where one makes sense.
 A green arrow appears next to `static Void main`, next to each `Test`
 subclass, and next to each `test*` method. Run configurations call `fan` and
 `fant` from the configured Fantom installation.
+
+## Axon and other files
+
+| File or place | What you get |
+|---|---|
+| `.axon` files | Axon colours (keywords, strings, numbers with units, dates, times, `@refs`, `^symbols`, URIs, comments, operators), brace matching for `( ) [ ] { }`, and Cmd+/ comments. Colours: Settings, Editor, Color Scheme, Axon |
+| Axon in Fantom strings | The first string argument of `eval`, `evalAll`, `evalToFunc`, `parseAxon` or `Axon` is coloured as Axon. Put `// language=axon` on the line above any other string to do the same |
+| `.trio` files | Haystack records: `---` separators, tag names, values, `//` comments. The `src:` value is coloured as Axon |
+| `.fandoc` files | Headings and their underlines, list markers, `pre>` blocks, backtick links and `'code'` |
+| `fan.props`, and `.props` files under an `etc/` folder | `key=value` colours and `//` comments |

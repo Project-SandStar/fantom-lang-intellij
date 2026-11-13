@@ -143,6 +143,15 @@ tasks {
         purgeOldFiles.set(true)
     }
 
+    // Axon (SkySpark/Haxall scripting) lexer. Same root as generateLexer; pathToClass scopes the purge.
+    // The class lives outside core/psi, so the generateParser purge never deletes it.
+    register<org.jetbrains.intellij.platform.gradle.tasks.GenerateLexerTask>("generateAxonLexer") {
+        sourceFile.set(file("src/main/grammar/Axon.flex"))
+        targetRootOutputDir.set(file("src/main/gen"))
+        pathToClass.set("co/anbora/labs/fantom/lang/axon/_AxonLexer.java")
+        purgeOldFiles.set(true)
+    }
+
     generateParser {
         sourceFile.set(file("src/main/grammar/Fantom.bnf"))
         targetRootOutputDir.set(file("src/main/gen"))
@@ -155,7 +164,7 @@ tasks {
     }
 
     withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-        dependsOn("generateLexer", "generateParser")
+        dependsOn("generateLexer", "generateParser", "generateAxonLexer")
     }
 }
 

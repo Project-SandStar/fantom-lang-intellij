@@ -109,6 +109,31 @@
         <indexPatternBuilder implementation="co.anbora.labs.fantom.ide.todo.FantomIndexPatternBuilder"/>
         <!-- Compiled pods without sources: .fan stubs from the pod's apidoc -->
         <postStartupActivity implementation="co.anbora.labs.fantom.lang.pod.FantomPodStubActivity"/>
+        <!-- Axon language (.axon), injected in Fantom strings and trio src: values -->
+        <fileType name="Axon" implementationClass="co.anbora.labs.fantom.lang.axon.AxonFileType"
+                  fieldName="INSTANCE" language="axon_lang" extensions="axon"/>
+        <lang.parserDefinition language="axon_lang" implementationClass="co.anbora.labs.fantom.lang.axon.AxonParserDefinition"/>
+        <lang.syntaxHighlighterFactory language="axon_lang" implementationClass="co.anbora.labs.fantom.ide.axon.AxonSyntaxHighlighterFactory"/>
+        <lang.braceMatcher language="axon_lang" implementationClass="co.anbora.labs.fantom.ide.axon.AxonBraceMatcher"/>
+        <lang.commenter language="axon_lang" implementationClass="co.anbora.labs.fantom.ide.axon.AxonCommenter"/>
+        <colorSettings implementation="co.anbora.labs.fantom.ide.axon.AxonColorSettingsPage" displayName="Axon"/>
+        <multiHostInjector implementation="co.anbora.labs.fantom.ide.axon.AxonInjector"/>
+        <!-- Trio (.trio) -->
+        <fileType name="Trio" implementationClass="co.anbora.labs.fantom.lang.trio.TrioFileType"
+                  fieldName="INSTANCE" language="trio_lang" extensions="trio"/>
+        <lang.parserDefinition language="trio_lang" implementationClass="co.anbora.labs.fantom.lang.trio.TrioParserDefinition"/>
+        <lang.syntaxHighlighterFactory language="trio_lang" implementationClass="co.anbora.labs.fantom.lang.trio.TrioSyntaxHighlighterFactory"/>
+        <!-- Fandoc (.fandoc) -->
+        <fileType name="Fandoc" implementationClass="co.anbora.labs.fantom.lang.fandoc.FandocFileType"
+                  fieldName="INSTANCE" language="fandoc_lang" extensions="fandoc"/>
+        <lang.parserDefinition language="fandoc_lang" implementationClass="co.anbora.labs.fantom.lang.fandoc.FandocParserDefinition"/>
+        <lang.syntaxHighlighterFactory language="fandoc_lang" implementationClass="co.anbora.labs.fantom.lang.fandoc.FandocSyntaxHighlighterFactory"/>
+        <!-- fan.props and etc/**/*.props (matched by FanPropsFileType.isMyFileType) -->
+        <fileType name="Fantom props" implementationClass="co.anbora.labs.fantom.lang.props.FanPropsFileType"
+                  fieldName="INSTANCE" language="fan_props" fileNames="fan.props"/>
+        <lang.parserDefinition language="fan_props" implementationClass="co.anbora.labs.fantom.lang.props.FanPropsParserDefinition"/>
+        <lang.syntaxHighlighterFactory language="fan_props" implementationClass="co.anbora.labs.fantom.lang.props.FanPropsSyntaxHighlighterFactory"/>
+        <lang.commenter language="fan_props" implementationClass="co.anbora.labs.fantom.lang.props.FanPropsCommenter"/>
     </extensions>
     <applicationListeners>
         <listener class="co.anbora.labs.fantom.ide.compiler.FantomCompileOnSaveListener"
