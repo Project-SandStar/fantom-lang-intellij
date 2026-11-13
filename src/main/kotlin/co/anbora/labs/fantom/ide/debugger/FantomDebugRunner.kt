@@ -1,0 +1,37 @@
+package co.anbora.labs.fantom.ide.debugger
+
+import co.anbora.labs.fantom.ide.run.FantomRunConfiguration
+import com.intellij.debugger.impl.GenericDebuggerRunner
+import com.intellij.execution.configurations.RemoteConnection
+import com.intellij.execution.configurations.RunProfile
+import com.intellij.execution.configurations.RunProfileState
+import com.intellij.execution.executors.DefaultDebugExecutor
+import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.execution.ui.RunContentDescriptor
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.util.net.NetUtils
+
+/**
+ * Debug for a Fantom run configuration: starts `java -agentlib:jdwp=...,server=y,suspend=y
+ * fanx.tools.Fan <target>` on a free local port and attaches the Java debugger to it.
+ */
+class FantomDebugRunner : GenericDebuggerRunner() {
+    override fun getRunnerId(): String = RUNNER_ID
+
+    override fun canRun(executorId: String, profile: RunProfile): Boolean =
+        executorId == DefaultDebugExecutor.EXECUTOR_ID && profile is FantomRunConfiguration
+
+    override fun doExecute(state: RunProfileState, env: ExecutionEnvironment): RunContentDescriptor? {
+        FileDocumentManager.getInstance().saveAllDocuments()
+        val configuration = env.runProfile as FantomRunConfiguration
+        val port = NetUtils.findAvailableSocketPort()
+        val debugState = configuration.debugState(env, port)
+        val connection = RemoteConnection(true, HOST, port.toString(), false)
+        return attachVirtualMachine(debugState, env, connection, true)
+    }
+
+    companion object {
+        const val RUNNER_ID = "FantomDebugRunner"
+        private const val HOST = "127.0.0.1"
+    }
+}

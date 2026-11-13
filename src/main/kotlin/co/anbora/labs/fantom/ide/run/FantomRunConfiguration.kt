@@ -53,6 +53,18 @@ class FantomRunConfiguration(project: Project, factory: ConfigurationFactory, na
     override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState =
         FantomCommandLine.state(environment) { buildCommandLine() }
 
+    /**
+     * `java <jdwp agent> ... fanx.tools.Fan <target> <args>`: the same program as [buildCommandLine],
+     * with the JVM waiting for a debugger on `127.0.0.1:<port>`.
+     */
+    @Throws(ExecutionException::class)
+    fun buildDebugCommandLine(port: Int, home: File? = FantomCommandLine.home(project)): GeneralCommandLine =
+        FantomCommandLine.buildJava(project, home, parameters(), workingDir, envs, passParentEnvs, listOf(jdwpAgent(port)))
+
+    /** The state the Debug runner starts: [buildDebugCommandLine] in a console. */
+    fun debugState(environment: ExecutionEnvironment, port: Int): RunProfileState =
+        FantomCommandLine.state(environment) { buildDebugCommandLine(port) }
+
     override fun writeExternal(element: Element) {
         super.writeExternal(element)
         JDOMExternalizerUtil.writeField(element, TARGET, target)
@@ -79,10 +91,13 @@ class FantomRunConfiguration(project: Project, factory: ConfigurationFactory, na
         return copy
     }
 
-    private companion object {
-        const val TARGET = "target"
-        const val ARGS = "programArgs"
-        const val WORK_DIR = "workingDir"
-        const val PASS_PARENT = "passParentEnvs"
+    companion object {
+        /** The JDWP agent option: the JVM listens on [port] and waits for the debugger before `main`. */
+        fun jdwpAgent(port: Int): String = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=127.0.0.1:$port"
+
+        private const val TARGET = "target"
+        private const val ARGS = "programArgs"
+        private const val WORK_DIR = "workingDir"
+        private const val PASS_PARENT = "passParentEnvs"
     }
 }
