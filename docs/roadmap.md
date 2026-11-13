@@ -91,6 +91,22 @@ Items 1 to 15 shipped in 2.1.0; items 16 and 17 shipped in 3.0.0; item 18 shippe
       Build Pod menu; switching re-maps every dependency to that target.
     - Each dependency row has a dropdown to pin another source or tag.
 
+19. **Java FFI and natives.** The basics of Fantom's Java FFI (`using [java]`
+    imports, Java method and field calls, constructors, arrays and `Interop`)
+    are being fixed now. This item covers the rest of Fantom's Java FFI guide:
+    - overloaded methods matched by argument types, not only by name;
+    - Java primitives and nullable values mapped to Fantom types, so type
+      inference and completion work on Java results;
+    - subclassing Java classes and overriding their methods;
+    - inner classes, closures passed as Java interfaces, and dynamic calls.
+
+    Natives, for both Java and JavaScript: navigate from a `native` slot to
+    its implementation in the pod's `java/` or `js/` folder and back, and warn
+    when a native slot has no implementation file. Fantom has no JavaScript
+    import; `@Js` types compile to JavaScript and already resolve as facets.
+    Not planned yet: checking that `@Js` types call only APIs that compile to
+    JavaScript.
+
 The promotional video follows these items.
 
 Ideas and votes: <https://github.com/Project-SandStar/fantom-lang-intellij/discussions>.
