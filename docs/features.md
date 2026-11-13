@@ -32,6 +32,10 @@
 | Rename | Shift+F6; follows every reference across files |
 | Override or implement members | Alt+Insert inside a class |
 | Optimize imports | Ctrl+Alt+O removes unused `using` lines and sorts the rest |
+| Introduce Variable | Cmd+Alt+V (Ctrl+Alt+V); puts `name := expr` before the statement, names it from the call or type, can replace equal expressions in the method |
+| Extract Method | Cmd+Alt+M (Ctrl+Alt+M) on whole statements; makes a private method after the current one, with locals as params and at most one result |
+| Surround With | Cmd+Alt+T (Ctrl+Alt+T); statements: `if`, `if / else`, `try / catch`, `while`, closure `\|->\| { }`; expressions: `(expr)`, `(expr as Type)` |
+| Unwrap / Remove | Cmd+Shift+Delete (Ctrl+Shift+Delete); unwraps `if`, `else`, `try`, `while`, `for` and a closure block, removes `else` and `catch` |
 
 ## Inspections
 
