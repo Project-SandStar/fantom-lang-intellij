@@ -1,6 +1,6 @@
 package co.anbora.labs.fantom
 
-import co.anbora.labs.fantom.ide.settings.FantomTargetWidget
+import co.anbora.labs.fantom.ide.settings.FantomTargetWidgets
 import co.anbora.labs.fantom.lang.library.FantomInstall
 import co.anbora.labs.fantom.lang.library.FantomInstalls
 import co.anbora.labs.fantom.lang.library.FantomSettings
@@ -119,12 +119,12 @@ class FantomDepsOrderTest : BasePlatformTestCase() {
         assertEquals("no 4.0.7 tag; using bassgCommon/4.0.6.2.2", b407.warning)
         assertTrue(b407.podSource!!.podDir.path.startsWith(cache.path))
         assertEquals(b407.podSource!!.podDir, settings.podSources().single { it.pod == "bassgCommon" }.podDir)
-        assertEquals("Fantom: SkySpark 4.0.7", FantomTargetWidget.text(project))
+        assertEquals("Fantom: SkySpark 4.0.7", FantomTargetWidgets.text(project))
 
         // the status bar switch: SkySpark 3.1.12 re-maps bassgCommon to its exact tag
         deps.switchTarget(sky3112.path)
         assertEquals(sky3112.path, settings.defaultTarget)
-        assertEquals("Fantom: SkySpark 3.1.12", FantomTargetWidget.text(project))
+        assertEquals("Fantom: SkySpark 3.1.12", FantomTargetWidgets.text(project))
         val snap2 = deps.refreshNow(listOf(proj), cache)
         val b3112 = row(snap2, "bassgCommon")
         assertEquals(FantomDependencyResolver.How.AUTO, b3112.how)

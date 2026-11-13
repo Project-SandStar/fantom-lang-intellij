@@ -9,40 +9,18 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
-import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
-import com.intellij.openapi.wm.WindowManager
 
-/**
- * The status bar entry "Fantom: SkySpark 4.0.7": the current build target. A click lists
- * the ticked installs; picking one calls [FantomDependencies.switchTarget], which re-maps
- * every dependency (Haxall pairing, tag choice) and fires a roots change.
- */
-class FantomTargetWidget(private val project: Project) : StatusBarWidget, StatusBarWidget.MultipleTextValuesPresentation {
+/** Text and popup of [FantomTargetWidget]. */
+object FantomTargetWidgets {
 
-    private var statusBar: StatusBar? = null
+    /** "Fantom: SkySpark 4.0.7", or "Fantom: no target". */
+    fun text(project: Project): String =
+        "Fantom: " + (FantomSettings.getInstance(project).defaultInstall()?.name ?: "no target")
 
-    init {
-        project.messageBus.connect(this).subscribe(FantomDependencies.TOPIC, object : FantomDependencies.Listener {
-            override fun dependenciesChanged(snapshot: FantomDependencies.Snapshot) = update()
-            override fun targetChanged(path: String) = update()
-        })
-    }
-
-    override fun ID(): String = ID
-
-    override fun install(statusBar: StatusBar) {
-        this.statusBar = statusBar
-    }
-
-    override fun getPresentation(): StatusBarWidget.WidgetPresentation = this
-
-    override fun getSelectedValue(): String = text(project)
-
-    override fun getTooltipText(): String = "Fantom build target: the install the index, runs and compile on save use. Click to switch."
-
-    override fun getPopup(): JBPopup? {
+    /** The ticked installs; picking one switches the build target. Null when none is ticked. */
+    fun popup(project: Project): JBPopup? {
         val targets = FantomSettings.getInstance(project).buildTargets()
         if (targets.isEmpty()) return null
         val current = FantomSettings.getInstance(project).defaultInstall()
@@ -55,23 +33,6 @@ class FantomTargetWidget(private val project: Project) : StatusBarWidget, Status
             }
         }
         return JBPopupFactory.getInstance().createListPopup(step)
-    }
-
-    private fun update() {
-        val bar = statusBar ?: WindowManager.getInstance().getStatusBar(project) ?: return
-        bar.updateWidget(ID)
-    }
-
-    override fun dispose() {
-        statusBar = null
-    }
-
-    companion object {
-        const val ID = "co.anbora.labs.fantom.target"
-
-        /** "Fantom: SkySpark 4.0.7", or "Fantom: no target". */
-        fun text(project: Project): String =
-            "Fantom: " + (FantomSettings.getInstance(project).defaultInstall()?.name ?: "no target")
     }
 }
 
