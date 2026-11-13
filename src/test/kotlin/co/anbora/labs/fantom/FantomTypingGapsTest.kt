@@ -126,6 +126,62 @@ class FantomTypingGapsTest : BasePlatformTestCase() {
         assertEquals(listOf("E"), ownersAt(offsetOf("size })")))
     }
 
+    // ---- 4. generic sys slots ----
+
+    private fun localType(name: String): FanType? {
+        val def = PsiTreeUtil.findChildrenOfType(myFixture.file, FantomLocalDef::class.java).first { it.name == name }
+        return FantomTypeInference.typeOfDeclaration(def)
+    }
+
+    fun testGenericTable() {
+        if (!enableLibrary()) return
+        configure(
+            """
+            Str[] l := [,]
+            Str:Int m := [:]
+            a := l.map |s| { s.size }
+            b := l.mapNotNull |s->Int?| { s.size }
+            c := l.flatMap |s| { [s.size] }
+            d := l.findType(Str#)
+            e := l.reduce(0) |r, s| { 1 }
+            f := l.first
+            g := l.getSafe(1)
+            h := l.max
+            i := l.dup
+            j := l.ro
+            k := m.map |v| { v.toStr }
+            n := m.rw
+            o := l.eachWhile |s| { s.size }
+            p := l.groupBy |s| { s.size }
+            q := l.findType(Int#).first
+            """.trimIndent(),
+        )
+        val str = FanType.STR
+        val int = FanType.INT
+        assertEquals(FanType.ListOf(int), localType("a"))
+        assertEquals(FanType.ListOf(int), localType("b"))
+        assertEquals(FanType.ListOf(int), localType("c"))
+        assertEquals(FanType.ListOf(str), localType("d"))
+        assertEquals(int, localType("e"))
+        assertEquals(str.withNullable(true), localType("f"))
+        assertEquals(str.withNullable(true), localType("g"))
+        assertEquals(str.withNullable(true), localType("h"))
+        assertEquals(FanType.ListOf(str), localType("i"))
+        assertEquals(FanType.ListOf(str), localType("j"))
+        assertEquals(FanType.MapOf(str, str), localType("k"))
+        assertEquals(FanType.MapOf(str, int), localType("n"))
+        assertEquals(int.withNullable(true), localType("o"))
+        assertEquals(FanType.MapOf(int, FanType.ListOf(str)), localType("p"))
+        assertEquals(int.withNullable(true), localType("q"))
+    }
+
+    fun testTableRowsCiteSys() {
+        val rows = co.anbora.labs.fantom.lang.types.FantomGenerics.TABLE.values
+        for (n in listOf("map", "mapNotNull", "flatMap", "findType", "reduce", "max", "min", "first", "last", "getSafe", "dup", "ro", "rw")) {
+            assertTrue(n, rows.any { it.owner == "List" && it.name == n && it.sysLine.startsWith("List.fan:") })
+        }
+    }
+
     // ---- 3. facet values ----
 
     private val facet = "facet class Fac { const Int count := 0\nconst Str label := \"\"\nstatic const Int max := 9 }\n"

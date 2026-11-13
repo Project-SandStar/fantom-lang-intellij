@@ -179,6 +179,11 @@ class FantomTypedResolveCorpusTest : BasePlatformTestCase() {
     private fun siteOf(id: FantomId): Site {
         val parent = id.parent
         if (parent is FantomTypeLiteral) return Site(null, null, null, false, null, oneLine(parent.text))
+        // `@Facet { x = 1 }`: the facet type owns the name, like `Type.x`.
+        if (parent is co.anbora.labs.fantom.lang.core.psi.FantomFacetVal) {
+            val facet = (parent.parent?.parent as? co.anbora.labs.fantom.lang.core.psi.FantomFacetItems)?.simpleType?.idList?.lastOrNull()?.text
+            return Site(null, null, null, false, facet, "@$facet")
+        }
         val slotExpr = parent?.parent as? FantomSlotExpr ?: return Site(null, null, null, false, null, "?")
         val op = slotExpr.parent ?: return Site(null, null, null, false, null, "?")
         if (op is FantomStaticCall) {
