@@ -5,6 +5,7 @@ import co.anbora.labs.fantom.lang.core.FantomTokenType
 import co.anbora.labs.fantom.lang.core.parser.FantomParser
 import co.anbora.labs.fantom.lang.core.psi.FantomFile
 import co.anbora.labs.fantom.lang.core.psi.FantomTypes
+import co.anbora.labs.fantom.lang.core.psi.impl.FantomStrInjectionHost
 import co.anbora.labs.fantom.lang.lexer.FantomLexer
 import com.intellij.lang.ASTNode
 import com.intellij.lang.ParserDefinition
@@ -31,7 +32,10 @@ class FantomParserDefinition: ParserDefinition {
 
     override fun getStringLiteralElements(): TokenSet = TokenSet.EMPTY
 
-    override fun createElement(node: ASTNode?): PsiElement = FantomTypes.Factory.createElement(node)
+    // `str` gets an injection host subclass of the generated FantomStrImpl (Axon in strings).
+    override fun createElement(node: ASTNode?): PsiElement =
+        if (node?.elementType == FantomTypes.STR) FantomStrInjectionHost(node)
+        else FantomTypes.Factory.createElement(node)
 
     override fun createFile(viewProvider: FileViewProvider): PsiFile = FantomFile(viewProvider)
 
