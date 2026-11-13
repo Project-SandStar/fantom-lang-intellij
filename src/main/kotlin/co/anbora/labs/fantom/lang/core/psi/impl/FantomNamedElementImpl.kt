@@ -13,6 +13,8 @@ import co.anbora.labs.fantom.lang.core.psi.FantomNamedElement
 import co.anbora.labs.fantom.lang.core.psi.FantomParam
 import co.anbora.labs.fantom.lang.core.psi.FantomTypes.IDENTIFIER
 import com.intellij.lang.ASTNode
+import com.intellij.navigation.ItemPresentation
+import com.intellij.navigation.ItemPresentationProviders
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafElement
 import com.intellij.psi.search.LocalSearchScope
@@ -34,6 +36,9 @@ abstract class FantomNamedElementImpl(node: ASTNode) : FantomElementImpl(node), 
     }
 
     override fun getName(): String? = nameIdentifier?.text
+
+    /** From the `itemPresentationProvider` registered for [FantomNamedElement] (ide/navigation). */
+    override fun getPresentation(): ItemPresentation? = ItemPresentationProviders.getItemPresentation(this)
 
     @Throws(IncorrectOperationException::class)
     override fun setName(name: String): PsiElement {

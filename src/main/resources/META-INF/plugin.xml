@@ -88,6 +88,8 @@
         <notificationGroup id="Fantom" displayType="BALLOON"/>
         <gotoClassContributor implementation="co.anbora.labs.fantom.ide.navigation.FantomGotoClassContributor"/>
         <gotoSymbolContributor implementation="co.anbora.labs.fantom.ide.navigation.FantomGotoSymbolContributor"/>
+        <itemPresentationProvider forClass="co.anbora.labs.fantom.lang.core.psi.impl.FantomNamedElementImpl"
+                                  implementationClass="co.anbora.labs.fantom.ide.navigation.FantomItemPresentationProvider"/>
 
         <annotator language="fantom_lang"
                    implementationClass="co.anbora.labs.fantom.ide.annotator.HighlightingAnnotator"/>
