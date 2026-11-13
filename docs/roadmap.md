@@ -5,9 +5,8 @@ rename across files, the Fantom installation as a library, type inference,
 completion, quick documentation, inspections, auto-import, run configurations,
 templates, a formatter and a full colour scheme.
 
-Done on `master`, to ship as 2.1: items 1 to 16 below. The debugger works for
-breakpoints, stepping and variables; Fantom expression evaluation is still
-open (see item 16).
+Done on `master`: items 1 to 16 below. Items 1 to 15 shipped in 2.1.0; the
+full debugger (item 16) ships in the next release.
 
 ## 2.1: the compiler in the loop
 
@@ -54,10 +53,13 @@ open (see item 16).
 
 ## 3.0: debugger
 
-16. **Debugger.** Done: breakpoints in `.fan` files, Fantom frames and named
-    locals over the JVM debugger, step over, into and out, including into
-    closures, with `sys` internals skipped, Debug on Fantom Test
-    configurations, and breakpoints in scripts. Needs the Java plugin.
-    Still open: Fantom expressions in Evaluate and in breakpoint conditions.
+16. **Debugger.** Done: breakpoints in `.fan` files, Fantom Test
+    configurations and standalone scripts; Fantom frames and named locals;
+    step over, into and out, including into closures, with `sys` internals
+    skipped; Fantom expressions in Evaluate, Watches and breakpoint
+    conditions; Fantom List, Map and object display. Needs the Java plugin.
+    Not yet: assignment, closures, `->` calls, ranges and string
+    interpolation in the evaluator; breakpoints in a script inside a pod
+    folder.
 
 Ideas and votes: <https://github.com/Project-SandStar/fantom-lang-intellij/discussions>.
