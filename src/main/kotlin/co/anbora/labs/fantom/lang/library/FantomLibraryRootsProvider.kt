@@ -11,7 +11,8 @@ import java.io.File
 import javax.swing.Icon
 
 /**
- * Exposes the pod sources of the Fantom home (and, for a Haxall or SkySpark home, of
+ * Exposes the pod sources of every ticked install (or, with none ticked, of the Fantom
+ * home and, for a Haxall or SkySpark home,
  * the Fantom sources install) as synthetic libraries, one per pod. The IDE then
  * indexes them, so `Str`, `echo`, `haystack::Etc` and the rest resolve from any
  * project, and each pod shows by name under External Libraries.

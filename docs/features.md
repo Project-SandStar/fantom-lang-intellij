@@ -56,6 +56,20 @@ A gutter icon on the `podName` line of `build.fan` does the same. A
 notification shows the result, and the open files of the pod show the
 compiler's errors and warnings in place.
 
+When you have ticked installs in the settings, a menu lists them as targets:
+"Build for SkySpark 4.0.7", "Build for Haxall 4.0.7", "Build for Fantom
+1.0.84". The last target you used comes first. The pod compiles with the
+target's `bin/fan` against the target's pods.
+
+- Haxall ships sources, not pods. The plugin asks whether to borrow the pods of
+  the SkySpark of the same version, or to build Haxall's pods first. Building
+  them takes a few minutes; they go into a temp folder.
+- The pod goes into a temp folder and never into an install. To copy it into
+  the target's `lib/fan`, choose **Build with Options** and tick "Write pod
+  into the target's lib/fan". A running server loads it after a restart.
+- You cannot build for an install whose Fantom is missing until you pick one
+  in the settings.
+
 The IDE reads `podName`, `version`, `depends`, `srcDirs` and `resDirs` from
 `build.fan` when they are written as plain values, such as
 `depends = ["sys 1.0", "concurrent 1.0"]`. When `depends` comes from a variable
