@@ -18,8 +18,11 @@ import co.anbora.labs.fantom.lang.core.psi.FantomNamedElement
 import co.anbora.labs.fantom.lang.core.psi.FantomParam
 import co.anbora.labs.fantom.lang.core.psi.FantomStatementBlock
 import co.anbora.labs.fantom.lang.core.psi.FantomStmt
+import co.anbora.labs.fantom.lang.index.FantomDeclarationIndex
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 
 /**
@@ -79,6 +82,33 @@ object FantomScope {
         } ?: return emptyList()
         return inheritance.typeList.typeList.mapNotNull { t ->
             t.simpleType?.idList?.lastOrNull()?.text
+        }
+    }
+
+    /**
+     * The declarations of [type]'s written supertypes. A short name that several pods
+     * declare (`connExt::Conn` and `hxConn::Conn` in one SkySpark install) is narrowed
+     * to the pod a `pod::Type` qualifier names, or else to the types the `using` lines
+     * of [type]'s own file make visible; when that leaves none, all are kept.
+     */
+    fun superTypes(type: FantomNamedElement, project: Project, scope: GlobalSearchScope): List<FantomNamedElement> {
+        val inheritance = when (type) {
+            is FantomClassDef -> type.inheritance
+            is FantomMixinDef -> type.inheritance
+            is FantomEnumDef -> type.inheritance
+            is FantomFacetDef -> type.inheritance
+            else -> null
+        } ?: return emptyList()
+        val file = type.containingFile
+        return inheritance.typeList.typeList.flatMap { t ->
+            val ids = t.simpleType?.idList ?: return@flatMap emptyList()
+            val name = ids.lastOrNull()?.text ?: return@flatMap emptyList()
+            val all = FantomDeclarationIndex.findDeclarations(name, project, scope) { it.isType }
+            if (all.size < 2) return@flatMap all
+            val pod = if (ids.size > 1) ids.first().text else null
+            if (pod != null) all.filter { FantomUsingScope.podOf(it) == pod }.ifEmpty { all }
+            else if (file != null) FantomUsingScope.preferVisible(all, file)
+            else all
         }
     }
 

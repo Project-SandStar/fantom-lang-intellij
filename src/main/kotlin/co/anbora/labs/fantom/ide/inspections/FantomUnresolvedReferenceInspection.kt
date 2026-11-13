@@ -12,6 +12,7 @@ import co.anbora.labs.fantom.lang.core.psi.FantomSafeDynCallStm
 import co.anbora.labs.fantom.lang.core.psi.FantomSlotExpr
 import co.anbora.labs.fantom.lang.core.psi.FantomStaticCall
 import co.anbora.labs.fantom.lang.library.FantomSettings
+import co.anbora.labs.fantom.lang.resolve.FantomFfi
 import co.anbora.labs.fantom.lang.resolve.FantomReference
 import co.anbora.labs.fantom.lang.resolve.FantomUsingScope
 import co.anbora.labs.fantom.lang.types.FantomTypeInference
@@ -22,6 +23,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiFile
 
 /**
  * Warns on an identifier use that resolves to nothing.
@@ -50,7 +52,8 @@ class FantomUnresolvedReferenceInspection : LocalInspectionTool() {
                 if (element !is FantomId) return
                 val ref = element.reference as? FantomReference ?: return
                 if (!isCheckable(element, ref)) return
-                if (ref.resolveAll().isNotEmpty()) return
+                if (ref.multiResolve(false).isNotEmpty()) return
+                if (isJavaNameWithoutJava(ref, holder.file)) return
                 val fixes: Array<LocalQuickFix> = if (ref.kind == FantomReference.Kind.TYPE) {
                     // Pods of the build.fan `depends` first.
                     val usings = FantomUsingScope.usingsOf(holder.file)
@@ -59,6 +62,23 @@ class FantomUnresolvedReferenceInspection : LocalInspectionTool() {
                         .map { AddUsingFix(it, ref.name) }.toTypedArray()
                 } else emptyArray()
                 holder.registerProblem(element, "Cannot resolve symbol '${ref.name}'", *fixes)
+            }
+        }
+    }
+
+    /**
+     * Without the Java plugin no `[java]` name can resolve, so names that may come from a
+     * `using [java]` line are not reported: a type imported by name or living in an imported
+     * Java package, and a slot on such a type.
+     */
+    private fun isJavaNameWithoutJava(ref: FantomReference, file: PsiFile): Boolean {
+        if (FantomFfi.resolver() != null) return false
+        if (FantomFfi.javaImports(file).isEmpty) return false
+        return when (ref.kind) {
+            FantomReference.Kind.TYPE, FantomReference.Kind.BARE -> FantomFfi.mayBeJavaType(ref.name, file)
+            FantomReference.Kind.SLOT -> {
+                val owner = ref.ffiOwnerName() ?: return false
+                FantomFfi.isJavaType(owner, file)
             }
         }
     }
@@ -80,7 +100,8 @@ class FantomUnresolvedReferenceInspection : LocalInspectionTool() {
             is FantomDotCall, is FantomSafeDotCallStm -> FantomTypeInference.receiverType(chainOp) != null
             is FantomStaticCall -> {
                 val typeName = chainOp.type.simpleType?.idList?.lastOrNull()?.text ?: return false
-                FantomTypeInference.typeDefinitions(typeName, id.project).isNotEmpty()
+                FantomTypeInference.typeDefinitions(typeName, id.project).isNotEmpty() ||
+                    FantomFfi.resolveType(typeName, id.containingFile).isNotEmpty()
             }
             else -> false
         }

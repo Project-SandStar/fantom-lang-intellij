@@ -16,6 +16,19 @@ from an it-block field assignment (`Foo { bar = 1 }`), which the resolver does
 not follow yet. Lower the inspection severity in Settings | Editor |
 Inspections | Fantom if it bothers you.
 
+**A Java name from `using [java]` cannot be resolved.**
+Java FFI needs the Java plugin. Without it, `[java]` names stay plain and
+show no warning. With it, check these points:
+- The class is in the JDK, in a project library, in `fanx.interop` or in a
+  jar in the pod's `jar/`, `jars/` or `lib/java/` folder.
+- For `fanx.interop`, the Fantom installation has `lib/java/sys.jar`.
+- A method on a Java object resolves only when the plugin knows the object's
+  type. Declare the type on the local (`Cipher c := ...`).
+
+**Go to Symbol or Search Everywhere does not find a Fantom class.**
+Wait until indexing ends, then try again. If the class is still missing, use
+File | Invalidate Caches.
+
 **Reformat changed nothing.**
 The formatter only fixes indentation. Spacing inside a line is left as it is
 on purpose, because the Fantom sources themselves mix styles.

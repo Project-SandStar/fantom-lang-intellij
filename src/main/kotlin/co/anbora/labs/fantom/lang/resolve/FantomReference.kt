@@ -46,9 +46,48 @@ class FantomReference(
     val name: String get() = element.text
 
     override fun multiResolve(incompleteCode: Boolean): Array<ResolveResult> =
-        resolveAll().map { PsiElementResolveResult(it) }.toTypedArray()
+        resolveWithFfi().map { PsiElementResolveResult(it) }.toTypedArray()
 
+    /** Fantom declarations only; Java FFI targets are in [resolveWithFfi]. */
     fun resolveAll(): List<FantomNamedElement> = preferProject(resolveRaw())
+
+    /**
+     * [resolveAll], plus Java classes and members the file's `using [java]` lines bring in
+     * ([FantomFfi]; empty without the Java plugin). A class imported by name wins over a
+     * Fantom type of that name; with a package import, a Fantom type the `using` lines make
+     * visible wins, else the Java class. A slot on a receiver whose type is a Java class by
+     * that rule ([FantomFfi.isJavaType]) resolves to the Java members, every overload.
+     * Otherwise Java is the fallback when nothing in Fantom matches.
+     */
+    fun resolveWithFfi(): List<PsiElement> {
+        val file = element.containingFile ?: return resolveAll()
+        val imports = FantomFfi.javaImports(file)
+        if (imports.isEmpty) return resolveAll()
+        when (kind) {
+            Kind.TYPE -> {
+                if (name in imports.types) FantomFfi.resolveType(name, file).let { if (it.isNotEmpty()) return it }
+                // A Java package import beats a Fantom type the file's `using` lines do not name.
+                val fan = resolveAll()
+                if (fan.any { FantomUsingScope.isVisible(it, file) }) return fan
+                FantomFfi.resolveType(name, file).let { if (it.isNotEmpty()) return it }
+                return fan
+            }
+            Kind.SLOT -> if (!thisReceiver) {
+                val owner = ownerName ?: receiverTypeName()
+                if (owner != null && FantomFfi.isJavaType(owner, file)) {
+                    val java = FantomFfi.resolveSlot(owner, name, file)
+                    if (java.isNotEmpty()) return java
+                }
+            }
+            Kind.BARE -> {}
+        }
+        val fan = resolveAll()
+        if (fan.isNotEmpty() || kind == Kind.SLOT) return fan
+        return FantomFfi.resolveType(name, file)
+    }
+
+    /** The Java type of an FFI receiver: `Type.x` with a Java `Type`, or `recv.x` whose type is one. */
+    fun ffiOwnerName(): String? = if (thisReceiver) null else ownerName ?: receiverTypeName()
 
     /**
      * When a name is declared both in the project and in the Fantom library (for
@@ -144,7 +183,9 @@ class FantomReference(
      */
     private fun slotsInTypeChain(start: FantomNamedElement, name: String, scope: GlobalSearchScope): List<FantomNamedElement> {
         val project = element.project
-        val seen = HashSet<String>()
+        // By declaration, not by name: two pods may each declare a `Conn`, and only one is the base.
+        val seen = HashSet<FantomNamedElement>()
+        val seenNames = HashSet<String>()
         val queue = ArrayDeque<FantomNamedElement>().apply { add(start) }
         var implicitDone = false
         while (true) {
@@ -152,18 +193,17 @@ class FantomReference(
                 if (implicitDone) return emptyList()
                 implicitDone = true
                 for (root in FantomScope.implicitSuperTypeNames(start)) {
-                    if (root !in seen) queue += FantomDeclarationIndex.findDeclarations(root, project, scope) { it.isType }
+                    if (root !in seenNames) queue += FantomDeclarationIndex.findDeclarations(root, project, scope) { it.isType }
                 }
                 if (queue.isEmpty()) return emptyList()
             }
             val type = queue.removeFirst()
             val typeName = type.name ?: continue
-            if (!seen.add(typeName)) continue
+            if (!seen.add(type)) continue
+            seenNames += typeName
             val hit = FantomScope.ownSlots(type).filter { it.name == name }
             if (hit.isNotEmpty()) return hit
-            for (superName in FantomScope.superTypeNames(type)) {
-                queue += FantomDeclarationIndex.findDeclarations(superName, project, scope) { it.isType }
-            }
+            queue += FantomScope.superTypes(type, project, scope)
         }
     }
 

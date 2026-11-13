@@ -7,11 +7,17 @@
     <depends>com.intellij.modules.lang</depends>
     <depends>com.intellij.platform.testRunner</depends>
     <depends optional="true" config-file="fantom-spellchecker.xml">com.intellij.modules.spellchecker</depends>
-    <!-- JVM debugger for .fan files; IDEs without the Java plugin load the rest of the plugin. -->
+    <!-- JVM debugger for .fan files and Java FFI (`using [java]`, fantom-java-ffi.xml, included by
+         fantom-java-debugger.xml); IDEs without the Java plugin load the rest of the plugin. -->
     <depends optional="true" config-file="fantom-java-debugger.xml">com.intellij.java</depends>
 
     <!-- Extension points defined by the plugin.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
+    <extensionPoints>
+        <!-- Resolves `[java]` FFI names; implemented in fantom-java-ffi.xml only. -->
+        <extensionPoint qualifiedName="co.anbora.labs.fantom.ffiResolver"
+                        interface="co.anbora.labs.fantom.lang.resolve.FantomFfiResolver" dynamic="true"/>
+    </extensionPoints>
     <extensions defaultExtensionNs="com.intellij">
         <fileType name="Fantom" implementationClass="co.anbora.labs.fantom.lang.FantomFileType"
                   fieldName="INSTANCE" language="fantom_lang" extensions="fan"/>
@@ -88,6 +94,8 @@
         <notificationGroup id="Fantom" displayType="BALLOON"/>
         <gotoClassContributor implementation="co.anbora.labs.fantom.ide.navigation.FantomGotoClassContributor"/>
         <gotoSymbolContributor implementation="co.anbora.labs.fantom.ide.navigation.FantomGotoSymbolContributor"/>
+        <itemPresentationProvider forClass="co.anbora.labs.fantom.lang.core.psi.impl.FantomNamedElementImpl"
+                                  implementationClass="co.anbora.labs.fantom.ide.navigation.FantomItemPresentationProvider"/>
 
         <annotator language="fantom_lang"
                    implementationClass="co.anbora.labs.fantom.ide.annotator.HighlightingAnnotator"/>

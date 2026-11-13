@@ -1,6 +1,8 @@
-<idea-plugin>
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
     <!-- Loaded only when the Java plugin is present (com.intellij.java): the JVM debugger for .fan files.
          Every class registered here lives in co.anbora.labs.fantom.ide.debugger; nothing else imports it. -->
+    <!-- Java FFI shares the one optional dependency on com.intellij.java (two <depends> on it is a defect). -->
+    <xi:include href="/META-INF/fantom-java-ffi.xml" xpointer="xpointer(/idea-plugin/*)"/>
     <extensions defaultExtensionNs="com.intellij">
         <programRunner implementation="co.anbora.labs.fantom.ide.debugger.FantomDebugRunner"/>
         <debugger.javaDebugAware implementation="co.anbora.labs.fantom.ide.debugger.FantomJavaDebugAware"/>

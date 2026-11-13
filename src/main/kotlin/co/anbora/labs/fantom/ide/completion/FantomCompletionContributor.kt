@@ -35,6 +35,7 @@ import co.anbora.labs.fantom.lang.core.psi.FantomType
 import co.anbora.labs.fantom.lang.core.psi.FantomTypes
 import co.anbora.labs.fantom.lang.index.FantomDeclarationIndex
 import co.anbora.labs.fantom.lang.index.FantomDeclarationKind
+import co.anbora.labs.fantom.lang.resolve.FantomFfi
 import co.anbora.labs.fantom.lang.resolve.FantomScope
 import co.anbora.labs.fantom.lang.resolve.FantomSlotLookup
 import co.anbora.labs.fantom.lang.resolve.FantomUsingScope
@@ -132,12 +133,24 @@ class FantomCompletionContributor : CompletionContributor() {
                     when {
                         chainOp is FantomStaticCall -> {
                             val typeName = chainOp.type.simpleType?.idList?.lastOrNull()?.text ?: return
-                            val type = FantomTypeInference.typeDefinitions(typeName, project).firstOrNull() ?: return
+                            val type = FantomTypeInference.typeDefinitions(typeName, project).firstOrNull()
+                            if (type == null) {
+                                // `JavaType.x` with `using [java] ...`: static members of the Java class.
+                                FantomFfi.memberVariants(typeName, staticOnly = true, id.containingFile).forEach(::add)
+                                return
+                            }
                             addReceiverSlots(type, Receiver.TYPE, id, project, scope, ::add)
                         }
                         chainOp is FantomDotCall || chainOp is FantomSafeDotCallStm ||
                             chainOp is FantomDynCallStm || chainOp is FantomSafeDynCallStm -> {
-                            val type = receiverTypeDef(chainOp, project) ?: return
+                            val type = receiverTypeDef(chainOp, project)
+                            if (type == null) {
+                                // `recv.x` on a Java FFI object: the Java class's members.
+                                val javaType = if (isThisOrSuperReceiver(chainOp)) null
+                                    else FantomTypeInference.receiverType(chainOp)?.slotOwnerName
+                                if (javaType != null) FantomFfi.memberVariants(javaType, staticOnly = false, id.containingFile).forEach(::add)
+                                return
+                            }
                             val kind = if (isThisOrSuperReceiver(chainOp)) Receiver.THIS else Receiver.INSTANCE
                             addReceiverSlots(type, kind, id, project, scope, ::add)
                         }
