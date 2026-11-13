@@ -3,6 +3,7 @@ package co.anbora.labs.fantom.ide.compiler
 import co.anbora.labs.fantom.lang.library.FantomBuildFile
 import co.anbora.labs.fantom.lang.library.FantomHome
 import co.anbora.labs.fantom.lang.library.FantomInstall
+import co.anbora.labs.fantom.lang.library.deps.FantomDependencies
 import co.anbora.labs.fantom.lang.library.FantomSettings
 import com.intellij.icons.AllIcons
 import com.intellij.lang.annotation.HighlightSeverity
@@ -105,7 +106,11 @@ class FantomBuildPodAction : DumbAwareAction() {
                 override fun isSpeedSearchEnabled() = true
                 override fun onChosen(selectedValue: Any, finalChoice: Boolean): PopupStep<*>? {
                     doFinalStep {
-                        if (selectedValue is FantomInstall) quickBuild(project, root, selectedValue)
+                        if (selectedValue is FantomInstall) {
+                            // picking a target here also makes it the current one (status bar, index)
+                            FantomDependencies.getInstance(project).switchTarget(selectedValue.path)
+                            quickBuild(project, root, selectedValue)
+                        }
                         else optionsBuild(project, root, targets, preferred)
                     }
                     return FINAL_CHOICE

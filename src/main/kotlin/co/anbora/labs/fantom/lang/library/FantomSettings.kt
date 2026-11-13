@@ -48,6 +48,10 @@ class FantomSettings : SimplePersistentStateComponent<FantomSettings.State>(Stat
         var defaultTarget by string()
         /** Path of the install the last Build Pod ran for. */
         var lastBuildTarget by string()
+        /** Folders scanned for project pods ("Source roots for project pods"); empty means `~/Code`. */
+        var sourceRoots by list<String>()
+        /** Per dependency pod, the source the user pinned on the dependencies table, see [FantomDependencyResolver]. */
+        var pins by map<String, String>()
     }
 
     /** One persisted row of the install table, see [FantomInstall]. */
@@ -63,12 +67,16 @@ class FantomSettings : SimplePersistentStateComponent<FantomSettings.State>(Stat
         var enabled by property(false)
         var custom by property(false)
         var skysparkPath by string()
+        var haxallPath by string()
+        var haxallChosen by property(false)
+        var haxallWarning by string()
 
         fun toInstall(): FantomInstall? {
             val p = path ?: return null
             val k = runCatching { FantomHome.Kind.valueOf(kind ?: "") }.getOrNull() ?: return null
             val pr = runCatching { FantomInstall.Pairing.valueOf(pairing ?: "") }.getOrDefault(FantomInstall.Pairing.MISSING)
-            return FantomInstall(k, p, version, fantomVersion, fantomPath, pr, matchSource ?: "", enabled, custom, skysparkPath)
+            return FantomInstall(k, p, version, fantomVersion, fantomPath, pr, matchSource ?: "", enabled, custom, skysparkPath,
+                haxallPath, haxallChosen, haxallWarning)
         }
 
         companion object {
@@ -83,6 +91,9 @@ class FantomSettings : SimplePersistentStateComponent<FantomSettings.State>(Stat
                 enabled = i.enabled
                 custom = i.custom
                 skysparkPath = i.skysparkPath
+                haxallPath = i.haxallPath
+                haxallChosen = i.haxallChosen
+                haxallWarning = i.haxallWarning
             }
         }
     }
@@ -135,6 +146,21 @@ class FantomSettings : SimplePersistentStateComponent<FantomSettings.State>(Stat
     var lastBuildTarget: String?
         get() = state.lastBuildTarget
         set(value) { state.lastBuildTarget = value?.takeIf { it.isNotBlank() } }
+
+    /** Folders scanned for project pods; `~/Code` when none is set. */
+    var sourceRoots: List<String>
+        get() = state.sourceRoots.takeIf { it.isNotEmpty() } ?: listOf(DEFAULT_SOURCE_ROOT)
+        set(value) {
+            val v = value.map { it.trim() }.filter { it.isNotEmpty() }.distinct()
+            state.sourceRoots = if (v == listOf(DEFAULT_SOURCE_ROOT)) ArrayList() else v.toMutableList()
+        }
+
+    /** Pinned dependency sources by pod; "auto" pins are not stored. */
+    var pins: Map<String, String>
+        get() = state.pins
+        set(value) {
+            state.pins = value.filterValues { it.isNotBlank() && it != "auto" }.toMutableMap()
+        }
 
     /** The ticked installs whose folder still exists, the default target first. */
     fun enabledInstalls(): List<FantomInstall> {
@@ -229,29 +255,76 @@ class FantomSettings : SimplePersistentStateComponent<FantomSettings.State>(Stat
         if (install.kind == FantomHome.Kind.FANTOM) null
         else install.fantomPath?.let(::File)?.takeIf(FantomHome::isSources)
 
-    /** The pods [install] brings with sources: its own, then its paired Fantom's it lacks. */
+    /** The paired Haxall of a SkySpark [install] when its folder is there, else null. */
+    private fun pairedHaxall(install: FantomInstall): File? =
+        if (install.kind != FantomHome.Kind.SKYSPARK) null
+        else install.haxallPath?.let(::File)?.takeIf { FantomHome.kindOf(it) == FantomHome.Kind.HAXALL }
+
+    /**
+     * The pods [install] brings with sources, first copy of a name wins: its own, then (for
+     * SkySpark) its paired Haxall's, then its paired Fantom's.
+     */
     private fun ownSources(install: FantomInstall): List<FantomHome.PodSource> {
-        val fromHome = FantomHome.podSources(install.dir)
-        val names = fromHome.mapTo(HashSet()) { it.pod }
-        val fromPair = pairedSources(install)?.let(FantomHome::podSources)?.filter { it.pod !in names } ?: emptyList()
-        return fromHome + fromPair
+        val out = ArrayList<FantomHome.PodSource>()
+        val names = HashSet<String>()
+        val homes = listOfNotNull(install.dir, pairedHaxall(install), pairedSources(install))
+        for (home in homes) for (pod in FantomHome.podSources(home)) if (names.add(pod.pod)) out += pod
+        return out
     }
 
     /**
-     * The pods of every ticked install, each with its paired Fantom's sources and the stubs
-     * of its own compiled pods. Pods are de-duplicated by name; the default target comes
-     * first, so its copy wins.
+     * Pods the open project defines itself (from its own `build.fan` files). They are never
+     * added as libraries: the project's copy wins. Set by [FantomDependencies].
      */
-    private fun installPodSources(ticked: List<FantomInstall>): List<FantomHome.PodSource> {
-        val key = "installs|" + ticked.joinToString("|") { it.path + ">" + (it.fantomPath ?: "") }
+    @Volatile
+    var projectPods: Set<String> = emptySet()
+        set(value) { if (field != value) { field = value; clearPodCache() } }
+
+    /**
+     * The source picked for each dependency of the project ([FantomDependencies]): a tagged
+     * export or working copy of a project pod, a pinned stub or Haxall pod. These come
+     * before every other copy of the same pod.
+     */
+    @Volatile
+    var dependencyOverrides: Map<String, FantomHome.PodSource> = emptyMap()
+        set(value) { if (field != value) { field = value; clearPodCache() } }
+
+    /**
+     * The pods of every ticked install. Order, first copy of a pod name wins:
+     * 1. pods the project defines itself are skipped (the project's own copy wins);
+     * 2. [dependencyOverrides];
+     * 3. sources of every ticked install, the default target first: its own pods, its paired
+     *    Haxall's (SkySpark), its paired Fantom's;
+     * 4. only then the stubs of the compiled pods, see [FantomPodStubs].
+     * So a SkySpark target gets haystack from Haxall source, not from a stub.
+     */
+    private fun installPodSources(ticked: List<FantomInstall>): List<FantomHome.PodSource> =
+        installPodSources(ticked, dependencyOverrides, projectPods)
+
+    /** [installPodSources] without the dependency overrides: the candidates [FantomDependencies] chooses from. */
+    fun basePodSources(): List<FantomHome.PodSource> {
+        val ticked = enabledInstalls()
+        return if (ticked.isEmpty()) podSources() else installPodSources(ticked, emptyMap(), projectPods)
+    }
+
+    private fun installPodSources(
+        ticked: List<FantomInstall>,
+        overrides: Map<String, FantomHome.PodSource>,
+        skip: Set<String>,
+    ): List<FantomHome.PodSource> {
+        val key = "installs|" + ticked.joinToString("|") { it.path + ">" + (it.fantomPath ?: "") + ">" + (it.haxallPath ?: "") } +
+            "|o:" + overrides.entries.sortedBy { it.key }.joinToString(",") { it.key + "=" + it.value.podDir.path } +
+            "|p:" + skip.sorted().joinToString(",")
         return podCache.getOrPut(key) {
             val out = ArrayList<FantomHome.PodSource>()
-            val names = HashSet<String>()
+            val names = HashSet<String>(skip)
+            for ((pod, src) in overrides) if (names.add(pod)) out += src
+            val own = ticked.map { ownSources(it) }
+            for (list in own) for (pod in list) if (names.add(pod.pod)) out += pod
             for (install in ticked) {
-                val own = ownSources(install)
-                val ownNames = own.mapTo(HashSet()) { it.pod }
-                val stubs = stubPods(install.dir, ownNames).mapNotNull { FantomPodStubs.podSource(it) }
-                for (pod in own + stubs) if (names.add(pod.pod)) out += pod
+                for (stub in stubPods(install.dir, names).mapNotNull { FantomPodStubs.podSource(it) }) {
+                    if (names.add(stub.pod)) out += stub
+                }
             }
             out
         }
@@ -271,6 +344,9 @@ class FantomSettings : SimplePersistentStateComponent<FantomSettings.State>(Stat
 
     companion object {
         fun getInstance(project: Project): FantomSettings = project.service()
+
+        /** The default source root for project pods. */
+        val DEFAULT_SOURCE_ROOT: String = System.getProperty("user.home") + "/Code"
 
         private val podCache = ConcurrentHashMap<String, List<FantomHome.PodSource>>()
 

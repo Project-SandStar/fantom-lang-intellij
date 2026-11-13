@@ -81,6 +81,10 @@
         <projectConfigurable parentId="language" instance="co.anbora.labs.fantom.ide.settings.FantomConfigurable"
                              id="co.anbora.labs.fantom.settings" displayName="Fantom" nonDefaultProject="true"/>
         <postStartupActivity implementation="co.anbora.labs.fantom.ide.settings.FantomHomeStartupActivity"/>
+        <!-- dependencies from Haxall source, tagged project pods and stubs; status bar build target -->
+        <postStartupActivity implementation="co.anbora.labs.fantom.lang.library.deps.FantomDependenciesStartupActivity"/>
+        <statusBarWidgetFactory id="co.anbora.labs.fantom.target"
+                                implementation="co.anbora.labs.fantom.ide.settings.FantomTargetWidgetFactory"/>
         <notificationGroup id="Fantom" displayType="BALLOON"/>
         <gotoClassContributor implementation="co.anbora.labs.fantom.ide.navigation.FantomGotoClassContributor"/>
         <gotoSymbolContributor implementation="co.anbora.labs.fantom.ide.navigation.FantomGotoSymbolContributor"/>
