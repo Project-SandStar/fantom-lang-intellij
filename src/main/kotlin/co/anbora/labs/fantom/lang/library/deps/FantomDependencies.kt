@@ -46,9 +46,13 @@ class FantomDependencies(private val project: Project) {
     private val running = AtomicBoolean(false)
     private val again = AtomicBoolean(false)
 
-    /** Schedules a background refresh; [rescan] drops the cached source-root scan first. */
+    /**
+     * Schedules a background refresh; [rescan] drops the cached source-root scan first.
+     * Does nothing in unit tests, which call [refreshNow].
+     */
     fun refresh(rescan: Boolean = false) {
         if (rescan) FantomSourceScan.clear()
+        if (ApplicationManager.getApplication().isUnitTestMode) return
         if (!running.compareAndSet(false, true)) { again.set(true); return }
         ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Resolving Fantom dependencies", true) {
             override fun run(indicator: ProgressIndicator) {
@@ -63,6 +67,10 @@ class FantomDependencies(private val project: Project) {
             override fun onFinished() { running.set(false) }
         })
     }
+
+    /** [refresh] on the calling thread, for tests. */
+    fun refreshNow(roots: List<File> = projectRoots(), cacheRoot: File = FantomTagExport.defaultCacheRoot()): Snapshot =
+        compute(roots, null, cacheRoot).also(::publish)
 
     private fun projectRoots(): List<File> = listOfNotNull(project.basePath?.let(::File))
 
