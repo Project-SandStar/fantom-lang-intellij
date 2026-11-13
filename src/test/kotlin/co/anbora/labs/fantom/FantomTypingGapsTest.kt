@@ -126,6 +126,54 @@ class FantomTypingGapsTest : BasePlatformTestCase() {
         assertEquals(listOf("E"), ownersAt(offsetOf("size })")))
     }
 
+    // ---- 3. facet values ----
+
+    private val facet = "facet class Fac { const Int count := 0\nconst Str label := \"\"\nstatic const Int max := 9 }\n"
+
+    fun testFacetValueResolvesToFacetField() {
+        myFixture.configureByText("A.fan", "$facet@Fac { count = 1; label = \"a\" }\nclass A {}")
+        assertEquals(listOf("Fac"), ownersAt(offsetOf("count = ")))
+        assertEquals(listOf("Fac"), ownersAt(offsetOf("label = ")))
+    }
+
+    fun testFacetValueRenamesWithField() {
+        myFixture.configureByText("A.fan", "$facet@Fac { count = 1 }\nclass A {}")
+        myFixture.editor.caretModel.moveToOffset(offsetOf("count :="))
+        myFixture.renameElementAtCaret("total")
+        assertTrue(myFixture.file.text, myFixture.file.text.contains("@Fac { total = 1 }"))
+    }
+
+    fun testFacetValueCompletion() {
+        myFixture.configureByText("A.fan", "$facet@Fac { co<caret> }\nclass A {}")
+        myFixture.completeBasic()
+        val items = myFixture.lookupElementStrings
+        // A single match is inserted at once.
+        if (items == null) assertTrue(myFixture.file.text.contains("@Fac { count"))
+        else assertTrue("$items", "count" in items)
+        myFixture.configureByText("B.fan", "$facet@Fac { <caret> }\nclass B {}")
+        myFixture.completeBasic()
+        val all = myFixture.lookupElementStrings.orEmpty()
+        assertTrue("$all", "count" in all && "label" in all && "max" !in all)
+    }
+
+    // ---- 6. unknown receiver hint ----
+
+    fun testUnknownReceiverText() {
+        configure("x := zzqNope()\nx.ab")
+        val at = myFixture.file.findElementAt(offsetOf("x.ab") + 2)!!
+        assertEquals(
+            "Type of 'x' unknown: declare it (Str x := ...) to see its slots",
+            co.anbora.labs.fantom.ide.completion.FantomCompletionContributor.unknownReceiverText(at),
+        )
+    }
+
+    fun testKnownReceiverHasNoText() {
+        configure("Str s := \"\"\ns.ab\nthis.ab")
+        val file = myFixture.file
+        assertNull(co.anbora.labs.fantom.ide.completion.FantomCompletionContributor.unknownReceiverText(file.findElementAt(offsetOf("s.ab") + 2)!!))
+        assertNull(co.anbora.labs.fantom.ide.completion.FantomCompletionContributor.unknownReceiverText(file.findElementAt(offsetOf("this.ab") + 5)!!))
+    }
+
     fun testOnlyCtorWhenNoMake() {
         configure("G(|k| { })", ctorClasses)
         assertEquals(FanType.INT, closureParamType("k"))
