@@ -302,7 +302,7 @@ object FantomTypeInference {
     private fun applyChain(receiver: FanType, chains: List<FantomTermChain>, i: Int): FanType? {
         val chain = chains[i]
         val next = chains.getOrNull(i + 1)
-        chain.dotCall?.let { return slotType(it.slotExpr, receiver, closureOf(next)) }
+        chain.dotCall?.let { return slotType(it.slotExpr, receiver, closureOf(next), next?.callOp?.args?.exprList) }
         chain.indexExpr?.let { ix ->
             // `x[a..b]` is getRange and keeps the container type; `x[i]` is get.
             val byRange = ix.expr?.let { typeOf(it) } == FanType.RANGE
@@ -316,7 +316,7 @@ object FantomTypeInference {
         chain.callOp?.let { return if (receiver is FanType.Func) receiver.returns else receiver }
         chain.itBlock?.let { return receiver }
         when (val stm = chain.stmt) {
-            is FantomSafeDotCallStm -> return slotType(stm.slotExpr, receiver, closureOf(next))?.withNullable(true)
+            is FantomSafeDotCallStm -> return slotType(stm.slotExpr, receiver, closureOf(next), next?.callOp?.args?.exprList)?.withNullable(true)
             is FantomDynCallStm, is FantomSafeDynCallStm -> return null // dynamic call: unknown
         }
         return null
@@ -326,17 +326,28 @@ object FantomTypeInference {
      * Type of slot `recv.x`. A slot declared as `This` returns the receiver's own type
      * (fluent APIs such as `StrBuf.add`, `OutStream.print`), so chains keep their type.
      */
-    private fun slotType(slotExpr: FantomSlotExpr?, receiver: FanType?, closure: FantomClosure? = null): FanType? {
+    private fun slotType(
+        slotExpr: FantomSlotExpr?,
+        receiver: FanType?,
+        closure: FantomClosure? = null,
+        nextArgs: List<FantomExpr>? = null,
+    ): FanType? {
         val call = slotExpr?.call
         val ref = (slotExpr?.field?.id ?: call?.id)?.reference as? FantomReference ?: return null
         val closureArg = closure ?: call?.let { closureArgument(it) }
+        val args = call?.args?.exprList ?: nextArgs
         val types = ref.resolveAll().mapNotNull { target ->
             val declared = typeOfDeclaration(target) ?: return@mapNotNull null
             val owner = FantomDeclarationIndex.enclosingTypeName(target)
             val generic = owner in FantomGenerics.GENERIC_OWNERS
             val closureReturn = closureArg?.let { typeOfClosure(it).returns }
-            if (generic && closureReturn != null && receiver != null) {
-                mapFamilyType(target.name, owner, receiver, closureReturn)?.let { return@mapNotNull it }
+            if (generic && FantomGenerics.TABLE.containsKey(owner to target.name)) {
+                val first = args?.firstOrNull()?.takeIf { closureExpr(it) == null }
+                FantomGenerics.bindResult(
+                    owner, target.name, receiver, closureReturn,
+                    firstArg = first?.let { typeOf(it) },
+                    typeArg = first?.let { typeLiteralArg(it) },
+                )?.let { return@mapNotNull it }
             }
             val extra = if (closureReturn != null) mapOf("R" to closureReturn) else emptyMap()
             FantomGenerics.substitute(declared, receiver, extra, generic)
@@ -344,18 +355,11 @@ object FantomTypeInference {
         return types.singleOrNull()
     }
 
-    /**
-     * sys `List.map`, `mapNotNull`, `flatMap` and `Map.map`, `mapNotNull` are declared with
-     * `Obj?` results; the closure's return type gives the useful answer (`l.map |s| { s.size }`
-     * is `Int[]`).
-     */
-    private fun mapFamilyType(name: String?, owner: String?, receiver: FanType, ret: FanType): FanType? = when {
-        owner == "List" && name == "map" -> FanType.ListOf(ret)
-        owner == "List" && name == "mapNotNull" -> FanType.ListOf(ret.withNullable(false))
-        owner == "List" && name == "flatMap" -> ret as? FanType.ListOf
-        owner == "Map" && receiver is FanType.MapOf && name == "map" -> FanType.MapOf(receiver.key, ret)
-        owner == "Map" && receiver is FanType.MapOf && name == "mapNotNull" -> FanType.MapOf(receiver.key, ret.withNullable(false))
-        else -> null
+    /** `T` when [e] is just the type literal `T#`. */
+    private fun typeLiteralArg(e: FantomExpr): FanType? {
+        val lit = PsiTreeUtil.findChildOfType(e, FantomTypeLiteral::class.java) ?: return null
+        if (lit.textRange != e.textRange || lit.id != null) return null
+        return fromPsiType(lit.type)
     }
 
     /** The closure handed to [call]: trailing (`f |x| { }`, `f(a) |x| { }`) or as the last argument. */

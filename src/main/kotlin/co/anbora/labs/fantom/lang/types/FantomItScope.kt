@@ -13,6 +13,7 @@ import co.anbora.labs.fantom.lang.core.psi.FantomGroupedExpr
 import co.anbora.labs.fantom.lang.core.psi.FantomId
 import co.anbora.labs.fantom.lang.core.psi.FantomItBlock
 import co.anbora.labs.fantom.lang.core.psi.FantomMethodDef
+import co.anbora.labs.fantom.lang.core.psi.FantomNamedElement
 import co.anbora.labs.fantom.lang.core.psi.FantomSafeDotCallStm
 import co.anbora.labs.fantom.lang.core.psi.FantomSimple
 import co.anbora.labs.fantom.lang.core.psi.FantomTermChain
@@ -31,11 +32,15 @@ import com.intellij.psi.util.PsiTreeUtil
  * the func type's params with `V` bound from the receiver. `it` in an it-block
  * (`Foo { }`, `recv.call { }`) or a zero-param closure is the first func param when the
  * call takes a func, else the receiver.
+ *
+ * Construction calls work the same way: `Foo(a) |x| { }` and `Foo(a, |x| { })` match
+ * the closure against the func param of `Foo.make` (else Foo's only ctor), with `This`
+ * bound to `Foo`. In `Foo { }` the block is an it-block whose `it` is `Foo`.
  */
 object FantomItScope {
 
     /** The slot a block is handed to: its name node, the receiver it is called on, and the block's arg position. */
-    private class Callee(val id: FantomId, val receiver: FanType?, val argIndex: Int)
+    private class Callee(val id: FantomId, val receiver: FanType?, val argIndex: Int, val ctorOf: String? = null)
 
     /** The func type a closure is matched against, with what is needed to bind its variables. */
     private class Site(val func: FanType.Func, val receiver: FanType?, val genericOwner: Boolean) {
@@ -93,7 +98,7 @@ object FantomItScope {
         when (val parent = closure.parent) {
             is FantomCallOp -> return calleeOfStep(parent.parent as? FantomTermChain ?: return null, parent.args?.exprList?.size ?: 0)
             is FantomCall -> return Callee(parent.id ?: return null, enclosingTypeOf(parent), parent.args?.exprList?.size ?: 0)
-            is FantomSimple -> return null // `Foo(a) |x| { }`: ctor args; not modelled
+            is FantomSimple -> return ctorCallee(parent, parent.args?.exprList?.size ?: 0)
         }
         val expr = PsiTreeUtil.getParentOfType(closure, FantomExpr::class.java) ?: return null
         if (expr.textRange != closure.textRange) return null
@@ -102,6 +107,7 @@ object FantomItScope {
         return when (val owner = args.parent) {
             is FantomCallOp -> calleeOfStep(owner.parent as? FantomTermChain ?: return null, at)
             is FantomCall -> Callee(owner.id ?: return null, enclosingTypeOf(owner), at)
+            is FantomSimple -> ctorCallee(owner, at)
             else -> null
         }
     }
@@ -142,13 +148,36 @@ object FantomItScope {
         return null
     }
 
+    /**
+     * `Foo(a) |x| { }` and `Foo(a, |x| { })`: the construction call `Foo.make(...)`. The
+     * callee is the type name; [site] looks up the type's `make` (ctor or static method),
+     * else its only ctor.
+     */
+    private fun ctorCallee(simple: FantomSimple, at: Int): Callee? {
+        val id = simple.type.simpleType?.idList?.lastOrNull() ?: return null
+        return Callee(id, FanType.Named(id.text), at, ctorOf = id.text)
+    }
+
+    // The ctor-like slots `Foo(...)` may call: `make` first, else the type's ctors.
+    private fun constructors(typeName: String, context: PsiElement): List<FantomNamedElement> {
+        val slots = FantomTypeInference.typeDefinitions(typeName, context.project).flatMap { FantomScope.ownSlots(it) }
+        val make = slots.filter { it.name == "make" && (it is FantomCtorDef || it is FantomMethodDef) }
+        return make.ifEmpty { slots.filterIsInstance<FantomCtorDef>() }
+    }
+
     private fun enclosingTypeOf(e: PsiElement): FanType? = FantomScope.enclosingType(e)?.name?.let { FanType.Named(it) }
 
     // The func-typed param at the block's position of the method [callee] resolves to; the targets must agree.
     private fun site(callee: Callee): Site? {
-        val ref = callee.id.reference as? FantomReference ?: return null
-        val sites = ref.resolveAll().filterIsInstance<FantomMethodDef>().mapNotNull { m ->
-            val params = m.itemParameterList?.paramsList?.mapNotNull { it.param } ?: return@mapNotNull null
+        val targets = callee.ctorOf?.let { constructors(it, callee.id) }
+            ?: (callee.id.reference as? FantomReference ?: return null).resolveAll().filterIsInstance<FantomMethodDef>()
+        val sites = targets.mapNotNull { m ->
+            val list = when (m) {
+                is FantomMethodDef -> m.itemParameterList
+                is FantomCtorDef -> m.itemParameterList
+                else -> null
+            }
+            val params = list?.paramsList?.mapNotNull { it.param } ?: return@mapNotNull null
             val p = params.getOrNull(callee.argIndex) ?: return@mapNotNull null
             val f = FantomTypeInference.fromPsiType(p.type) as? FanType.Func ?: return@mapNotNull null
             val generic = FantomDeclarationIndex.enclosingTypeName(m) in FantomGenerics.GENERIC_OWNERS

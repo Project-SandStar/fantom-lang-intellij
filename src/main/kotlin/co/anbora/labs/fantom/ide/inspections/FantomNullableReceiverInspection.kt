@@ -31,7 +31,9 @@ import com.intellij.psi.util.PsiTreeUtil
  * On purpose this is narrow: only the declared type counts (an inferred type or an
  * initializer does not), only the first `.` after the name is checked, and the slots
  * every `Obj?` accepts (`equals`, `toStr`, `isImmutable`, `typeof`, `hash`, `compare`)
- * are exempt. There is no flow analysis, so `if (x != null) x.foo` is still reported.
+ * are exempt. A receiver checked non-null on the path is not reported; [FantomNullChecks]
+ * lists the shapes it understands (`if (x != null)`, `if (x == null) return`,
+ * `x != null && x.foo`, `x ?: throw`). It is structural, not a data-flow analysis.
  */
 class FantomNullableReceiverInspection : LocalInspectionTool() {
 
@@ -49,6 +51,7 @@ class FantomNullableReceiverInspection : LocalInspectionTool() {
                 val ref = receiverId.reference as? FantomReference ?: return
                 val target = ref.resolveAll().singleOrNull() ?: return
                 if (declaredType(target)?.nullable != true) return
+                if (FantomNullChecks.isCheckedNonNull(term, receiverId.text)) return
                 holder.registerProblem(receiverId, "Receiver may be null", ReplaceWithSafeDotFix())
             }
         }

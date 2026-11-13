@@ -4,6 +4,8 @@ import co.anbora.labs.fantom.lang.core.psi.FantomCall
 import co.anbora.labs.fantom.lang.core.psi.FantomDotCall
 import co.anbora.labs.fantom.lang.core.psi.FantomDynCallStm
 import co.anbora.labs.fantom.lang.core.psi.FantomElementImpl
+import co.anbora.labs.fantom.lang.core.psi.FantomFacetItems
+import co.anbora.labs.fantom.lang.core.psi.FantomFacetVal
 import co.anbora.labs.fantom.lang.core.psi.FantomField
 import co.anbora.labs.fantom.lang.core.psi.FantomLocal
 import co.anbora.labs.fantom.lang.core.psi.FantomNamedElement
@@ -37,6 +39,7 @@ abstract class FantomIdMixin(node: ASTNode) : FantomElementImpl(node) {
             is FantomField, is FantomCall -> slotOrBareReference(parent)
             is FantomSimpleType -> typeReference(parent)
             is FantomTypeLiteral -> FantomReference(this, FantomReference.Kind.SLOT) // `#slot` or `Type#slot`
+            is FantomFacetVal -> FantomReference(this, FantomReference.Kind.SLOT, (parent.parent?.parent as? FantomFacetItems)?.simpleType?.idList?.lastOrNull()?.text) // `@Facet { x = 1 }`
             is FantomUsingPod, is FantomPodSpec -> null         // pods are not indexed yet
             else -> null
         }
