@@ -16,27 +16,26 @@ The plugin reads the Fantom standard library from a Fantom installation, so
 that `Str`, `List`, `echo` and every other `sys` name resolves, completes and
 shows documentation.
 
-It looks, in this order, for:
+Open Settings | Languages & Frameworks | Fantom. The page lists every install
+under `~/fantom`, `~/haxall` and `~/skyspark`. Change the root folders if your
+installs live elsewhere, or use **Add folder**. Tick the installs you work
+with and pick the default build target.
 
-1. the folder set in Settings | Languages & Frameworks | Fantom,
-2. the `FAN_HOME` environment variable,
-3. the newest `fantom-<version>` folder under `~/fantom`.
-
-A valid home has `bin/fan` and a `src/` folder. If none is found, a balloon
-says so the first time a project with `.fan` files opens; click Configure to
-pick one.
+Until you tick one, the plugin uses `FAN_HOME`, else the newest
+`fantom-<version>` folder under `~/fantom`. If none is found, a balloon says so
+the first time a project with `.fan` files opens; click Configure to open the
+page.
 
 ### Haxall or SkySpark
 
-You can set the home to a Haxall checkout or a SkySpark install. Neither has
-the `sys` sources, so the plugin also needs a plain Fantom install. Set it in
-the **Fantom sources** field, or leave the field empty and the plugin uses the
-newest `~/fantom/fantom-*` folder.
+Haxall and SkySpark ship no `sys` sources, so the plugin pairs each with a
+plain Fantom install. SkySpark 4.0.7 pairs with Fantom 1.0.84 on its own; the
+Fantom column shows the match and lets you pick another.
 
 - Haxall: every pod under `src/` is indexed, so `haystack::Etc` and
   `xeto::Dict` resolve and complete next to `sys::Str`.
-- SkySpark: it ships compiled pods only, so only the Fantom sources are
-  indexed. Runs and builds still use SkySpark's `bin/fan`.
+- SkySpark: the plugin reads its compiled pods. Runs and builds use SkySpark's
+  own `bin/fan`.
 
 See [Settings](settings.md) for details.
 
