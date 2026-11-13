@@ -1,6 +1,10 @@
 package co.anbora.labs.fantom.lang.library.deps
 
+import co.anbora.labs.fantom.ide.imports.FantomUsingCandidates
 import co.anbora.labs.fantom.lang.library.FantomHome
+import co.anbora.labs.fantom.lang.library.FantomInstalls
+import co.anbora.labs.fantom.lang.pod.FantomPodStubActivity
+import org.jetbrains.annotations.TestOnly
 import co.anbora.labs.fantom.lang.library.FantomSettings
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
@@ -52,7 +56,10 @@ class FantomDependencies(private val project: Project) {
      */
     fun refresh(rescan: Boolean = false) {
         if (rescan) FantomSourceScan.clear()
-        if (ApplicationManager.getApplication().isUnitTestMode) return
+        if (ApplicationManager.getApplication().isUnitTestMode) {
+            testRoots?.let { refreshNow(it, testCacheRoot ?: FantomTagExport.defaultCacheRoot()) }
+            return
+        }
         if (!running.compareAndSet(false, true)) { again.set(true); return }
         ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Resolving Fantom dependencies", true) {
             override fun run(indicator: ProgressIndicator) {
@@ -67,6 +74,10 @@ class FantomDependencies(private val project: Project) {
             override fun onFinished() { running.set(false) }
         })
     }
+
+    /** In unit tests [refresh] runs inline over these project folders; null skips it. */
+    @TestOnly @Volatile var testRoots: List<File>? = null
+    @TestOnly @Volatile var testCacheRoot: File? = null
 
     /** [refresh] on the calling thread, for tests. */
     fun refreshNow(roots: List<File> = projectRoots(), cacheRoot: File = FantomTagExport.defaultCacheRoot()): Snapshot =
@@ -121,15 +132,43 @@ class FantomDependencies(private val project: Project) {
         val before = settings.podSources().map { it.podDir.path }
         settings.dependencyOverrides = overrides
         val after = settings.podSources().map { it.podDir.path }
-        project.messageBus.syncPublisher(TOPIC).dependenciesChanged(snap)
-        if (before == after) return
-        ApplicationManager.getApplication().invokeLater({
-            if (project.isDisposed) return@invokeLater
-            WriteAction.run<RuntimeException> {
-                ProjectRootManagerEx.getInstanceEx(project)
-                    .makeRootsChange(EmptyRunnable.getInstance(), RootsChangeRescanningInfo.TOTAL_RESCAN)
-            }
-        }, project.disposed)
+        onEdt { project.messageBus.syncPublisher(TOPIC).dependenciesChanged(snap) }
+        if (before != after) rootsChanged()
+    }
+
+    private fun onEdt(action: () -> Unit) {
+        val app = ApplicationManager.getApplication()
+        if (app.isDispatchThread) action()
+        else app.invokeLater({ if (!project.isDisposed) action() }, project.disposed)
+    }
+
+    /** Tells the IDE the library roots changed: the index, `using` candidates and stubs are made again. */
+    private fun rootsChanged() = onEdt {
+        FantomUsingCandidates.reset()
+        WriteAction.run<RuntimeException> {
+            ProjectRootManagerEx.getInstanceEx(project)
+                .makeRootsChange(EmptyRunnable.getInstance(), RootsChangeRescanningInfo.TOTAL_RESCAN)
+        }
+        FantomPodStubActivity.schedule(project)
+    }
+
+    /**
+     * Pairs the persisted install rows again (a Haxall for each SkySpark row, which rows saved
+     * by older versions lack) and stores them when they changed. Scans the install roots:
+     * background thread only. Returns true when the rows changed.
+     */
+    fun repairInstalls(): Boolean {
+        val settings = FantomSettings.getInstance(project)
+        val persisted = settings.installs
+        if (persisted.isEmpty()) return false
+        val fresh = FantomInstalls.rows(settings.roots(), persisted, null).associateBy { it.path }
+        val updated = persisted.map { p ->
+            val f = fresh[p.path] ?: return@map p
+            p.copy(haxallPath = f.haxallPath, haxallChosen = f.haxallChosen, haxallWarning = f.haxallWarning)
+        }
+        if (updated == persisted) return false
+        settings.installs = updated
+        return true
     }
 
     /**
@@ -141,7 +180,8 @@ class FantomDependencies(private val project: Project) {
         if (settings.buildTargets().none { it.path == path }) return
         if (settings.defaultTarget == path) return
         settings.defaultTarget = path
-        project.messageBus.syncPublisher(TOPIC).targetChanged(path)
+        onEdt { project.messageBus.syncPublisher(TOPIC).targetChanged(path) }
+        rootsChanged()
         refresh()
     }
 

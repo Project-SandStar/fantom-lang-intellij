@@ -38,6 +38,8 @@ class FantomDepsOrderTest : BasePlatformTestCase() {
             settings.dependencyOverrides = emptyMap()
             settings.projectPods = emptySet()
             settings.pins = emptyMap()
+            FantomDependencies.getInstance(project).testRoots = null
+            FantomDependencies.getInstance(project).testCacheRoot = null
             FantomSettings.clearPodCache()
             WriteAction.runAndWait<RuntimeException> {
                 ProjectRootManagerEx.getInstanceEx(project)
@@ -85,6 +87,19 @@ class FantomDepsOrderTest : BasePlatformTestCase() {
         assertNull(settings.podSources().firstOrNull { it.pod == "haystack" })
     }
 
+    /** Rows saved before the Haxall column get their Haxall at startup, so haystack is source, not a stub. */
+    fun testOldRowsArePairedWithHaxallAgain() {
+        if (missing(sky407, hx407, fantom)) return
+        tick(sky407)
+        settings.installs = settings.installs.map { it.copy(haxallPath = null, haxallWarning = null) }
+        FantomSettings.clearPodCache()
+        assertFalse(settings.podSources().firstOrNull { it.pod == "haystack" }?.podDir == File(hx407, "src/core/haystack"))
+        assertTrue(FantomDependencies.getInstance(project).repairInstalls())
+        assertEquals(hx407.path, settings.installs.single { it.path == sky407.path }.haxallPath)
+        assertEquals(File(hx407, "src/core/haystack"), settings.podSources().single { it.pod == "haystack" }.podDir)
+        assertFalse(FantomDependencies.getInstance(project).repairInstalls())
+    }
+
     /** The demo's dependencies: Haxall source, stub or not found, and bassgCommon from a tag. */
     fun testDependencyRowsAndTargetSwitch() {
         if (missing(sky407, sky3112, hx407, fantom, bassg)) return
@@ -113,7 +128,7 @@ class FantomDepsOrderTest : BasePlatformTestCase() {
         assertEquals("Haxall 4.0.7 source", row(snap, "haystack").source)
         assertEquals(FantomDependencyResolver.How.AUTO, row(snap, "folio").how)
         assertEquals(FantomDependencyResolver.How.NOT_FOUND, row(snap, "connExt").how)
-        assertTrue(row(snap, "skyarcd").how in setOf(FantomDependencyResolver.How.STUB, FantomDependencyResolver.How.NOT_FOUND))
+        assertEquals(FantomDependencyResolver.How.STUB, row(snap, "skyarcd").how)
         val b407 = row(snap, "bassgCommon")
         assertEquals(FantomDependencyResolver.How.NEAREST_TAG, b407.how)
         assertEquals("no 4.0.7 tag; using bassgCommon/4.0.6.2.2", b407.warning)
@@ -122,10 +137,13 @@ class FantomDepsOrderTest : BasePlatformTestCase() {
         assertEquals("Fantom: SkySpark 4.0.7", FantomTargetWidgets.text(project))
 
         // the status bar switch: SkySpark 3.1.12 re-maps bassgCommon to its exact tag
+        deps.testRoots = listOf(proj)
+        deps.testCacheRoot = cache
         deps.switchTarget(sky3112.path)
         assertEquals(sky3112.path, settings.defaultTarget)
         assertEquals("Fantom: SkySpark 3.1.12", FantomTargetWidgets.text(project))
-        val snap2 = deps.refreshNow(listOf(proj), cache)
+        val snap2 = deps.snapshot
+        assertEquals(sky3112.path, snap2.target)
         val b3112 = row(snap2, "bassgCommon")
         assertEquals(FantomDependencyResolver.How.AUTO, b3112.how)
         assertTrue(b3112.source, b3112.source.endsWith("bassgCommon/3.1.12.2.2"))

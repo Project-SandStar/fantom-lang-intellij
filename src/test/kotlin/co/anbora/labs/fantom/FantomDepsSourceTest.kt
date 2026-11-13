@@ -207,15 +207,15 @@ class FantomDepsSourceTest : TestCase() {
         val scan = FantomSourceScan.scanNow(listOf(root))
         assertEquals(2, scan.repos("acme").size) // no git: each folder is its own repo
         val rows = FantomDependencyResolver.resolve(
-            listOf(FantomBuildFile.Dependency("acme", "3.0+")), null, emptyList(), emptySet(), emptyList(), scan, emptyMap(),
-        ) { null }
+            listOf(FantomBuildFile.Dependency("acme", "3.0+")), null, emptyList(), emptySet(), emptyList(), scan, emptyMap(), stubOf = { null }, compiled = { false },
+        )
         val row = rows.single()
         assertEquals(new, row.podSource?.podDir)
         assertTrue(row.source, row.source.contains("working copy"))
         assertEquals(FantomDependencyResolver.How.AUTO, row.how)
         val none = FantomDependencyResolver.resolve(
-            listOf(FantomBuildFile.Dependency("acme", "4.0+")), null, emptyList(), emptySet(), emptyList(), scan, emptyMap(),
-        ) { null }.single()
+            listOf(FantomBuildFile.Dependency("acme", "4.0+")), null, emptyList(), emptySet(), emptyList(), scan, emptyMap(), stubOf = { null }, compiled = { false },
+        ).single()
         assertEquals(FantomDependencyResolver.How.NOT_FOUND, none.how)
         assertNotSame(old, new)
     }
@@ -252,7 +252,7 @@ class FantomDepsSourceTest : TestCase() {
         fun rowFor(target: String): FantomDependencyResolver.Row {
             val sky = co.anbora.labs.fantom.lang.library.FantomInstall(FantomHome.Kind.SKYSPARK, "/x/skyspark-$target", target, null, null,
                 co.anbora.labs.fantom.lang.library.FantomInstall.Pairing.MISSING, "")
-            return FantomDependencyResolver.resolve(dep, sky, listOf(sky), emptySet(), emptyList(), scan, emptyMap()) { null }.single()
+            return FantomDependencyResolver.resolve(dep, sky, listOf(sky), emptySet(), emptyList(), scan, emptyMap(), stubOf = { null }, compiled = { false }).single()
         }
         val r407 = rowFor("4.0.7")
         assertEquals("bassgCommon/4.0.6.2.2", r407.export?.tag)

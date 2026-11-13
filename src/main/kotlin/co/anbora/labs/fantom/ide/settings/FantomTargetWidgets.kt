@@ -1,6 +1,5 @@
 package co.anbora.labs.fantom.ide.settings
 
-import co.anbora.labs.fantom.ide.compiler.FantomBuildTargets
 import co.anbora.labs.fantom.lang.library.FantomInstall
 import co.anbora.labs.fantom.lang.library.FantomSettings
 import co.anbora.labs.fantom.lang.library.deps.FantomDependencies
@@ -25,7 +24,7 @@ object FantomTargetWidgets {
         if (targets.isEmpty()) return null
         val current = FantomSettings.getInstance(project).defaultInstall()
         val step = object : BaseListPopupStep<FantomInstall>("Fantom Build Target", targets) {
-            override fun getTextFor(value: FantomInstall): String = FantomBuildTargets.label(value)
+            override fun getTextFor(value: FantomInstall): String = value.name
             override fun getDefaultOptionIndex(): Int = targets.indexOfFirst { it.path == current?.path }.coerceAtLeast(0)
             override fun onChosen(selectedValue: FantomInstall, finalChoice: Boolean): PopupStep<*>? {
                 doFinalStep { FantomDependencies.getInstance(project).switchTarget(selectedValue.path) }

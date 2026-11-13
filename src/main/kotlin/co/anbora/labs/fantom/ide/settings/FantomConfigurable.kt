@@ -17,7 +17,9 @@ import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
+import com.intellij.openapi.components.service
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
@@ -356,6 +358,8 @@ class FantomConfigurable(private val project: Project) : BoundConfigurable("Fant
         // targets, Haxall pairing, roots and pins all change the dependency picks
         FantomDependencies.getInstance(project).refresh(rescan = rootsChanged || rescanRequested)
         rescanRequested = false
+        // the status bar entry shows only with a ticked install: re-check it now
+        project.service<StatusBarWidgetsManager>().updateWidget(FantomTargetWidgetFactory::class.java)
         if (indexKey() == before) return
         FantomUsingCandidates.reset()
         WriteAction.runAndWait<RuntimeException> {

@@ -80,6 +80,7 @@ object FantomDependencyResolver {
         scan: FantomSourceScan.Result?,
         pins: Map<String, String>,
         stubOf: (String) -> FantomHome.PodSource? = { pod -> stubFor(target, pod) },
+        compiled: (String) -> Boolean = { pod -> hasCompiledPod(target, pod) },
     ): List<Row> {
         val byName = base.associateBy { it.pod }
         val version = targetVersion(target)
@@ -106,6 +107,7 @@ object FantomDependencyResolver {
             if (installSrc != null) return@map Row(pod, dep.constraint, sourceText(installSrc, installs), How.AUTO, podSource = installSrc, options = options)
             fromRepos(pod, dep, repos, version)?.let { return@map it.copy(options = options) }
             if (stub != null) return@map Row(pod, dep.constraint, "stub", How.STUB, podSource = stub, options = options)
+            if (compiled(pod)) return@map Row(pod, dep.constraint, "stub (being made)", How.STUB, options = options)
             Row(pod, dep.constraint, "", How.NOT_FOUND, options = options)
         }
     }
@@ -130,7 +132,7 @@ object FantomDependencyResolver {
             val repo = repos.firstOrNull { it.key == key }
             val clone = repo?.tags?.get(tag)
             if (repo != null && clone?.gitRoot != null) {
-                Row(pod, dep.constraint, "${repo.name} tag $tag", How.PINNED, export = Export(clone.gitRoot, repo.name, tag, clone.relPath))
+                Row(pod, dep.constraint, "${repo.name} tag $tag", How.PINNED, export = Export(clone.gitRoot, repo.key, tag, clone.relPath))
             } else null
         }
         else -> null
@@ -154,7 +156,7 @@ object FantomDependencyResolver {
                 if (clone.gitRoot != null) {
                     val how = if (c.kind == FantomTagChoice.Kind.EXACT) How.AUTO else How.NEAREST_TAG
                     val row = Row(pod, dep.constraint, "${repo.name} tag ${c.tag.name}", how, c.warning,
-                        export = Export(clone.gitRoot, repo.name, c.tag.name, clone.relPath))
+                        export = Export(clone.gitRoot, repo.key, c.tag.name, clone.relPath))
                     return RepoPick(row, if (c.kind == FantomTagChoice.Kind.EXACT) 0 else 1, c.tag.version)
                 }
             }
@@ -175,6 +177,10 @@ object FantomDependencyResolver {
     /** The pod [pod] at [dir] (its `build.fan` folder), with its source sub folders as roots. */
     fun podAt(dir: File, pod: String): FantomHome.PodSource? =
         FantomHome.nestedPods(dir).firstOrNull { it.pod == pod }
+
+    /** True when the target ships a compiled `lib/fan/<pod>.pod`, so a stub is (or will be) made for it. */
+    fun hasCompiledPod(target: FantomInstall?, pod: String): Boolean =
+        target?.dir?.let { File(it, "lib/fan/$pod.pod").isFile } == true
 
     /** The stub of the target's compiled `<pod>.pod`, when it was generated. */
     fun stubFor(target: FantomInstall?, pod: String): FantomHome.PodSource? {
