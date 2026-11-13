@@ -28,7 +28,7 @@ import com.sun.jdi.Value
  */
 class FantomCodeFragmentFactory : CodeFragmentFactory() {
     override fun createPsiCodeFragment(item: TextWithImports, context: PsiElement?, project: Project): PsiCodeFragment =
-        FantomExpressionCodeFragment(project, "fragment.fan", item.text, context)
+        FantomExpressionCodeFragment.create(project, "fragment.fan", item.text, context)
 
     override fun createPresentationPsiCodeFragment(item: TextWithImports, context: PsiElement?, project: Project): PsiCodeFragment =
         createPsiCodeFragment(item, context, project)

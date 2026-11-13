@@ -55,7 +55,7 @@ class FantomEvaluatorTest : BasePlatformTestCase() {
     }
 
     private fun ast(text: String): FExpr {
-        val fragment = FantomExpressionCodeFragment(project, "fragment.fan", text, null)
+        val fragment = FantomExpressionCodeFragment.create(project, "fragment.fan", text, null)
         return FantomEvalAstBuilder.build(fragment.node)
     }
 
