@@ -5,7 +5,7 @@ rename across files, the Fantom installation as a library, type inference,
 completion, quick documentation, inspections, auto-import, run configurations,
 templates, a formatter and a full colour scheme.
 
-Items 1 to 15 shipped in 2.1.0; items 16 and 17 shipped in 3.0.0.
+Items 1 to 15 shipped in 2.1.0; items 16 and 17 shipped in 3.0.0; item 18 shipped in 3.0.1.
 
 ## 2.1: the compiler in the loop
 
