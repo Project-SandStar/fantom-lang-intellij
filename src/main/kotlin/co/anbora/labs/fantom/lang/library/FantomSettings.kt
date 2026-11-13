@@ -257,26 +257,6 @@ class FantomSettings : SimplePersistentStateComponent<FantomSettings.State>(Stat
         }
     }
 
-    /**
-     * The `lib/java` jars that hold the `fan.sys` Java classes, so the debugger finds them:
-     * for each ticked install its own `lib/java/sys.jar` if present, else its paired
-     * Fantom's; with no ticked row, the home's if present, else the Fantom sources'.
-     * `jline.jar` comes along when the folder has it. Missing files are skipped.
-     */
-    fun runtimeJars(): List<File> {
-        val ticked = enabledInstalls()
-        val homes: List<File> = if (ticked.isNotEmpty()) {
-            ticked.mapNotNull { i -> i.dir.takeIf(::hasSysJar) ?: i.fantomPath?.let(::File) }
-        } else {
-            listOfNotNull(configuredHome()?.takeIf(::hasSysJar) ?: effectiveSourcesHome())
-        }
-        return homes.flatMap { h -> listOf("sys.jar", "jline.jar").map { File(h, "lib/java/$it") } }
-            .filter { it.isFile }
-            .distinctBy { it.path }
-    }
-
-    private fun hasSysJar(dir: File) = File(dir, "lib/java/sys.jar").isFile
-
     /** The source roots to index, see [podSources]. */
     fun effectiveSources(): List<File> = podSources().flatMap { it.roots }
 

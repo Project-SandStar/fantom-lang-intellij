@@ -22,7 +22,7 @@ class FantomBuildPodLineMarkerProvider : LineMarkerProvider {
             element.textRange,
             AllIcons.Actions.Compile,
             { "Build pod" },
-            { _, elt -> elt.containingFile?.virtualFile?.let { FantomBuildPodAction.run(elt.project, it) } },
+            { e, elt -> elt.containingFile?.virtualFile?.let { FantomBuildPodAction.run(elt.project, it, e) } },
             GutterIconRenderer.Alignment.LEFT,
             { "Build pod" },
         )

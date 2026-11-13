@@ -1,6 +1,5 @@
 package co.anbora.labs.fantom.ide.compiler
 
-import co.anbora.labs.fantom.lang.library.FantomSettings
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.ExternalAnnotator
 import com.intellij.openapi.progress.ProgressManager
@@ -24,14 +23,18 @@ import java.io.File
  */
 class FantomCompilerAnnotator : ExternalAnnotator<FantomCompilerAnnotator.Input, List<FantomDiagnostic>>() {
     /** [cachedOnly]: a pod built by the Build Pod action with compile-on-save off; show, never compile. */
-    class Input(val project: Project, val file: VirtualFile, val podRoot: File, val home: File, val cachedOnly: Boolean = false)
+    class Input(
+        val project: Project, val file: VirtualFile, val podRoot: File, val home: File,
+        val cachedOnly: Boolean = false, val podPath: List<File> = emptyList(),
+    )
 
     override fun collectInformation(file: PsiFile): Input? {
         val vf = file.virtualFile ?: return null
         val project = file.project
         val service = FantomCompilerService.getInstance(project)
-        val home = FantomSettings.getInstance(project).effectiveHome() ?: return null
-        service.podRootFor(vf)?.let { return Input(project, vf, it, home) }
+        val env = FantomBuildTargets.defaultEnv(project) ?: return null
+        val home = env.runner
+        service.podRootFor(vf)?.let { return Input(project, vf, it, home, podPath = env.podPath) }
         val built = service.builtRootFor(vf) ?: return null
         return Input(project, vf, built, home, cachedOnly = true)
     }
@@ -47,7 +50,7 @@ class FantomCompilerAnnotator : ExternalAnnotator<FantomCompilerAnnotator.Input,
             service.result(input.podRoot) ?: return null
         } else {
             val indicator = ProgressManager.getInstance().progressIndicator
-            service.compile(input.podRoot, input.home, indicator, input.file) ?: return null
+            service.compile(input.podRoot, input.home, indicator, input.file, input.podPath) ?: return null
         }
         return result.forFile(FantomCompilerDiagnostics.canonical(input.file.path))
     }

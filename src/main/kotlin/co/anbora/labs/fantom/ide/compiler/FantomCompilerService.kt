@@ -78,6 +78,13 @@ class FantomCompilerService(private val project: Project) : Disposable {
         return root.takeIf { builtRoots.containsKey(FantomCompilerDiagnostics.canonical(it.path)) }
     }
 
+    /** The private work folder of [podRoot]; the built pod lands in its `lib/fan`. */
+    fun workDir(podRoot: File): File = FantomCompilerDiagnostics.workDirFor(workRoot, podRoot)
+
+    /** The private work folder that receives the pods built from a Haxall install's sources. */
+    fun haxallWorkDir(haxall: File): File =
+        File(workRoot, "haxall-" + haxall.name.replace(' ', '_') + "-" + Integer.toHexString(FantomCompilerDiagnostics.canonical(haxall.path).hashCode()))
+
     /** When the last Build Pod run of [podRoot] ended, or null when it never ran. */
     fun builtAt(podRoot: File): Long? = builtRoots[FantomCompilerDiagnostics.canonical(podRoot.path)]
 
@@ -85,11 +92,11 @@ class FantomCompilerService(private val project: Project) : Disposable {
      * An explicit build of the pod at [podRoot]: always runs the compiler, then every open
      * file of the pod shows the new diagnostics. Blocks the caller.
      */
-    fun buildPod(podRoot: File, home: File, indicator: ProgressIndicator?): FantomCompileResult? {
+    fun buildPod(podRoot: File, home: File, indicator: ProgressIndicator?, podPath: List<File> = emptyList()): FantomCompileResult? {
         val key = FantomCompilerDiagnostics.canonical(podRoot.path)
         builtRoots.putIfAbsent(key, 0L)
         markDirty(podRoot)
-        val result = compile(podRoot, home, indicator)
+        val result = compile(podRoot, home, indicator, null, podPath)
         builtRoots[key] = System.currentTimeMillis()
         if (result != null) restartOtherEditors(podRoot, null)
         return result
@@ -114,7 +121,13 @@ class FantomCompilerService(private val project: Project) : Disposable {
      * The result for the pod: cached when nothing changed, else a compile. Blocks the
      * caller; [indicator] cancellation stops the wait but not the process.
      */
-    fun compile(podRoot: File, home: File, indicator: ProgressIndicator?, requester: VirtualFile? = null): FantomCompileResult? {
+    fun compile(
+        podRoot: File,
+        home: File,
+        indicator: ProgressIndicator?,
+        requester: VirtualFile? = null,
+        podPath: List<File> = emptyList(),
+    ): FantomCompileResult? {
         val st = state(podRoot)
         val future: CompletableFuture<FantomCompileResult>
         synchronized(st) {
@@ -131,7 +144,7 @@ class FantomCompilerService(private val project: Project) : Disposable {
                 st.future = f
                 AppExecutorUtil.getAppExecutorService().execute {
                     val res = try {
-                        run(st, podRoot, home, startedAt)
+                        run(st, podRoot, home, startedAt, podPath)
                     } catch (t: Throwable) {
                         LOG.warn("Fantom compile failed for $podRoot", t)
                         FantomCompileResult(podRoot, startedAt, emptyMap(), -1, false)
@@ -152,9 +165,12 @@ class FantomCompilerService(private val project: Project) : Disposable {
         return if (indicator != null) ProgressIndicatorUtils.awaitWithCheckCanceled(future, indicator) else future.get()
     }
 
-    private fun run(st: PodState, podRoot: File, home: File, startedAt: Long): FantomCompileResult {
+    /** Root of the private work folders of this project. */
+    fun workRoot(): File = workRoot
+
+    private fun run(st: PodState, podRoot: File, home: File, startedAt: Long, podPath: List<File>): FantomCompileResult {
         val buildFile = File(podRoot, "build.fan")
-        val workDir = FantomCompilerDiagnostics.prepareWorkDir(workRoot, podRoot)
+        val workDir = FantomCompilerDiagnostics.prepareWorkDir(workRoot, podRoot, podPath)
             ?: return FantomCompileResult(podRoot, startedAt, emptyMap(), -1, false)
         val cmd = FantomCompilerDiagnostics.commandLine(home, buildFile, workDir)
         val handler = CapturingProcessHandler(cmd)

@@ -270,9 +270,9 @@ class FantomConfigurable(private val project: Project) : BoundConfigurable("Fant
         FantomPodStubActivity.schedule(project)
     }
 
-    /** What the index depends on: the pod folders, the runtime jars and the runner. */
+    /** What the index depends on: the pod folders and the runner. */
     private fun indexKey(): List<String> =
-        settings.podSources().map { it.podDir.path } + settings.runtimeJars().map { it.path } +
+        settings.podSources().map { it.podDir.path } +
             listOf(settings.effectiveHome()?.path ?: "", settings.podsNeedingStubs().size.toString())
 
     /** The install table: tick, name, paired Fantom, source of the match. */

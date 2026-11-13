@@ -91,13 +91,29 @@ object FantomCompilerDiagnostics {
         return cmd
     }
 
-    /** Creates the private work folder with its `fan.props`; returns null when it cannot be made. */
-    fun prepareWorkDir(root: File, podRoot: File): File? {
-        val name = podRoot.name.ifBlank { "pod" } + "-" + Integer.toHexString(podRoot.canonicalPath.hashCode())
-        val dir = File(root, name)
+    /** The private work folder of [podRoot] under [root]; the same path for every target. */
+    fun workDirFor(root: File, podRoot: File): File =
+        File(root, podRoot.name.ifBlank { "pod" } + "-" + Integer.toHexString(podRoot.canonicalPath.hashCode()))
+
+    /**
+     * Creates the private work folder with its `fan.props`; returns null when it cannot be made.
+     * The file is written on every run: [podPath] becomes its `path=` line (folders searched for
+     * `lib/fan` pods after the work dir and before the runner's home), so the pods one build
+     * borrowed never leak into the next.
+     */
+    fun prepareWorkDir(root: File, podRoot: File, podPath: List<File> = emptyList()): File? {
+        val dir = workDirFor(root, podRoot)
         if (!dir.isDirectory && !dir.mkdirs()) return null
-        val props = File(dir, "fan.props")
-        if (!props.isFile) runCatching { props.writeText("// IntelliJ Fantom plugin: PathEnv work dir for compiler diagnostics\n") }.onFailure { return null }
+        if (!writeProps(dir, podPath)) return null
         return dir
+    }
+
+    /** Writes `<dir>/fan.props` for [podPath]; false on failure. */
+    fun writeProps(dir: File, podPath: List<File>): Boolean {
+        val text = buildString {
+            append("// IntelliJ Fantom plugin: PathEnv work dir for compiler diagnostics\n")
+            if (podPath.isNotEmpty()) append("path=").append(podPath.joinToString(";") { it.absolutePath.replace('\\', '/') }).append('\n')
+        }
+        return runCatching { File(dir, "fan.props").writeText(text) }.isSuccess
     }
 }
