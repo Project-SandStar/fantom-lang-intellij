@@ -15,8 +15,8 @@ import java.util.EnumSet
 
 /**
  * Spell checking: comments, fandoc, string text and declaration names reach the
- * spellchecker; URIs and string interpolation do not. The inspection itself lives
- * in another plugin (Grazie), so the test collects the words the strategy hands over.
+ * spellchecker; URIs and string interpolation do not. The concrete inspection is
+ * not on the test classpath, so the test collects the words the strategy hands over.
  */
 class FantomSpellcheckTest : BasePlatformTestCase() {
 

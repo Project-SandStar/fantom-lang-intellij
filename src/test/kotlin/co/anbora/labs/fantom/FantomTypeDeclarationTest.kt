@@ -8,9 +8,10 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 class FantomTypeDeclarationTest : BasePlatformTestCase() {
 
     private val code = """
-        class Bar {}
+        class Bar { This me() { this } }
         class Foo
         {
+          Void chain() { echo(Bar().me.toStr) }
           Bar? field
           Bar make() { return Bar() }
           Void run(Bar p)
@@ -46,6 +47,11 @@ class FantomTypeDeclarationTest : BasePlatformTestCase() {
 
     fun testParamDeclaration() {
         assertEquals(listOf("Bar"), typesAt("p)\n"))
+    }
+
+    /** The declared type is `This`; the expression at the caret makes it `Bar`. */
+    fun testThisReturnInChain() {
+        assertEquals(listOf("Bar"), typesAt("me.toStr"))
     }
 
     fun testMethodReturnType() {
