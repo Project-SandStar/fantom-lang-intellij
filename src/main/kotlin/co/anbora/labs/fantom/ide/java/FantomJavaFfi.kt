@@ -91,10 +91,15 @@ class FantomSysJarRootsProvider : AdditionalLibraryRootsProvider() {
     }
 
     companion object {
-        /** The jar root of `lib/java/sys.jar` of the home, else of the sources folder; null when neither has one. */
+        /**
+         * The jar root of `lib/java/sys.jar` of the default target (or the single home), else
+         * of the Fantom install that supplies `sys`; null when neither has one. Reads the
+         * resolved homes, not the legacy `homePath` field: with the install table that field
+         * is empty.
+         */
         fun sysJarRoot(project: Project): VirtualFile? {
             val settings = FantomSettings.getInstance(project)
-            for (dir in listOfNotNull(settings.homePath, settings.sourcesPath)) {
+            for (dir in listOfNotNull(settings.configuredHome(), settings.effectiveSourcesHome()).distinct()) {
                 val jar = File(dir, "lib/java/sys.jar")
                 if (!jar.isFile) continue
                 val url = "jar://${jar.absolutePath.replace(File.separatorChar, '/')}!/"

@@ -117,6 +117,45 @@ class FantomJavaFfiTest : FantomInspectionTestBase() {
         assertEquals("java.security.Key", (targetsAt("Key key").single() as PsiClass).qualifiedName)
     }
 
+    /**
+     * With the install table (a ticked default target) `homePath` stays empty; sys.jar must
+     * still come from the target. The sandbox projects are set up this way.
+     */
+    fun testSysJarFromDefaultTarget() {
+        if (skip()) return
+        val settings = FantomSettings.getInstance(project)
+        val target = File(System.getProperty("user.home"), "skyspark/skyspark-3.1.12")
+        val dir = if (File(target, "lib/java/sys.jar").isFile) target else home!!
+        val rows = co.anbora.labs.fantom.lang.library.FantomInstalls.pair(
+            co.anbora.labs.fantom.lang.library.FantomInstalls.scan(listOf(dir.parentFile)),
+        ).map { it.copy(enabled = it.path == dir.path) }
+        if (rows.none { it.enabled }) { println("testSysJarFromDefaultTarget skipped: $dir not scanned"); return }
+        try {
+            settings.homePath = null
+            settings.installs = rows
+            settings.defaultTarget = dir.path
+            val root = co.anbora.labs.fantom.ide.java.FantomSysJarRootsProvider.sysJarRoot(project)
+            assertNotNull("sys.jar of $dir", root)
+            assertTrue(root!!.path, root.path.startsWith(dir.path))
+        } finally {
+            settings.installs = emptyList()
+            settings.defaultTarget = null
+            settings.homePath = home!!.path
+        }
+    }
+
+    /** bassgModbusRtu writes `using [java]fanx.interop::ByteArray`, with no space after `]`. */
+    fun testNoSpaceAfterJavaBracket() {
+        if (skip()) return
+        myFixture.enableInspections(FantomUnresolvedReferenceInspection())
+        myFixture.configureByText(
+            "A.fan",
+            "using [java]fanx.interop::ByteArray\n\nclass A {\n  Void f(ByteArray b) { ByteArray c := b; echo(c.size) }\n}\n",
+        )
+        assertEquals("fanx.interop.ByteArray", (targetsAt("ByteArray b").single() as PsiClass).qualifiedName)
+        assertEmpty(myFixture.doHighlighting().filter { it.description?.startsWith("Cannot resolve") == true }.map { it.description })
+    }
+
     fun testSlotsResolveToJavaMembers() {
         if (skip()) return
         myFixture.configureByText("A.fan", crypto)
