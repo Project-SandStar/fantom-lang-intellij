@@ -56,8 +56,8 @@ open (see item 16).
 
 16. **Debugger.** Done: breakpoints in `.fan` files, Fantom frames and named
     locals over the JVM debugger, step over, into and out, including into
-    closures, with `sys` internals skipped. Needs the Java plugin.
-    Still open: Fantom expressions in Evaluate and in breakpoint conditions,
-    debugging Fantom Test configurations, and breakpoints in scripts.
+    closures, with `sys` internals skipped, Debug on Fantom Test
+    configurations, and breakpoints in scripts. Needs the Java plugin.
+    Still open: Fantom expressions in Evaluate and in breakpoint conditions.
 
 Ideas and votes: <https://github.com/Project-SandStar/fantom-lang-intellij/discussions>.
