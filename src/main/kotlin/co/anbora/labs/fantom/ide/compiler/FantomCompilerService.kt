@@ -64,6 +64,37 @@ class FantomCompilerService(private val project: Project) : Disposable {
         return VfsUtilCore.virtualToIoFile(root)
     }
 
+    /** Pods built by the Build Pod action: canonical root path to the time the build ended. */
+    private val builtRoots = ConcurrentHashMap<String, Long>()
+
+    /**
+     * The pod root of a local `.fan` file whose pod was built by [buildPod] while
+     * compile-on-save is off. Its last result is shown, but nothing compiles on save.
+     */
+    fun builtRootFor(file: VirtualFile): File? {
+        if (FantomSettings.getInstance(project).compileOnSave) return null
+        if (file.fileSystem !is LocalFileSystem || file.extension != "fan") return null
+        val root = VfsUtilCore.virtualToIoFile(FantomPodRoot.find(file) ?: return null)
+        return root.takeIf { builtRoots.containsKey(FantomCompilerDiagnostics.canonical(it.path)) }
+    }
+
+    /** When the last Build Pod run of [podRoot] ended, or null when it never ran. */
+    fun builtAt(podRoot: File): Long? = builtRoots[FantomCompilerDiagnostics.canonical(podRoot.path)]
+
+    /**
+     * An explicit build of the pod at [podRoot]: always runs the compiler, then every open
+     * file of the pod shows the new diagnostics. Blocks the caller.
+     */
+    fun buildPod(podRoot: File, home: File, indicator: ProgressIndicator?): FantomCompileResult? {
+        val key = FantomCompilerDiagnostics.canonical(podRoot.path)
+        builtRoots.putIfAbsent(key, 0L)
+        markDirty(podRoot)
+        val result = compile(podRoot, home, indicator)
+        builtRoots[key] = System.currentTimeMillis()
+        if (result != null) restartOtherEditors(podRoot, null)
+        return result
+    }
+
     /**
      * True when the compiler has spoken about this file since it was last saved. The
      * resolver inspection stays quiet then; its "cannot resolve" would only repeat or
@@ -149,7 +180,7 @@ class FantomCompilerService(private val project: Project) : Disposable {
             val files = ReadAction.computeBlocking<List<PsiFile>, RuntimeException> {
                 FileEditorManager.getInstance(project).openFiles.mapNotNull { vf ->
                     if (vf == requester) return@mapNotNull null
-                    val root = podRootFor(vf) ?: return@mapNotNull null
+                    val root = podRootFor(vf) ?: builtRootFor(vf) ?: return@mapNotNull null
                     if (FantomCompilerDiagnostics.canonical(root.path) != rootPath) return@mapNotNull null
                     psiManager.findFile(vf)
                 }

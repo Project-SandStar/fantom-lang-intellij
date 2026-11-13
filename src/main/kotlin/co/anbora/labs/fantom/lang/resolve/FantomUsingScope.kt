@@ -3,6 +3,7 @@ package co.anbora.labs.fantom.lang.resolve
 import co.anbora.labs.fantom.lang.core.psi.FantomNamedElement
 import co.anbora.labs.fantom.lang.core.psi.FantomUsingDef
 import co.anbora.labs.fantom.lang.core.psi.FantomUsingPod
+import co.anbora.labs.fantom.lang.library.FantomBuildFile
 import co.anbora.labs.fantom.lang.library.FantomPodResolver
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -35,7 +36,25 @@ object FantomUsingScope {
         val wholePods: Set<String>,
         /** Visible name to the import behind it. */
         val typeImports: Map<String, TypeImport>,
+        /**
+         * Pod names of the literal `depends` list of the file's `build.fan`; null when there
+         * is no `build.fan` or its `depends` is not a literal list.
+         */
+        val depends: Set<String>? = null,
     ) {
+        /**
+         * True when [pod] is available to the file by its `build.fan`: `sys`, the file's own
+         * pod, or a pod in `depends`. Every pod counts as available when [depends] is unknown.
+         * This is a preference for completion and imports, never a resolve filter.
+         */
+        fun isPodAvailable(pod: String?): Boolean {
+            if (pod == null || depends == null) return true
+            return pod == SYS || pod == ownPod || pod in depends
+        }
+
+        /** True when [depends] is known and [pod] is not available by it. */
+        fun isOutsideDepends(pod: String?): Boolean = !isPodAvailable(pod)
+
         /**
          * True when a type [typeName] of pod [typePod] can be named in the file. A type
          * whose pod is unknown counts as visible: no `using` could bring it in.
@@ -96,6 +115,17 @@ object FantomUsingScope {
         return pod.takeIf { it != NO_POD }
     }
 
+    /**
+     * The pod names of the literal `depends` list of the `build.fan` above [file]; null when
+     * there is no `build.fan` or `depends` is not a literal. A `build.fan` itself has none:
+     * it is a script of the `build` pod, not part of the pod it describes.
+     */
+    fun dependsOf(file: PsiFile): Set<String>? {
+        val vf = file.originalFile.virtualFile ?: file.viewProvider.virtualFile
+        if (vf.name == FantomBuildFile.FILE_NAME) return null
+        return FantomBuildFile.forFile(vf, file.project)?.dependsPods
+    }
+
     /** The Fantom pod a `using` line names, or null for FFI and string specs. */
     fun podName(using: FantomUsingDef): String? = podName(using.usingPod)
 
@@ -129,6 +159,6 @@ object FantomUsingScope {
             if (type == null) whole += pod
             else types[aliasName(using) ?: type] = TypeImport(pod, type)
         }
-        return Usings(podOf(file), whole, types)
+        return Usings(podOf(file), whole, types, dependsOf(file))
     }
 }

@@ -274,7 +274,9 @@ class FantomCompletionContributor : CompletionContributor() {
         /**
          * Type names from the index. A type no `using` line of [file] makes visible shows
          * its pod as grey tail text, `Actor (concurrent)`, and inserting it adds
-         * `using <pod>::<Name>`. A visible type gets neither.
+         * `using <pod>::<Name>`. A visible type gets neither. When the file's `build.fan` has a
+         * literal `depends`, a type of a pod outside it ranks lower and its tail adds
+         * `(not in depends)`.
          */
         private fun addTypes(file: PsiFile, project: Project, scope: GlobalSearchScope, add: (LookupElement) -> Unit) {
             val usings = FantomUsingScope.usingsOf(file.originalFile)
@@ -302,12 +304,16 @@ class FantomCompletionContributor : CompletionContributor() {
                     else -> AllIcons.Nodes.Class
                 }
                 var element = LookupElementBuilder.create(name).withIcon(icon)
+                var priority = TYPE
                 if (!visible && pods.isNotEmpty()) {
-                    val pod = pods.first()
-                    element = element.withTailText(" ($pod)", true)
+                    // A pod of the build.fan `depends` first; others only when no depended pod has the name.
+                    val pod = pods.firstOrNull { usings.isPodAvailable(it) } ?: pods.first()
+                    val outside = usings.isOutsideDepends(pod)
+                    element = element.withTailText(if (outside) " ($pod) (not in depends)" else " ($pod)", true)
                         .withInsertHandler(FantomUsingInserter.AddUsingInsertHandler(pod, name))
+                    if (outside) priority = TYPE_NOT_IN_DEPENDS
                 }
-                add(withPriority(element, TYPE))
+                add(withPriority(element, priority))
             }
         }
 
@@ -364,6 +370,8 @@ class FantomCompletionContributor : CompletionContributor() {
         const val INHERITED_SLOT = 70.0
         const val OBJ_SLOT = 60.0
         const val TYPE = 40.0
+        /** A type whose pod is not in the `depends` of the file's `build.fan`. */
+        const val TYPE_NOT_IN_DEPENDS = 35.0
         const val KEYWORD = 30.0
         const val RESTRICTED = 5.0
         const val STEP = 0.001

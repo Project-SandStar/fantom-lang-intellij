@@ -23,22 +23,39 @@ import java.io.File
  * end of the token there.
  */
 class FantomCompilerAnnotator : ExternalAnnotator<FantomCompilerAnnotator.Input, List<FantomDiagnostic>>() {
-    class Input(val project: Project, val file: VirtualFile, val podRoot: File, val home: File)
+    /** [cachedOnly]: a pod built by the Build Pod action with compile-on-save off; show, never compile. */
+    class Input(val project: Project, val file: VirtualFile, val podRoot: File, val home: File, val cachedOnly: Boolean = false)
 
     override fun collectInformation(file: PsiFile): Input? {
         val vf = file.virtualFile ?: return null
         val project = file.project
-        val podRoot = FantomCompilerService.getInstance(project).podRootFor(vf) ?: return null
+        val service = FantomCompilerService.getInstance(project)
         val home = FantomSettings.getInstance(project).effectiveHome() ?: return null
-        return Input(project, vf, podRoot, home)
+        service.podRootFor(vf)?.let { return Input(project, vf, it, home) }
+        val built = service.builtRootFor(vf) ?: return null
+        return Input(project, vf, built, home, cachedOnly = true)
     }
 
     override fun doAnnotate(collectedInfo: Input?): List<FantomDiagnostic>? {
         val input = collectedInfo ?: return null
         if (input.project.isDisposed) return null
-        val indicator = ProgressManager.getInstance().progressIndicator
-        val result = FantomCompilerService.getInstance(input.project).compile(input.podRoot, input.home, indicator, input.file) ?: return null
+        val service = FantomCompilerService.getInstance(input.project)
+        val result = if (input.cachedOnly) {
+            // Lines move once the file changes after the build; show nothing stale.
+            val builtAt = service.builtAt(input.podRoot) ?: return null
+            if (input.file.timeStamp > builtAt || isUnsaved(input.file)) return null
+            service.result(input.podRoot) ?: return null
+        } else {
+            val indicator = ProgressManager.getInstance().progressIndicator
+            service.compile(input.podRoot, input.home, indicator, input.file) ?: return null
+        }
         return result.forFile(FantomCompilerDiagnostics.canonical(input.file.path))
+    }
+
+    private fun isUnsaved(file: VirtualFile): Boolean {
+        val fdm = com.intellij.openapi.fileEditor.FileDocumentManager.getInstance()
+        val doc = fdm.getCachedDocument(file) ?: return false
+        return fdm.isDocumentUnsaved(doc)
     }
 
     override fun apply(file: PsiFile, annotationResult: List<FantomDiagnostic>?, holder: AnnotationHolder) {
