@@ -6,6 +6,7 @@
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.lang</depends>
     <depends>com.intellij.platform.testRunner</depends>
+    <depends optional="true" config-file="fantom-spellchecker.xml">com.intellij.modules.spellchecker</depends>
 
     <!-- Extension points defined by the plugin.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
@@ -101,6 +102,11 @@
         <runLineMarkerContributor language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.run.FantomRunLineMarkerContributor"/>
         <!-- Compiler diagnostics: `fan build.fan compile` on save, messages painted in the editor -->
         <externalAnnotator language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.compiler.FantomCompilerAnnotator"/>
+        <!-- Editor basics: type declaration, implementations, breadcrumbs, TODO -->
+        <typeDeclarationProvider implementation="co.anbora.labs.fantom.ide.navigation.FantomTypeDeclarationProvider"/>
+        <definitionsScopedSearch implementation="co.anbora.labs.fantom.ide.navigation.FantomImplementationSearch"/>
+        <breadcrumbsInfoProvider implementation="co.anbora.labs.fantom.ide.structure.FantomBreadcrumbsProvider"/>
+        <indexPatternBuilder implementation="co.anbora.labs.fantom.ide.todo.FantomIndexPatternBuilder"/>
     </extensions>
     <applicationListeners>
         <listener class="co.anbora.labs.fantom.ide.compiler.FantomCompileOnSaveListener"
