@@ -1,0 +1,16 @@
+== SyntaxErr
+base=axon::AxonErr sys::Err sys::Obj
+flags=const public
+loc=Errs.fan:36/33
+@sys::Js
+
+SyntaxErr is thrown during parse phase.
+
+-- make(
+msg sys::Str?
+loc axon::Loc
+cause sys::Err?:=null
+) sys::Void
+flags=public new
+loc=:38
+

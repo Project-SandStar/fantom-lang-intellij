@@ -1,0 +1,186 @@
+== MStream
+base=sys::Obj
+flags=abstract public
+loc=MStream.fan:15/12
+@sys::NoDoc
+@sys::Js
+
+MStream is base class for Stream implementations
+
+-- make(
+prev axon::MStream?
+) sys::Void
+flags=public new
+loc=:18/17
+
+Constructor
+
+-- source(
+) axon::MStream
+flags=public
+loc=:39/38
+
+Head of the stream
+
+-- terminal(
+) axon::MStream
+flags=public
+loc=:45/44
+
+Tail of the stream
+
+-- prev axon::MStream?
+set=private
+flags=public
+loc=:51/50
+
+Previous step in stream
+
+-- next axon::MStream?
+set=private
+flags=public
+loc=:54/53
+
+Next step in the stream
+
+-- walk(
+f |axon::MStream->sys::Void|
+) sys::Void
+flags=public
+loc=:57/56
+
+Walk this stream from this step back to the source step
+
+-- isSource(
+) sys::Bool
+flags=abstract public virtual
+loc=:63/62
+
+Is this a source stream step
+
+-- isTerminal(
+) sys::Bool
+flags=abstract public virtual
+loc=:66/65
+
+Is this a terminal stream step
+
+-- isGridStage(
+) sys::Bool
+flags=public virtual
+loc=:69/68
+
+Is this a stream which should infer grid result
+
+-- signalStart(
+) sys::Void
+flags=public
+loc=:76/75
+
+Send start signal along the entire stream from source to sink
+
+-- signalComplete(
+) sys::Void
+flags=public
+loc=:82/81
+
+Send complete signal along the entire stream from source to sink
+
+-- signal(
+signal axon::Signal
+) sys::Void
+flags=public
+loc=:88/87
+
+Send signal from this step and downstream all the way to terminal step
+
+-- submit(
+data sys::Obj?
+) sys::Void
+flags=public
+loc=:94/93
+
+Submit data item downstream
+
+-- submitAll(
+dataList sys::Obj?[]
+) sys::Void
+flags=public
+loc=:101/100
+
+Submit list of data items downstream
+
+-- isComplete(
+) sys::Bool
+flags=public
+loc=:111/110
+
+Has this stream completed (either succesfully or with error)
+
+-- onData(
+data sys::Obj?
+) sys::Void
+flags=public virtual
+loc=:118/117
+
+Data item callback
+
+-- onStart(
+sig axon::Signal
+) sys::Void
+flags=public virtual
+loc=:133/132
+
+Start signal callback
+
+-- onComplete(
+sig axon::Signal
+) sys::Void
+flags=public virtual
+loc=:136/135
+
+Complete signal callback
+
+-- onSignal(
+sig axon::Signal
+) sys::Void
+flags=public virtual
+loc=:139/138
+
+Signal callback called independently of onStart, onComplete, etc
+
+-- funcName(
+) sys::Str
+flags=abstract public virtual
+loc=:146/145
+
+Function name to encode
+
+-- funcArgs(
+) sys::Obj?[]
+flags=public virtual
+loc=:149/148
+
+Function args to encode (does not include prev stream)
+
+-- encode(
+) haystack::Grid
+flags=public
+loc=:152/151
+
+Encode this stage and everything upstream into a Grid.
+
+-- decode(
+cx axon::AxonContext
+grid haystack::Grid
+) axon::MStream
+flags=const public static
+loc=:197/196
+
+Decode a stream from grid
+
+-- cx axon::AxonContext
+set=private
+flags=public
+loc=:232
+

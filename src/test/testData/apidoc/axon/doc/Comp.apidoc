@@ -1,0 +1,75 @@
+== Comp
+flags=abstract mixin public
+loc=Comp.fan:13/10
+@sys::Js
+
+Comp is an instance of CompDef. See `docSkySpark::Comps`.
+
+-- def(
+) axon::CompDef
+flags=abstract public virtual
+loc=:16/15
+
+Definition of the component
+
+-- get(
+name sys::Str
+) sys::Obj?
+flags=abstract public virtual
+loc=:19/18
+@sys::Operator
+
+Get a cell value by name or raise error if not a valid cell
+
+-- set(
+name sys::Str
+val sys::Obj?
+) sys::This
+flags=abstract public virtual
+loc=:22/21
+@sys::Operator
+
+Set a cell value by name or raise error if not a valid cell
+
+-- getCell(
+cd axon::CellDef
+) sys::Obj?
+flags=abstract public virtual
+loc=:25/24
+
+Get a cell value by its cell definition
+
+-- setCell(
+cd axon::CellDef
+val sys::Obj?
+) sys::This
+flags=abstract public virtual
+loc=:28/27
+
+Set a cell value by its cell definition
+
+-- recompute(
+cx axon::AxonContext
+) sys::This
+flags=abstract public virtual
+loc=:31/30
+
+Recompute cells
+
+-- cellVals(
+) sys::Obj?[]
+flags=abstract public virtual
+loc=:34/33
+@sys::NoDoc
+
+Return list of current cell values
+
+-- dump(
+out sys::OutStream:=Env.cur().out()
+) sys::Void
+flags=abstract public virtual
+loc=:37/36
+@sys::NoDoc
+
+Debug dump
+

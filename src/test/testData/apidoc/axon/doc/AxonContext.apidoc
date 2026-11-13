@@ -1,0 +1,247 @@
+== AxonContext
+base=sys::Obj
+flags=abstract public
+loc=AxonContext.fan:17/14
+@sys::Js
+
+AxonContext manages the environment of an Axon evaluation
+
+-- curAxon(
+checked sys::Bool:=true
+) axon::AxonContext?
+flags=const public static
+loc=:25/24
+@sys::NoDoc
+
+Current context for actor thread
+
+-- make(
+) sys::Void
+flags=public new
+loc=:38/37
+@sys::NoDoc
+
+Constructor
+
+-- ns(
+) haystack::Namespace
+flags=abstract public virtual
+loc=:48/47
+
+Definition namespace
+
+-- findTop(
+name sys::Str
+checked sys::Bool:=true
+) axon::Fn?
+flags=abstract public virtual
+loc=:51/50
+@sys::NoDoc
+
+Find top-level function by qname or name
+
+-- trapRef(
+ref haystack::Ref
+checked sys::Bool:=true
+) haystack::Dict?
+flags=public virtual
+loc=:54/53
+@sys::NoDoc
+
+Resolve dict by id - used by trap on Ref
+
+-- xqReadById(
+ref haystack::Ref
+checked sys::Bool:=true
+) haystack::Dict?
+flags=public virtual
+loc=:57/56
+@sys::NoDoc
+
+Resolve dict by local or remote id
+
+-- toDateSpanDef(
+) haystack::DateSpan
+flags=public virtual
+loc=:60/59
+@sys::NoDoc
+
+Resolve toDateSpan default value
+
+-- evalOrReadAll(
+src sys::Str
+) sys::Obj?
+flags=public virtual
+loc=:63/62
+@sys::NoDoc
+
+Evaluate an expression or if a filter then readAll convenience
+
+-- parse(
+src sys::Str
+loc axon::Loc:=Loc.eval
+) axon::Expr
+flags=public
+loc=:70/69
+
+Parse Axon expression
+
+-- call(
+funcName sys::Str
+args sys::Obj?[]
+) sys::Obj?
+flags=public
+loc=:79/77
+
+Lookup and call a function with the given arguments.  The arguments
+must be fully evaluated values such as Numbers, Dicts, Grids, etc.
+
+-- evalToFunc(
+src sys::Str
+) axon::Fn
+flags=public
+loc=:85/84
+
+Evaluate expression to a function expression
+
+-- eval(
+src sys::Str
+loc axon::Loc:=Loc.eval
+) sys::Obj?
+flags=public
+loc=:89/87
+
+Evaluate an Axon expression within this context.
+Convenience for 'evalExpr(parse(src, loc))'
+
+-- evalExpr(
+expr axon::Expr
+) sys::Obj?
+flags=public
+loc=:95/94
+
+Evaluate an expression
+
+-- timeout sys::Duration?
+flags=public
+loc=:108/107
+@sys::NoDoc
+
+Get/set the timeout
+
+-- timeoutDef sys::Duration:=1min
+flags=const public static
+loc=:118/117
+@sys::NoDoc
+
+Default timeout to use across VM
+
+-- heartbeat(
+loc axon::Loc
+) sys::Void
+flags=public
+loc=:121/120
+@sys::NoDoc
+
+Check job cancel/timeout state
+
+-- curFunc(
+) axon::Fn?
+flags=public
+loc=:136/135
+@sys::NoDoc
+
+Current function on top of call stack
+
+-- callInNewFrame(
+func axon::Fn
+args sys::Obj?[]
+callLoc axon::Loc
+vars [sys::Str:sys::Obj?]:=[Str:Obj?][:]
+) sys::Obj?
+flags=public
+loc=:148/147
+@sys::NoDoc
+
+Push new call frame onto the stack with given loc/vars and route to Fn.doCall
+
+-- checkCall(
+func axon::Fn
+) sys::Void
+flags=public virtual
+loc=:159/158
+@sys::NoDoc
+
+Check security permissions to call given function
+
+-- defOrAssign(
+name sys::Str
+val sys::Obj?
+loc axon::Loc
+) sys::Obj?
+flags=public
+loc=:166/165
+@sys::NoDoc
+
+Define or assign given variable
+
+-- varsInScope(
+) [sys::Str:sys::Obj?]
+flags=public
+loc=:220/219
+@sys::NoDoc
+
+Get the variables in scope
+
+-- traceToStr(
+errLoc axon::Loc
+) sys::Str
+flags=public
+loc=:266/265
+@sys::NoDoc
+
+Dump call stack trace to a string
+
+-- trace(
+errLoc axon::Loc
+out sys::OutStream:=Env.cur().out()
+) sys::Void
+flags=public
+loc=:274/273
+@sys::NoDoc
+
+Dump call stack trace to output stream
+
+-- stash(
+) [sys::Str:sys::Obj?]
+flags=public
+loc=:312/309
+
+Stash allows you to stash objects on the Context object
+during an Axon evaluation.  You should scope your string
+keys with your pod name to avoid naming collisions.
+
+-- clone(
+) sys::This
+flags=public virtual
+loc=:333/328
+@sys::NoDoc
+
+Create a snapshot of the call stack exactly as it is now.
+This allows closure functions to be stored away for lazy evaluation
+without loosing their scoping context.
+DO NOT USE THIS METHOD ANYMORE!
+TODO: this is only used in one spot: hisExt::Rollup
+
+-- doClone(
+that axon::AxonContext
+) sys::This
+flags=protected
+loc=:334
+@sys::NoDoc
+
+-- heartbeatFunc sys::Func?
+flags=public
+loc=:347
+@sys::NoDoc
+

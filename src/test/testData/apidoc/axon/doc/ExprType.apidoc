@@ -1,0 +1,172 @@
+== ExprType
+base=sys::Enum sys::Obj
+flags=const enum final public
+loc=ExprType.fan:14/10
+@sys::NoDoc
+@sys::Js
+@sys::Serializable{
+simple=true
+}
+
+ExprType enum to type all Enum subclasses
+
+-- literal axon::ExprType:=...
+flags=const enum public static
+loc=:17
+
+-- list axon::ExprType:=...
+flags=const enum public static
+loc=:18
+
+-- dict axon::ExprType:=...
+flags=const enum public static
+loc=:19
+
+-- range axon::ExprType:=...
+flags=const enum public static
+loc=:20
+
+-- filter axon::ExprType:=...
+flags=const enum public static
+loc=:21
+
+-- def axon::ExprType:=...
+flags=const enum public static
+loc=:24
+
+-- var axon::ExprType:=...
+flags=const enum public static
+loc=:25
+
+-- func axon::ExprType:=...
+flags=const enum public static
+loc=:26
+
+-- compdef axon::ExprType:=...
+flags=const enum public static
+loc=:27
+
+-- celldef axon::ExprType:=...
+flags=const enum public static
+loc=:28
+
+-- call axon::ExprType:=...
+flags=const enum public static
+loc=:29
+
+-- dotCall axon::ExprType:=...
+flags=const enum public static
+loc=:30
+
+-- trapCall axon::ExprType:=...
+flags=const enum public static
+loc=:31
+
+-- partialCall axon::ExprType:=...
+flags=const enum public static
+loc=:32
+
+-- block axon::ExprType:=...
+flags=const enum public static
+loc=:33
+
+-- ifExpr axon::ExprType:=...
+flags=const enum public static
+loc=:34
+
+-- returnExpr axon::ExprType:=...
+flags=const enum public static
+loc=:35
+
+-- throwExpr axon::ExprType:=...
+flags=const enum public static
+loc=:36
+
+-- tryExpr axon::ExprType:=...
+flags=const enum public static
+loc=:37
+
+-- assign axon::ExprType:=...
+flags=const enum public static
+loc=:40
+
+-- not axon::ExprType:=...
+flags=const enum public static
+loc=:43
+
+-- and axon::ExprType:=...
+flags=const enum public static
+loc=:44
+
+-- or axon::ExprType:=...
+flags=const enum public static
+loc=:45
+
+-- eq axon::ExprType:=...
+flags=const enum public static
+loc=:48
+
+-- ne axon::ExprType:=...
+flags=const enum public static
+loc=:49
+
+-- lt axon::ExprType:=...
+flags=const enum public static
+loc=:50
+
+-- le axon::ExprType:=...
+flags=const enum public static
+loc=:51
+
+-- ge axon::ExprType:=...
+flags=const enum public static
+loc=:52
+
+-- gt axon::ExprType:=...
+flags=const enum public static
+loc=:53
+
+-- cmp axon::ExprType:=...
+flags=const enum public static
+loc=:54
+
+-- neg axon::ExprType:=...
+flags=const enum public static
+loc=:57
+
+-- add axon::ExprType:=...
+flags=const enum public static
+loc=:58
+
+-- sub axon::ExprType:=...
+flags=const enum public static
+loc=:59
+
+-- mul axon::ExprType:=...
+flags=const enum public static
+loc=:60
+
+-- div axon::ExprType:=...
+flags=const enum public static
+loc=:61
+
+-- vals axon::ExprType[]:=...
+flags=const public static
+loc=:14/14
+
+List of ExprType values indexed by ordinal
+
+-- op sys::Str?
+flags=const public
+loc=:67
+
+-- fromStr(
+name sys::Str
+checked sys::Bool:=true
+) axon::ExprType?
+flags=const public static new
+loc=:14/14
+
+Return the ExprType instance for the specified name.  If not a
+valid name and checked is false return null, otherwise throw ParseErr.
+

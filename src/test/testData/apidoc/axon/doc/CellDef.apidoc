@@ -1,0 +1,30 @@
+== CellDef
+mixins=haystack::Dict
+flags=abstract const mixin public
+loc=CellDef.fan:16/13
+@sys::Js
+
+CellDef data flow component cell and its metadata
+
+-- parent(
+) axon::CompDef
+flags=abstract public virtual
+loc=:19/18
+
+Parent component def
+
+-- name(
+) sys::Str
+flags=abstract public virtual
+loc=:22/21
+
+Cell name
+
+-- index(
+) sys::Int
+flags=abstract public virtual
+loc=:25/24
+@sys::NoDoc
+
+Cell index into CompDef.cells
+

@@ -1,0 +1,116 @@
+== Parser
+base=sys::Obj
+flags=public
+loc=Parser.fan:16/13
+@sys::Js
+@sys::NoDoc
+
+Stream based parser for Axon scripts.
+
+-- make(
+startLoc axon::Loc
+in sys::InStream
+) sys::Void
+flags=public new
+loc=:23
+
+-- parse(
+) axon::Expr
+flags=public
+loc=:37
+
+-- parseTop(
+name sys::Str
+) axon::Fn
+flags=public
+loc=:44
+
+-- namedExpr(
+name sys::Str
+) axon::Expr
+flags=protected
+loc=:67
+
+-- expr(
+) axon::Expr
+flags=protected
+loc=:75
+
+-- isEos(
+) sys::Bool
+flags=protected
+loc=:112
+
+-- eos(
+) sys::Void
+flags=protected
+loc=:117
+
+-- constDict(
+) haystack::Dict
+flags=protected
+loc=:350/349
+
+Parse dict literal
+
+-- err(
+msg sys::Str
+loc axon::Loc:=this.curLoc()
+) axon::SyntaxErr
+flags=protected
+loc=:767
+
+-- curLoc(
+) axon::Loc
+flags=protected
+loc=:769
+
+-- consumeId(
+expected sys::Str
+) sys::Str
+flags=protected
+loc=:775
+
+-- consumeIdOrKeyword(
+expected sys::Str
+) sys::Str
+flags=protected
+loc=:783
+
+-- consumeVal(
+) sys::Obj?
+flags=protected
+loc=:794
+
+-- verify(
+expected axon::Token
+) sys::Void
+flags=protected
+loc=:802
+
+-- consume(
+expected axon::Token?:=null
+) sys::Void
+flags=protected
+loc=:814
+
+-- cur axon::Token
+set=private
+flags=public
+loc=:843
+
+-- curVal sys::Obj?
+set=private
+flags=public
+loc=:844
+
+-- peek axon::Token
+set=private
+flags=public
+loc=:849
+
+-- peekVal sys::Obj?
+set=private
+flags=public
+loc=:850
+

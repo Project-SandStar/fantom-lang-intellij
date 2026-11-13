@@ -1,0 +1,109 @@
+== AbstractComp
+base=sys::Obj
+mixins=axon::Comp
+flags=abstract public
+loc=AbstractComp.fan:14/10
+@sys::Js
+
+AbstractComp is base class for Fantom components.
+See `docSkySpark::Comps#fantom`.
+
+-- reflect(
+type sys::Type
+) axon::CompDef
+flags=const public static
+loc=:17/16
+
+Reflect the given type
+
+-- make(
+init sys::Obj
+) sys::Void
+flags=public new
+loc=:23/22
+
+All components must implement single arg constructor
+
+-- def(
+) axon::CompDef
+flags=override public
+loc=:26/25
+
+Get the definition
+
+-- get(
+name sys::Str
+) sys::Obj?
+flags=override public
+loc=:30/29
+@sys::Operator
+
+Get a cell value by name or raise error if not a valid cell
+
+-- set(
+name sys::Str
+val sys::Obj?
+) sys::This
+flags=override public
+loc=:36/35
+@sys::Operator
+
+Set a cell value by name or raise error if not a valid cell
+
+-- getCell(
+cd axon::CellDef
+) sys::Obj?
+flags=override public
+loc=:42/41
+
+Get a cell value by its cell definition
+
+-- setCell(
+cd axon::CellDef
+val sys::Obj?
+) sys::This
+flags=override public
+loc=:48/47
+
+Set a cell value by its cell definition
+
+-- recompute(
+cx axon::AxonContext
+) sys::This
+flags=override public
+loc=:55/54
+
+Recompute the component's cells
+
+-- onRecompute(
+cx axon::AxonContext
+) sys::Void
+flags=abstract protected virtual
+loc=:62/61
+
+Callback to recompute the cells
+
+-- toStr(
+) sys::Str
+flags=override public
+loc=:65/64
+
+Debug string
+
+-- cellVals(
+) sys::Obj?[]
+flags=override public
+loc=:68/67
+@sys::NoDoc
+
+Return list of current cell values
+
+-- dump(
+out sys::OutStream:=Env.cur().out()
+) sys::Void
+flags=override public
+loc=:74/73
+@sys::NoDoc
+
+Debug dump
+

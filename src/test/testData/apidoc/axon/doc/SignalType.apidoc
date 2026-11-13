@@ -1,0 +1,72 @@
+== SignalType
+base=sys::Enum sys::Obj
+flags=const enum final public
+loc=Signal.fan:50/46
+@sys::NoDoc
+@sys::Js
+@sys::Serializable{
+simple=true
+}
+
+SignalType
+
+-- start axon::SignalType:=...
+flags=const enum public static
+loc=:52
+
+-- err axon::SignalType:=...
+flags=const enum public static
+loc=:53
+
+-- complete axon::SignalType:=...
+flags=const enum public static
+loc=:54
+
+-- setMeta axon::SignalType:=...
+flags=const enum public static
+loc=:55
+
+-- addMeta axon::SignalType:=...
+flags=const enum public static
+loc=:56
+
+-- setColMeta axon::SignalType:=...
+flags=const enum public static
+loc=:57
+
+-- addColMeta axon::SignalType:=...
+flags=const enum public static
+loc=:58
+
+-- reorderCols axon::SignalType:=...
+flags=const enum public static
+loc=:59
+
+-- keepCols axon::SignalType:=...
+flags=const enum public static
+loc=:60
+
+-- removeCols axon::SignalType:=...
+flags=const enum public static
+loc=:61
+
+-- vals axon::SignalType[]:=...
+flags=const public static
+loc=:50/50
+
+List of SignalType values indexed by ordinal
+
+-- isComplete sys::Bool
+flags=const public
+loc=:65
+
+-- fromStr(
+name sys::Str
+checked sys::Bool:=true
+) axon::SignalType?
+flags=const public static new
+loc=:50/50
+
+Return the SignalType instance for the specified name.  If not a
+valid name and checked is false return null, otherwise throw ParseErr.
+

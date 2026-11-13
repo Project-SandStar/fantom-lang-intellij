@@ -1,0 +1,54 @@
+== Tokenizer
+base=sys::Obj
+flags=public
+loc=Tokenizer.fan:16/13
+@sys::NoDoc
+@sys::Js
+
+Stream based tokenizer for Axon grammar.
+
+-- make(
+startLoc axon::Loc
+in sys::InStream
+) sys::Void
+flags=public new
+loc=:23
+
+-- next(
+) axon::Token
+flags=public
+loc=:39/37
+
+Read the next token, store result in `tok` and `val`
+
+-- err(
+msg sys::Str
+) axon::SyntaxErr
+flags=public
+loc=:502
+
+-- curLoc(
+) axon::Loc
+flags=public
+loc=:504
+
+-- startLoc axon::Loc
+flags=public
+loc=:521
+
+-- tok axon::Token
+flags=public
+loc=:522
+
+-- val sys::Obj?
+flags=public
+loc=:523
+
+-- line sys::Int:=1
+flags=public
+loc=:524
+
+-- col sys::Int:=-2
+flags=public
+loc=:525
+

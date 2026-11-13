@@ -1,0 +1,39 @@
+== Axon
+base=sys::Obj
+mixins=sys::Facet
+flags=const facet final public
+loc=Axon.fan:15/12
+@sys::Js
+@sys::Serializable
+
+Facet applied to methods which should be exposed as Axon functions.
+
+-- su sys::Bool:=false
+flags=const public
+loc=:18/17
+
+Mark a function as superuser only.
+
+-- admin sys::Bool:=false
+flags=const public
+loc=:23/20
+
+Marks a function as admin-only.  Any functions that modify the database
+or perform ad hoc I/O should set this field to true.  Functions with
+side effects should clearly document what side effects are.
+
+-- meta sys::Obj?
+flags=const public
+loc=:26/25
+
+Meta data for the function encoded as a Trio string
+
+-- decode(
+f |sys::Str,sys::Obj->sys::Void|
+) sys::Void
+flags=override public virtual
+loc=:29/28
+@sys::NoDoc
+
+Decode into meta tag name/value pairs
+

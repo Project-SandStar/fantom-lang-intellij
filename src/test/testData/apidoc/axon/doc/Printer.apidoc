@@ -1,0 +1,81 @@
+== Printer
+base=sys::Obj
+flags=public
+loc=Printer.fan:17/12
+@sys::NoDoc
+@sys::Js
+
+Printer is used to encode/pretty print the Axon AST.  Expr printing
+is required to return Axon source code which can be re-parsed into the
+equivalent AST.  This enables Expr.toStr to marshal exprs over network.
+
+-- w(
+v sys::Obj
+) sys::This
+flags=public
+loc=:19
+
+-- wc(
+c sys::Int
+) sys::This
+flags=public
+loc=:26
+
+-- nl(
+) sys::This
+flags=public
+loc=:33
+
+-- eos(
+) sys::This
+flags=public
+loc=:41
+
+-- indent(
+) sys::This
+flags=public
+loc=:47
+
+-- unindent(
+) sys::This
+flags=public
+loc=:49
+
+-- val(
+val sys::Obj?
+) sys::This
+flags=public
+loc=:51
+
+-- comma(
+) sys::This
+flags=public
+loc=:53
+
+-- expr(
+expr axon::Expr
+) sys::This
+flags=public
+loc=:55
+
+-- atomic(
+expr axon::Expr
+) sys::This
+flags=public
+loc=:57
+
+-- atomicStart(
+) sys::This
+flags=public
+loc=:65
+
+-- atomicEnd(
+) sys::This
+flags=public
+loc=:71
+
+-- toStr(
+) sys::Str
+flags=override public virtual
+loc=:77
+

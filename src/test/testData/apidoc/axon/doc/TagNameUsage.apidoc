@@ -1,0 +1,84 @@
+== TagNameUsage
+base=sys::Obj
+flags=public
+loc=CoreLibUtil.fan:64/63
+@sys::NoDoc
+@sys::Js
+
+Helper class used by count occurances and kinds of tags
+
+-- toKind(
+) sys::Str
+flags=public
+loc=:66
+
+-- add(
+val sys::Obj?
+) sys::Void
+flags=public
+loc=:87
+
+-- count sys::Int
+flags=public
+loc=:109
+
+-- marker sys::Bool
+flags=public
+loc=:110
+
+-- str sys::Bool
+flags=public
+loc=:111
+
+-- ref sys::Bool
+flags=public
+loc=:112
+
+-- number sys::Bool
+flags=public
+loc=:113
+
+-- bool sys::Bool
+flags=public
+loc=:114
+
+-- bin sys::Bool
+flags=public
+loc=:115
+
+-- uri sys::Bool
+flags=public
+loc=:116
+
+-- dateTime sys::Bool
+flags=public
+loc=:117
+
+-- date sys::Bool
+flags=public
+loc=:118
+
+-- time sys::Bool
+flags=public
+loc=:119
+
+-- coord sys::Bool
+flags=public
+loc=:120
+
+-- list sys::Bool
+flags=public
+loc=:121
+
+-- dict sys::Bool
+flags=public
+loc=:122
+
+-- grid sys::Bool
+flags=public
+loc=:123
+
+-- symbol sys::Bool
+flags=public
+loc=:124
+

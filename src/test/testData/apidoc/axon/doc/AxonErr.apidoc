@@ -1,0 +1,25 @@
+== AxonErr
+base=sys::Err sys::Obj
+flags=abstract const public
+loc=Errs.fan:15/12
+@sys::Js
+
+AxonErr is the base class of `SyntaxErr` and `EvalErr`.
+
+-- make(
+msg sys::Str?
+loc axon::Loc
+cause sys::Err?:=null
+) sys::Void
+flags=public new
+loc=:17
+
+-- toStr(
+) sys::Str
+flags=override public virtual
+loc=:22
+
+-- loc axon::Loc
+flags=const public
+loc=:29
+

@@ -1,0 +1,24 @@
+== EvalTimeoutErr
+base=axon::EvalErr axon::AxonErr sys::Err sys::Obj
+flags=const public
+loc=Errs.fan:61/57
+@sys::Js
+@sys::NoDoc
+
+EvalTimeoutErr is thrown when an expr exceeds a timeout
+limit (configured by 'evalTimeout' on 'projMeta' of project).
+
+-- make(
+timeout sys::Duration
+cx axon::AxonContext
+loc axon::Loc
+) sys::Void
+flags=public new
+loc=:63
+
+-- meta haystack::Dict
+flags=const public
+loc=:69/68
+
+Meta to use for Grid.meta to indicate timeout
+

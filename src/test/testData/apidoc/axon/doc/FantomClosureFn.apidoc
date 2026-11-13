@@ -1,0 +1,31 @@
+== FantomClosureFn
+base=axon::Fn axon::Expr sys::Obj
+flags=const public
+loc=FantomFn.fan:189/186
+@sys::NoDoc
+
+Wrap an mutable Fantom function as an Axon function expression.
+
+-- make(
+f sys::Func
+) sys::Void
+flags=public new
+loc=:191
+
+-- isNative(
+) sys::Bool
+flags=override public virtual
+loc=:196
+
+-- callx(
+cx axon::AxonContext
+args sys::Obj?[]
+callLoc axon::Loc
+) sys::Obj?
+flags=override public virtual
+loc=:198
+
+-- f sys::Unsafe
+flags=const public
+loc=:203
+

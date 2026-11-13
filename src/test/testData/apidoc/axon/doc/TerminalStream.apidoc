@@ -1,0 +1,40 @@
+== TerminalStream
+base=axon::MStream sys::Obj
+flags=abstract public
+loc=TerminalStreams.fan:15/12
+@sys::NoDoc
+@sys::Js
+
+TerminalStream is base class for functions which terminate the stream
+
+-- make(
+prev axon::MStream
+) sys::Void
+flags=public new
+loc=:17
+
+-- isSource(
+) sys::Bool
+flags=override public
+loc=:19
+
+-- isTerminal(
+) sys::Bool
+flags=override public
+loc=:21
+
+-- run(
+) sys::Obj?
+flags=public
+loc=:23
+
+-- onPreRun(
+) sys::Void
+flags=public virtual
+loc=:30
+
+-- onRun(
+) sys::Obj?
+flags=abstract public virtual
+loc=:32
+

@@ -1,0 +1,39 @@
+== DictCollector
+base=sys::Obj
+flags=public
+loc=Collectors.fan:46/42
+@sys::NoDoc
+@sys::Js
+
+DictCollector
+
+-- make(
+dict haystack::Dict?:=null
+) sys::Void
+flags=public new
+loc=:48
+
+-- finish(
+) haystack::Dict
+flags=public
+loc=:50
+
+-- reset(
+x haystack::Dict
+) sys::Void
+flags=public
+loc=:55
+
+-- merge(
+m haystack::Dict
+) sys::Void
+flags=public
+loc=:61
+
+-- set(
+name sys::Str
+val sys::Obj?
+) sys::Void
+flags=public
+loc=:67
+
