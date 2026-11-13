@@ -11,15 +11,20 @@ import java.util.concurrent.ConcurrentHashMap
 object FantomUsingCandidates {
     private val cache = ConcurrentHashMap<String, Map<String, List<String>>>()
 
-    fun podsFor(home: File, typeName: String): List<String> =
-        cache.getOrPut(home.absolutePath) { scan(home) }[typeName] ?: emptyList()
+    fun podsFor(home: File, typeName: String): List<String> = podsFor(FantomHome.podSources(home), typeName)
+
+    /** Same as above for an explicit pod list, such as [co.anbora.labs.fantom.lang.library.FantomSettings.podSources]. */
+    fun podsFor(sources: List<FantomHome.PodSource>, typeName: String): List<String> {
+        val key = sources.joinToString("|") { it.podDir.absolutePath }
+        return cache.getOrPut(key) { scan(sources) }[typeName] ?: emptyList()
+    }
 
     fun reset() = cache.clear()
 
-    private fun scan(home: File): Map<String, List<String>> {
+    private fun scan(sources: List<FantomHome.PodSource>): Map<String, List<String>> {
         val out = HashMap<String, MutableList<String>>()
-        for (root in FantomHome.sourceRoots(home)) {
-            val pod = root.parentFile.name
+        for (source in sources) for (root in source.roots) {
+            val pod = source.pod
             root.walkTopDown().filter { it.isFile && it.extension == "fan" }.forEach { f ->
                 val pods = out.getOrPut(f.nameWithoutExtension) { ArrayList(1) }
                 if (pod !in pods) pods += pod

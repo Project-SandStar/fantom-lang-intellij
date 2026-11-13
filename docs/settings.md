@@ -2,12 +2,33 @@
 
 ## Fantom installation
 
-Settings | Languages & Frameworks | Fantom holds the path of the Fantom
-installation. Leave it empty to use `FAN_HOME` or the newest `~/fantom/fantom-*`
-folder. The field turns red when the folder has no `bin/fan` or `src/`.
+Settings | Languages & Frameworks | Fantom has two folder fields.
 
-Changing the path reindexes the library. The pod sources under
-`src/<pod>/fan` show up under External Libraries in the Project view.
+**Fantom home** is the Fantom, Haxall or SkySpark folder you work against.
+Leave it empty to use `FAN_HOME` or the newest `~/fantom/fantom-*` folder.
+The plugin tells the three kinds apart:
+
+| Kind | What it needs | What gets indexed |
+|---|---|---|
+| Fantom | `bin/fan` and `src/sys/fan` | every `src/<pod>/fan` |
+| Haxall | `src/core` (or a `src/build.fan` that names Haxall) | every pod under `src/`, at any depth (`src/core/haystack`), with its `fan/` and `test/` folders |
+| SkySpark | `lib/fan/skyarcd.pod` and `bin/fan` | nothing; SkySpark ships compiled pods only. Pod browsing comes in a later version |
+
+The field turns red when the folder is none of these.
+
+**Fantom sources** is optional. It is a plain Fantom install that supplies
+`sys` and the other core pods when the home is Haxall or SkySpark. Leave it
+empty to use the newest `~/fantom/fantom-*` folder; the page shows which one it
+found. The field turns red when the folder has no `src/sys/fan`. It is not used
+when the home is a plain Fantom install. When a pod is in both folders, the
+home's copy wins.
+
+Run configurations, tests and compile on save use the home's `bin/fan`. A
+Haxall checkout has no `bin/fan`, so for Haxall they use the Fantom sources'
+`bin/fan`.
+
+Changing either path reindexes the library. Each pod shows up by name under
+External Libraries in the Project view.
 
 ## Compile on save
 

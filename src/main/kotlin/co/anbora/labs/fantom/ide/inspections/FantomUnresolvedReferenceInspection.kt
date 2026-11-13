@@ -39,7 +39,9 @@ import com.intellij.psi.PsiElementVisitor
 class FantomUnresolvedReferenceInspection : LocalInspectionTool() {
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-        val home = FantomSettings.getInstance(holder.project).effectiveHome() ?: return PsiElementVisitor.EMPTY_VISITOR
+        // The indexed pods (home plus Fantom sources); none means no library, so stay quiet.
+        val pods = FantomSettings.getInstance(holder.project).podSources()
+        if (pods.isEmpty()) return PsiElementVisitor.EMPTY_VISITOR
         // A fresh compiler result for this pod says exactly what does not resolve; do not repeat it.
         if (FantomCompilerService.getInstance(holder.project).isFresh(holder.file)) return PsiElementVisitor.EMPTY_VISITOR
         return object : PsiElementVisitor() {
@@ -49,7 +51,7 @@ class FantomUnresolvedReferenceInspection : LocalInspectionTool() {
                 if (!isCheckable(element, ref)) return
                 if (ref.resolveAll().isNotEmpty()) return
                 val fixes: Array<LocalQuickFix> = if (ref.kind == FantomReference.Kind.TYPE) {
-                    FantomUsingCandidates.podsFor(home, ref.name).map { AddUsingFix(it, ref.name) }.toTypedArray()
+                    FantomUsingCandidates.podsFor(pods, ref.name).map { AddUsingFix(it, ref.name) }.toTypedArray()
                 } else emptyArray()
                 holder.registerProblem(element, "Cannot resolve symbol '${ref.name}'", *fixes)
             }

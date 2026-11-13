@@ -45,13 +45,13 @@ class FantomLibraryTest : BasePlatformTestCase() {
         return home == null
     }
 
-    fun testProviderReturnsOneLibraryWithPodRoots() {
+    fun testProviderReturnsOneLibraryPerPod() {
         if (skip()) return
         val libs = FantomLibraryRootsProvider().getAdditionalProjectLibraries(project)
-        assertEquals(1, libs.size)
-        val lib = libs.single() as FantomLibraryRootsProvider.FantomLibrary
-        assertTrue(lib.presentableText.startsWith("Fantom "))
-        assertTrue(lib.sourceRoots.any { it.path.endsWith("/sys/fan") })
+            .map { it as FantomLibraryRootsProvider.FantomLibrary }
+        assertEquals(FantomHome.sourceRoots(home!!).size, libs.size)
+        val sys = libs.single { it.presentableText == "sys" }
+        assertTrue(sys.sourceRoots.single().path.endsWith("/src/sys/fan"))
     }
 
     fun testSysTypeResolvesFromProjectFile() {
