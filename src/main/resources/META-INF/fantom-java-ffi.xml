@@ -7,6 +7,8 @@
     <extensions defaultExtensionNs="com.intellij">
         <!-- <home>/lib/java/sys.jar: fanx.interop::Interop and the primitive arrays -->
         <additionalLibraryRootsProvider implementation="co.anbora.labs.fantom.ide.java.FantomSysJarRootsProvider"/>
+        <!-- jars a pod bundles: <pod>/jar/*.jar, <pod>/lib/java/*.jar, jars named in build.fan -->
+        <additionalLibraryRootsProvider implementation="co.anbora.labs.fantom.ide.java.FantomPodJarRootsProvider"/>
         <java.elementFinder implementation="co.anbora.labs.fantom.ide.java.FantomSysJarClassFinder"/>
     </extensions>
 </idea-plugin>

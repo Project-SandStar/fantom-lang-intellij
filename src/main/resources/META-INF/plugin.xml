@@ -7,10 +7,9 @@
     <depends>com.intellij.modules.lang</depends>
     <depends>com.intellij.platform.testRunner</depends>
     <depends optional="true" config-file="fantom-spellchecker.xml">com.intellij.modules.spellchecker</depends>
-    <!-- JVM debugger for .fan files; IDEs without the Java plugin load the rest of the plugin. -->
+    <!-- JVM debugger for .fan files and Java FFI (`using [java]`, fantom-java-ffi.xml, included by
+         fantom-java-debugger.xml); IDEs without the Java plugin load the rest of the plugin. -->
     <depends optional="true" config-file="fantom-java-debugger.xml">com.intellij.java</depends>
-    <!-- Java FFI (`using [java] pkg::Type`): Java classes and members resolve when the Java plugin is present. -->
-    <depends optional="true" config-file="fantom-java-ffi.xml">com.intellij.java</depends>
 
     <!-- Extension points defined by the plugin.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->

@@ -8,7 +8,10 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.SyntheticLibrary
+import com.intellij.openapi.vfs.JarFileSystem
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.JavaPsiFacade
@@ -76,10 +79,11 @@ class FantomSysJarRootsProvider : AdditionalLibraryRootsProvider() {
         return listOf(SysJarLibrary(root))
     }
 
-    class SysJarLibrary(private val root: VirtualFile) : SyntheticLibrary(), ItemPresentation {
+    class SysJarLibrary(private val root: VirtualFile, private val text: String = "sys.jar (Fantom Java FFI)") :
+        SyntheticLibrary(), ItemPresentation {
         override fun getSourceRoots(): Collection<VirtualFile> = emptyList()
         override fun getBinaryRoots(): Collection<VirtualFile> = listOf(root)
-        override fun getPresentableText(): String = "sys.jar (Fantom Java FFI)"
+        override fun getPresentableText(): String = text
         override fun getLocationString(): String = root.path
         override fun getIcon(unused: Boolean): Icon = FantomIcons.FILE
         override fun equals(other: Any?): Boolean = other is SysJarLibrary && other.root == root
@@ -102,9 +106,62 @@ class FantomSysJarRootsProvider : AdditionalLibraryRootsProvider() {
 }
 
 /**
- * The packages and classes of `sys.jar` for `JavaPsiFacade`: the roots of a synthetic library
- * are no package roots, so without this finder `fanx.interop` has no package.
+ * The packages and classes of `sys.jar` and of pod jars for `JavaPsiFacade`: the roots of a
+ * synthetic library are no package roots, so without this finder `fanx.interop` has no package.
  */
 class FantomSysJarClassFinder(project: Project) : NonClasspathClassFinder(project, "class") {
-    override fun calcClassRoots(): List<VirtualFile> = listOfNotNull(FantomSysJarRootsProvider.sysJarRoot(myProject))
+    override fun calcClassRoots(): List<VirtualFile> =
+        listOfNotNull(FantomSysJarRootsProvider.sysJarRoot(myProject)) + FantomPodJarRootsProvider.podJarRoots(myProject)
+}
+
+/**
+ * Java libraries a pod bundles: every `.jar` in a pod's `jar/` or `lib/java/` folder, and
+ * every jar its `build.fan` names in a backtick URI (`` `lib/foo.jar` ``). A pod is a folder
+ * with a `build.fan`, up to three levels below a content root. Its `using [java] pkg::Type`
+ * lines resolve against these jars.
+ */
+class FantomPodJarRootsProvider : AdditionalLibraryRootsProvider() {
+
+    override fun getAdditionalProjectLibraries(project: Project): Collection<SyntheticLibrary> =
+        podJarRoots(project).map { FantomSysJarRootsProvider.SysJarLibrary(it, "${it.name} (Fantom pod jar)") }
+
+    companion object {
+        private const val MAX_DEPTH = 3
+        private val SKIP = setOf("build", "out", "node_modules", ".git", ".idea", ".gradle")
+        private val JAR_URI = Regex("""`([^`]+\.jar)`""")
+
+        /** The jar roots of every pod in [project]'s content roots. */
+        fun podJarRoots(project: Project): List<VirtualFile> {
+            if (project.isDisposed) return emptyList()
+            val out = LinkedHashSet<VirtualFile>()
+            for (root in ProjectRootManager.getInstance(project).contentRoots) collect(root, 0, out)
+            return out.toList()
+        }
+
+        private fun collect(dir: VirtualFile, depth: Int, out: MutableSet<VirtualFile>) {
+            if (!dir.isDirectory) return
+            val build = dir.findChild("build.fan")
+            if (build != null) {
+                jarsIn(dir.findChild("jar"), out)
+                jarsIn(dir.findFileByRelativePath("lib/java"), out)
+                namedJars(dir, build, out)
+            }
+            if (depth >= MAX_DEPTH) return
+            for (child in dir.children) {
+                if (child.isDirectory && !child.name.startsWith(".") && child.name !in SKIP) collect(child, depth + 1, out)
+            }
+        }
+
+        private fun jarsIn(dir: VirtualFile?, out: MutableSet<VirtualFile>) {
+            if (dir == null || !dir.isDirectory) return
+            for (f in dir.children) if (!f.isDirectory && f.extension == "jar") jarRoot(f)?.let(out::add)
+        }
+
+        private fun namedJars(pod: VirtualFile, build: VirtualFile, out: MutableSet<VirtualFile>) {
+            val text = try { VfsUtilCore.loadText(build) } catch (_: java.io.IOException) { return }
+            for (m in JAR_URI.findAll(text)) pod.findFileByRelativePath(m.groupValues[1])?.let { jarRoot(it)?.let(out::add) }
+        }
+
+        private fun jarRoot(jar: VirtualFile): VirtualFile? = JarFileSystem.getInstance().getJarRootForLocalFile(jar)
+    }
 }
