@@ -139,6 +139,8 @@
                          groupName="Fantom" enabledByDefault="true" level="WARNING"
                          implementationClass="co.anbora.labs.fantom.ide.inspections.FantomUndeclaredDependencyInspection"/>
         <codeInsight.lineMarkerProvider language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.compiler.FantomBuildPodLineMarkerProvider"/>
+        <!-- rename a slot with its override family -->
+        <renamePsiElementProcessor implementation="co.anbora.labs.fantom.ide.refactoring.FantomRenameSlotProcessor"/>
     </extensions>
     <applicationListeners>
         <listener class="co.anbora.labs.fantom.ide.compiler.FantomCompileOnSaveListener"
