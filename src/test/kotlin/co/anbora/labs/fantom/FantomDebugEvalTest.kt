@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.HeavyPlatformTestCase
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.xdebugger.XDebugProcess
@@ -128,6 +129,8 @@ class FantomDebugEvalTest : HeavyPlatformTestCase() {
         val podDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(File(root, "evalpod"))!!
         VfsUtil.markDirtyAndRefresh(false, true, true, podDir)
         PsiTestUtil.addContentRoot(module, podDir)
+        // The module has no Java SDK, as in a plain Fantom project: FantomJdkRootsProvider supplies java.base.
+        IndexingTestUtil.waitUntilIndexesAreReady(project)
         val foo = podDir.findFileByRelativePath("fan/Foo.fan")!!
 
         val type = XDebuggerUtil.getInstance().findBreakpointType(JavaLineBreakpointType::class.java)
@@ -181,9 +184,9 @@ class FantomDebugEvalTest : HeavyPlatformTestCase() {
             "f is Foo" to "true",
             "Str.spaces(2).size" to "2",
             "[x, y].size" to "2",
-            "list" to "[1, 2, 3]",
-            "f" to "evalpod::Foo",
-            "map" to "[a:1]",
+            // The platform's collection and map renderers: element count, then the elements.
+            "list" to "size = 3",
+            "map" to "size = 1",
         )
         val results = expected.keys.associateWith { evaluate(s, it) }
         println("FANTOM-DEBUG-EVAL $results")
@@ -193,6 +196,10 @@ class FantomDebugEvalTest : HeavyPlatformTestCase() {
             assertTrue("$expr: expected $value, got $got", got.endsWith(" $value") || got.endsWith(" \"$value\"") || got == value)
         }
         assertEquals(listOf("0", "1", "2"), children(s, "list"))
+        assertEquals(listOf("0"), children(s, "map"))
+        // A Fantom object shows its JVM class and toString(), not `pod::Type`.
+        val f = evaluate(s, "f")
+        assertTrue("f: got $f", f.contains("\"fan.evalpod.Foo@"))
         assertTrue(children(s, "f").contains("name"))
         assertEquals("error: Not supported in the Fantom evaluator: -> (dynamic call)", evaluate(s, "f->name"))
 

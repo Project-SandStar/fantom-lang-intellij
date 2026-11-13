@@ -101,8 +101,9 @@ What works:
   - index `a[i]` on a List, Map or Str;
   - `+ - * / % == != < <= > >= <=>`, `&& || !`, `?:`, `a ? b : c`,
     `is`, `isnot` and `as`.
-- The Variables view shows a Fantom List and Map with their elements, and
-  other Fantom objects with their type name (`pod::Type`) and fields.
+- The Variables view shows a Fantom List and Map with their size
+  (`size = 3`) and expands them to their elements. Other Fantom objects show
+  their JVM class (`fan.pod.Type`), their `toStr` value and their fields.
 
 What does not work:
 
