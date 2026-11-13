@@ -99,5 +99,9 @@ class FantomSkySparkLibraryTest : BasePlatformTestCase() {
         val doc = FantomDocumentationProvider().generateDoc(target, null)
         assertNotNull(doc)
         assertTrue(doc!!, doc.contains("Get the emtpy Dict instance"))
+        val etc = resolveAt("using haystack\nclass A { Void f() { x := Et<caret>c.emptyDict } }")
+        val typeDoc = FantomDocumentationProvider().generateDoc(etc, null)!!
+        println("FantomSkySparkLibraryTest: Etc doc has header line: ${"Generated from" in typeDoc}")
+        assertTrue(typeDoc, typeDoc.contains("Etc is the utility methods"))
     }
 }

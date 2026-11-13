@@ -71,7 +71,9 @@ class FantomSettings : SimplePersistentStateComponent<FantomSettings.State>(Stat
 
     /**
      * The pods to index: the home's pods, then the Fantom sources' pods that the home
-     * does not have. A plain Fantom home needs no second install. SkySpark adds nothing.
+     * does not have, then the stubs of the home's compiled pods that have no sources
+     * (see [FantomPodStubs]; only stubs already generated count). A plain Fantom home
+     * needs no second install.
      */
     fun podSources(): List<FantomHome.PodSource> {
         val home = configuredHome()

@@ -108,6 +108,11 @@ class FantomPodStubTest : ParsingTestCase("", "fan", FantomParserDefinition()) {
             for (pod in pods) files += FantomPodStubs.generate(pod, base)
             val ms = (System.nanoTime() - t0) / 1_000_000
             println("FantomPodStubTest: ${pods.size} pods, $files stubs generated in ${ms}ms")
+            val apidocs = pods.map { pod ->
+                java.util.zip.ZipFile(pod).use { z -> z.entries().asSequence().count { it.name.startsWith("doc/") && it.name.endsWith(".apidoc") } }
+            }
+            println("FantomPodStubTest: ${apidocs.sum()} apidoc entries, ${apidocs.count { it == 0 }} pods without apidoc")
+            assertEquals(apidocs.sum(), files)
             val results = base.walkTopDown().filter { it.extension == "fan" }.map { f ->
                 val (n, first) = errors(f.name, f.readText())
                 Triple(f, n, first)
