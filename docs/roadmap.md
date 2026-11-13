@@ -5,6 +5,9 @@ rename across files, the Fantom installation as a library, type inference,
 completion, quick documentation, inspections, auto-import, run configurations,
 templates, a formatter and a full colour scheme.
 
+Done on `master`, to ship as 2.1: items 1 to 15 below. Only the debugger
+(item 16) is still open.
+
 ## 2.1: the compiler in the loop
 
 1. **Compiler errors inline.** Run `fanc` on the pod when a file is saved and
