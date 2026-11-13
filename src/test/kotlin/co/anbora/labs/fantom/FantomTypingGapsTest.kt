@@ -100,4 +100,34 @@ class FantomTypingGapsTest : BasePlatformTestCase() {
         configure("m := Str:Obj?[:] { ordered = true }")
         assertEquals(listOf("Map"), ownersAt(offsetOf("ordered")))
     }
+
+    // ---- 2. closures handed to constructors ----
+
+    private val ctorClasses = """
+        class D { new make(Int i, |Str s, Int n| f) {} }
+        class E { new make(|This| f) {} Int size }
+        class G { new fromList(|Int k| f) {} }
+    """.trimIndent()
+
+    fun testTrailingClosureOnCtorCall() {
+        configure("D(1) |x, y| { x.size }", ctorClasses)
+        assertEquals(FanType.STR, closureParamType("x"))
+        assertEquals(FanType.INT, closureParamType("y"))
+    }
+
+    fun testClosureArgOnCtorCall() {
+        configure("D(1, |p| { })", ctorClasses)
+        assertEquals(FanType.STR, closureParamType("p"))
+    }
+
+    fun testCtorThisParamBindsType() {
+        configure("E(|e| { e.size })", ctorClasses)
+        assertEquals(FanType.Named("E"), closureParamType("e"))
+        assertEquals(listOf("E"), ownersAt(offsetOf("size })")))
+    }
+
+    fun testOnlyCtorWhenNoMake() {
+        configure("G(|k| { })", ctorClasses)
+        assertEquals(FanType.INT, closureParamType("k"))
+    }
 }
