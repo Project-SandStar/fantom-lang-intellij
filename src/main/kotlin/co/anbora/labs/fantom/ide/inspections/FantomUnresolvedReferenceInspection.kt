@@ -1,5 +1,6 @@
 package co.anbora.labs.fantom.ide.inspections
 
+import co.anbora.labs.fantom.ide.compiler.FantomCompilerService
 import co.anbora.labs.fantom.ide.imports.FantomUsingCandidates
 import co.anbora.labs.fantom.ide.imports.FantomUsingInserter
 import co.anbora.labs.fantom.lang.core.psi.FantomDotCall
@@ -39,6 +40,8 @@ class FantomUnresolvedReferenceInspection : LocalInspectionTool() {
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         val home = FantomSettings.getInstance(holder.project).effectiveHome() ?: return PsiElementVisitor.EMPTY_VISITOR
+        // A fresh compiler result for this pod says exactly what does not resolve; do not repeat it.
+        if (FantomCompilerService.getInstance(holder.project).isFresh(holder.file)) return PsiElementVisitor.EMPTY_VISITOR
         return object : PsiElementVisitor() {
             override fun visitElement(element: PsiElement) {
                 if (element !is FantomId) return

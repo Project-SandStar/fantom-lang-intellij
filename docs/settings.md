@@ -9,6 +9,15 @@ folder. The field turns red when the folder has no `bin/fan` or `src/`.
 Changing the path reindexes the library. The pod sources under
 `src/<pod>/fan` show up under External Libraries in the Project view.
 
+## Compile on save
+
+The checkbox under the home path runs `bin/fan build.fan compile` for the pod
+of a `.fan` file when you save it. The compiler's errors and warnings show up
+in the editor with the exact message. The compile runs in a temp folder with
+its own `fan.props`, so the pod file goes there and not into your Fantom
+install. While a fresh compiler result exists, the "Unresolved reference"
+inspection stays quiet for that file.
+
 ## Colours
 
 Settings | Editor | Color Scheme | Fantom lists every colour the plugin paints:

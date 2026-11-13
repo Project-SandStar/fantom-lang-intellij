@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.EmptyRunnable
+import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
@@ -32,6 +33,7 @@ class FantomConfigurable(private val project: Project) : BoundConfigurable("Fant
 
     /** Built in [createPanel]; read it only after `createComponent()`. */
     internal lateinit var homeField: TextFieldWithBrowseButton
+    internal lateinit var compileOnSaveBox: JBCheckBox
     private lateinit var detectedLabel: JLabel
 
     private val settings: FantomSettings get() = FantomSettings.getInstance(project)
@@ -61,6 +63,12 @@ class FantomConfigurable(private val project: Project) : BoundConfigurable("Fant
             row("") {
                 cell(detectedLabel)
             }
+            row {
+                compileOnSaveBox = checkBox("Compile the pod on save and show compiler errors in the editor")
+                    .comment("Runs bin/fan build.fan compile into a temp folder; the Fantom install is not changed.")
+                    .component
+                compileOnSaveBox.isSelected = settings.compileOnSave
+            }
         }
     }
 
@@ -79,11 +87,13 @@ class FantomConfigurable(private val project: Project) : BoundConfigurable("Fant
 
     private val hasUi: Boolean get() = ::homeField.isInitialized
 
-    override fun isModified(): Boolean = hasUi && homeField.text.trim() != (settings.homePath ?: "")
+    override fun isModified(): Boolean = hasUi &&
+        (homeField.text.trim() != (settings.homePath ?: "") || compileOnSaveBox.isSelected != settings.compileOnSave)
 
     override fun reset() {
         if (!hasUi) return
         homeField.text = settings.homePath ?: ""
+        compileOnSaveBox.isSelected = settings.compileOnSave
         updateDetectedLabel()
     }
 
@@ -92,6 +102,7 @@ class FantomConfigurable(private val project: Project) : BoundConfigurable("Fant
         if (!hasUi) return
         val text = homeField.text.trim()
         validateHome(text)?.let { throw ConfigurationException(it) }
+        settings.compileOnSave = compileOnSaveBox.isSelected
         if (text == (settings.homePath ?: "")) return
         settings.homePath = text.ifBlank { null }
         WriteAction.runAndWait<RuntimeException> {
