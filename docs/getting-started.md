@@ -26,6 +26,20 @@ A valid home has `bin/fan` and a `src/` folder. If none is found, a balloon
 says so the first time a project with `.fan` files opens; click Configure to
 pick one.
 
+### Haxall or SkySpark
+
+You can set the home to a Haxall checkout or a SkySpark install. Neither has
+the `sys` sources, so the plugin also needs a plain Fantom install. Set it in
+the **Fantom sources** field, or leave the field empty and the plugin uses the
+newest `~/fantom/fantom-*` folder.
+
+- Haxall: every pod under `src/` is indexed, so `haystack::Etc` and
+  `xeto::Dict` resolve and complete next to `sys::Str`.
+- SkySpark: it ships compiled pods only, so only the Fantom sources are
+  indexed. Runs and builds still use SkySpark's `bin/fan`.
+
+See [Settings](settings.md) for details.
+
 ## Open a pod
 
 Open the folder that holds `build.fan`, or any folder with `fan/*.fan` files.
