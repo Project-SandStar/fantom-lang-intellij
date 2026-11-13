@@ -6,6 +6,7 @@ import co.anbora.labs.fantom.lang.index.FantomDeclarationIndex
 import co.anbora.labs.fantom.lang.library.FantomHome
 import co.anbora.labs.fantom.lang.library.FantomSettings
 import com.intellij.codeInsight.documentation.DocumentationManager
+import com.intellij.lang.documentation.DocumentationMarkup
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.EmptyRunnable
@@ -148,5 +149,33 @@ class FantomDocumentationTest : BasePlatformTestCase() {
         val doc = docAtCaret()
         assertTrue(doc, doc.contains("class Str"))
         assertTrue(doc, doc.contains("sequence of Unicode characters"))
+    }
+
+    fun testFandocRenderedAsHtml() {
+        myFixture.configureByText("A.fan", """
+            class A {
+              ** Returns the sum.
+              **
+              ** - first item
+              ** - second with 'code'
+              **
+              ** **Important** note, see `#g`.
+              **
+              **   a + b
+              Int f(Int a) { a }
+
+              Void g() { <caret>f(1) }
+            }
+        """.trimIndent())
+        val doc = docAtCaret()
+        assertTrue(doc, doc.contains("<ul><li>first item</li><li>second with <code>code</code></li></ul>"))
+        assertTrue(doc, doc.contains("<strong>Important</strong>"))
+        assertTrue(doc, doc.contains("<code>#g</code>"))
+        assertTrue(doc, doc.contains("<pre>a + b</pre>"))
+        assertTrue(doc, doc.contains(DocumentationMarkup.CONTENT_START))
+        assertTrue(doc, doc.contains(DocumentationMarkup.SECTIONS_START))
+        assertTrue(doc, doc.contains("A.fan"))
+        val content = doc.substringAfter(DocumentationMarkup.CONTENT_START).substringBefore(DocumentationMarkup.CONTENT_END)
+        assertTrue(content, FandocHtml.balanced(content))
     }
 }

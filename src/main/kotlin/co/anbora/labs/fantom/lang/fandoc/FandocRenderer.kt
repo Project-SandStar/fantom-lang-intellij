@@ -76,7 +76,7 @@ object FandocRenderer {
             is Text -> sb.append(escape(node.str))
             is Image -> sb.append(escape(node.alt))
             is Link -> writeLink(node, sb)
-            is Elem -> {
+            is Elem -> if (node.tag == "hr") sb.append("<hr>") else {
                 sb.append('<').append(node.tag)
                 if (node.attr != null) sb.append(' ').append(node.attr)
                 sb.append('>')
