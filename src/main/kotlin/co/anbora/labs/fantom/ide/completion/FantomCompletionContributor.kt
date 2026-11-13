@@ -38,6 +38,7 @@ import co.anbora.labs.fantom.lang.index.FantomDeclarationKind
 import co.anbora.labs.fantom.lang.resolve.FantomScope
 import co.anbora.labs.fantom.lang.resolve.FantomSlotLookup
 import co.anbora.labs.fantom.lang.resolve.FantomUsingScope
+import co.anbora.labs.fantom.lang.types.FantomItScope
 import co.anbora.labs.fantom.lang.types.FantomTypeInference
 import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionParameters
@@ -72,6 +73,7 @@ import com.intellij.util.indexing.FileBasedIndex
  * - a type position (`Foo` in a declaration, `is`, `as`, cast): type names only;
  * - a name being declared (`Str <caret>`): nothing;
  * - outside an expression (file level, type body): keywords, plus types in a type body.
+ * - a bare name inside an it-block (`Foo { <caret> }`): also the fields of `it`, first after locals;
  * - a facet value name (`@Foo { <caret> = 1 }`): the facet type's instance fields.
  * Nothing is offered for a receiver whose type is unknown; a wrong list is worse than none.
  * The empty lookup then says so ([unknownReceiverText]) instead of "No suggestions".
@@ -150,10 +152,15 @@ class FantomCompletionContributor : CompletionContributor() {
         private fun addFacetFields(value: FantomFacetVal, project: Project, scope: GlobalSearchScope, add: (LookupElement) -> Unit) {
             val typeName = (value.parent?.parent as? FantomFacetItems)?.simpleType?.idList?.lastOrNull()?.text ?: return
             val type = FantomTypeInference.typeDefinitions(typeName, project).firstOrNull() ?: return
+            addFields(type, null, project, scope, add)
+        }
+
+        /** The non-static fields on [type]'s chain, own first; at [base] priority, else by tier. */
+        private fun addFields(type: FantomNamedElement, base: Double?, project: Project, scope: GlobalSearchScope, add: (LookupElement) -> Unit) {
             var index = 0
             for ((slot, tier) in rankedSlots(type, project, scope)) {
                 if (slot !is FantomFieldDef || "static" in FantomPresentation.modifiers(slot)) continue
-                add(withPriority(slotElement(slot), tier.base - index * STEP))
+                add(withPriority(slotElement(slot), (base ?: tier.base) - index * STEP))
                 index++
             }
         }
@@ -236,6 +243,9 @@ class FantomCompletionContributor : CompletionContributor() {
         private fun addBare(at: PsiElement, project: Project, scope: GlobalSearchScope, add: (LookupElement) -> Unit) {
             val locals = FantomScope.localsVisibleAt(at).sortedByDescending { it.textRange.startOffset }
             locals.forEachIndexed { i, local -> add(withPriority(localElement(local), LOCAL - i * STEP)) }
+            // `Foo { <caret> }`: a bare `x = v` sets a field of `it`.
+            FantomItScope.typeOfIt(at)?.let { t -> FantomTypeInference.typeDefinitions(t.slotOwnerName, project).firstOrNull() }
+                ?.let { addFields(it, IT_FIELD, project, scope, add) }
             FantomScope.enclosingType(at)?.let { type -> addReceiverSlots(type, Receiver.BARE, at, project, scope, add) }
             addTypes(at.containingFile, project, scope, add)
             if (isStatementStart(at)) addKeywords(FantomKeywords.STATEMENT, add)
@@ -409,6 +419,7 @@ class FantomCompletionContributor : CompletionContributor() {
 
         // Priority ladder. Higher comes first; items in one group keep their order through STEP.
         const val LOCAL = 100.0
+        const val IT_FIELD = 85.0
         const val OWN_SLOT = 80.0
         const val INHERITED_SLOT = 70.0
         const val OBJ_SLOT = 60.0

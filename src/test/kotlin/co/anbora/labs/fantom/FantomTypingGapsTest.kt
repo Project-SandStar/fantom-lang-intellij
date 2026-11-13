@@ -95,6 +95,14 @@ class FantomTypingGapsTest : BasePlatformTestCase() {
         assertTrue(refAt(offsetOf("name = ")).resolveAll().single() is FantomLocalDef)
     }
 
+    fun testItFieldsCompleteInItBlock() {
+        configure("b := B { si<caret> }", classes)
+        myFixture.completeBasic()
+        val items = myFixture.lookupElementStrings
+        if (items == null) assertTrue(myFixture.file.text.contains("B { size"))
+        else assertTrue("$items", "size" in items)
+    }
+
     fun testMapItBlockOrdered() {
         if (!enableLibrary()) return
         configure("m := Str:Obj?[:] { ordered = true }")
