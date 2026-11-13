@@ -135,6 +135,9 @@ class FantomPodJarRootsProvider : AdditionalLibraryRootsProvider() {
         private val SKIP = setOf("build", "out", "node_modules", ".git", ".idea", ".gradle")
         private val JAR_URI = Regex("""`([^`]+\.jar)`""")
 
+        /** The pod folders whose jars are class roots; jars named in `build.fan` count too. */
+        val JAR_FOLDERS = listOf("jar", "jars", "lib/java")
+
         /** The jar roots of every pod in [project]'s content roots. */
         fun podJarRoots(project: Project): List<VirtualFile> {
             if (project.isDisposed) return emptyList()
@@ -147,8 +150,7 @@ class FantomPodJarRootsProvider : AdditionalLibraryRootsProvider() {
             if (!dir.isDirectory) return
             val build = dir.findChild("build.fan")
             if (build != null) {
-                jarsIn(dir.findChild("jar"), out)
-                jarsIn(dir.findFileByRelativePath("lib/java"), out)
+                for (folder in JAR_FOLDERS) jarsIn(dir.findFileByRelativePath(folder), out)
                 namedJars(dir, build, out)
             }
             if (depth >= MAX_DEPTH) return

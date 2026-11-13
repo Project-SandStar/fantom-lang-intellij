@@ -1,6 +1,7 @@
 package co.anbora.labs.fantom.lang.library
 
 import co.anbora.labs.fantom.lang.core.psi.FantomAssignExpr
+import co.anbora.labs.fantom.lang.core.psi.FantomId
 import co.anbora.labs.fantom.lang.core.psi.FantomList
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -30,6 +31,12 @@ class FantomBuildFile(
     val resDirs: List<String>?,
     /** Offset of the `podName` assignment target, for the gutter icon. -1 when unknown. */
     val podNameOffset: Int,
+    /**
+     * True when code other than the `depends = [...]` assignment names `depends`, as in
+     * `depends.addAll([...])` or `addDependencies(depends)`. [depends] then lists only part
+     * of the pod's dependencies.
+     */
+    val dependsChangedInCode: Boolean = false,
 ) {
     /** One `depends` entry: `"concurrent 1.0+"` is pod `concurrent`, constraint `1.0+`. */
     data class Dependency(val pod: String, val constraint: String)
@@ -95,7 +102,8 @@ class FantomBuildFile(
             val srcDirs = values["srcDirs"]?.let { stringList(it, URI) }
             val resDirs = values["resDirs"]?.let { stringList(it, URI) }
             val podNameOffset = values["podName"]?.let { (it.parent as? FantomAssignExpr)?.ifExpr?.textOffset } ?: -1
-            return FantomBuildFile(podName, version, depends, srcDirs, resDirs, podNameOffset)
+            val dependsUses = PsiTreeUtil.findChildrenOfType(file, FantomId::class.java).count { it.text == "depends" }
+            return FantomBuildFile(podName, version, depends, srcDirs, resDirs, podNameOffset, dependsUses > 1)
         }
 
         /** The list literal [value] is, when it is exactly one; null otherwise. */

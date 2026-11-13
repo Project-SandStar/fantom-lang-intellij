@@ -24,7 +24,8 @@ import java.util.zip.ZipFile
  * Warns on `using x` or `using x::T` when pod `x` is not in the `depends` of the file's
  * `build.fan`. The compiler would reject it; the IDE says so before a build.
  *
- * Quiet when there is no `build.fan`, when its `depends` is not a literal list, for `sys`,
+ * Quiet when there is no `build.fan`, when its `depends` is not a literal list or code
+ * adds to it (`depends.addAll([...])`), for `sys`,
  * for the file's own pod, and inside `build.fan` itself (a script of the `build` pod).
  * The quick fix appends `"x 1.0"` to the `depends` list literal.
  */
@@ -35,6 +36,8 @@ class FantomUndeclaredDependencyInspection : LocalInspectionTool() {
         if (vf.name == FantomBuildFile.FILE_NAME) return PsiElementVisitor.EMPTY_VISITOR
         val build = FantomBuildFile.forFile(vf, holder.project) ?: return PsiElementVisitor.EMPTY_VISITOR
         val depends = build.dependsPods ?: return PsiElementVisitor.EMPTY_VISITOR
+        // Code adds to `depends` (`depends.addAll([...])`): the literal list is not the whole set.
+        if (build.dependsChangedInCode) return PsiElementVisitor.EMPTY_VISITOR
         val ownPod = build.podName ?: FantomUsingScope.podOf(holder.file)
         return object : PsiElementVisitor() {
             override fun visitElement(element: PsiElement) {

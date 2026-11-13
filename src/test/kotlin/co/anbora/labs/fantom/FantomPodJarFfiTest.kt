@@ -47,14 +47,24 @@ class FantomPodJarFfiTest : FantomInspectionTestBase() {
         return true
     }
 
-    fun testPodJarClassesAndMembersResolve() {
+    fun testPodJarClassesAndMembersResolve() = check("jar/serial.jar")
+
+    /** bassgMSAccessLib bundles its jars in `jars/` (plural). */
+    fun testJarsFolder() = check("jars/serial.jar")
+
+    fun testLibJavaFolder() = check("lib/java/serial.jar")
+
+    /** A jar anywhere in the pod counts when build.fan names it. */
+    fun testJarNamedInBuildFan() = check("vendor/serial.jar", "  jars = [`vendor/serial.jar`]\n")
+
+    private fun check(jarPath: String, buildExtra: String = "") {
         val root = Files.createTempDirectory("ffi-pod").toFile()
         val pod = File(root, "serialpod")
-        if (!buildJar(File(pod, "jar/serial.jar"))) {
+        if (!buildJar(File(pod, jarPath))) {
             println("FantomPodJarFfiTest skipped: no system Java compiler")
             return
         }
-        File(pod, "build.fan").writeText("using build\nclass Build : BuildPod { new make() { podName = \"serialpod\" } }\n")
+        File(pod, "build.fan").writeText("using build\nclass Build : BuildPod { new make() { podName = \"serialpod\"\n$buildExtra } }\n")
         val text = """
             using [java] jssc::SerialPort as SerialPortImpl
             using [java] jssc::SerialPortList

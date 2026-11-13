@@ -33,6 +33,12 @@ class FantomUndeclaredDependencyInspectionTest : FantomInspectionTestBase() {
         highlight("using <warning descr=\"Pod 'zzinet' is not in the depends of build.fan\">zzinet</warning>\nclass A {}")
     }
 
+    /** bassgModbusRtu: `depends = ["sys 1.0"]` and then `depends.addAll([...])` in a method. */
+    fun testQuietWhenCodeAddsToDepends() {
+        build("depends = [\"sys 1.0\"]\n    addDependencies(depends)\n  }\n  Void addDependencies(Str[] depends) {\n    depends.addAll([\"zzinet 1.0\"])")
+        highlight("using zzinet\nclass A {}")
+    }
+
     private fun applyFix(using: String) {
         myFixture.addFileToProject("foo/fan/A.fan", "$using\nclass A {}")
         myFixture.configureFromTempProjectFile("foo/fan/A.fan")
