@@ -25,6 +25,32 @@
 | Structure view | Cmd+7 |
 | Override gutter | Arrows on overriding and overridden slots |
 
+## Java FFI
+
+Fantom code can use Java classes with `using [java]`:
+
+```fantom
+using [java] javax.crypto              // a whole package
+using [java] java.util::Base64          // one class
+using [java] fanx.interop               // Interop, ByteArray, IntArray, ...
+```
+
+With the Java plugin (IntelliJ IDEA), these names resolve to the Java
+classes:
+
+- Go to Declaration on `Cipher` or `Base64` opens the JDK class.
+- `Cipher.getInstance(...)`, `c.doFinal(...)` and `Cipher.ENCRYPT_MODE`
+  resolve to the Java methods and fields. All overloads count.
+- Completion after `Base64.` lists static members. After a Java object, such
+  as `c.`, it lists all public members.
+- `fanx.interop` comes from `lib/java/sys.jar` of the configured Fantom
+  installation.
+- A name imported with `pkg::Type` wins over a Fantom type of the same name.
+  With a package import, a Fantom type from your `using` lines wins.
+
+In IDEs without the Java plugin, `[java]` names do not resolve. The plugin
+does not mark them as errors.
+
 ## Refactoring
 
 | Feature | How |
