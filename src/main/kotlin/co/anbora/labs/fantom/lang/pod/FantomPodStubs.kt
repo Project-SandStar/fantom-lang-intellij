@@ -65,6 +65,9 @@ object FantomPodStubs {
         return FantomHome.PodSource(podName(pod), podDir, listOf(fan))
     }
 
+    /** True when [source] is a stub folder made by this class rather than real sources. */
+    fun isStub(source: FantomHome.PodSource): Boolean = File(source.podDir.parentFile, MARKER).isFile
+
     /** True when [pod] has no up to date stubs under [base]. */
     fun needsGeneration(pod: File, base: File = defaultBase()): Boolean = existingStub(pod, base) == null
 

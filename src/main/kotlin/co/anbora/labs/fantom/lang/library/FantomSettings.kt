@@ -1,5 +1,6 @@
 package co.anbora.labs.fantom.lang.library
 
+import co.anbora.labs.fantom.lang.pod.FantomPodStubs
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.SimplePersistentStateComponent
@@ -81,9 +82,24 @@ class FantomSettings : SimplePersistentStateComponent<FantomSettings.State>(Stat
             val fromHome = home?.let(FantomHome::podSources) ?: emptyList()
             val names = fromHome.mapTo(HashSet()) { it.pod }
             val fromSources = sources?.let(FantomHome::podSources)?.filter { it.pod !in names } ?: emptyList()
-            fromHome + fromSources
+            fromSources.mapTo(names) { it.pod }
+            val fromStubs = stubPods(home, names).mapNotNull { FantomPodStubs.podSource(it) }
+            fromHome + fromSources + fromStubs
         }
     }
+
+    /**
+     * The compiled pods of the home that have no sources, see [FantomPodStubs]: every
+     * `lib/fan/<pod>.pod` with no source pod of the same name. For SkySpark that is all
+     * of them except the ones the Fantom sources supply.
+     */
+    fun podsNeedingStubs(): List<File> {
+        val names = podSources().filter { !FantomPodStubs.isStub(it) }.mapTo(HashSet()) { it.pod }
+        return stubPods(configuredHome(), names)
+    }
+
+    private fun stubPods(home: File?, withSources: Set<String>): List<File> =
+        home?.let(FantomPodStubs::podFiles)?.filter { FantomPodStubs.podName(it) !in withSources } ?: emptyList()
 
     /** The source roots to index, see [podSources]. */
     fun effectiveSources(): List<File> = podSources().flatMap { it.roots }
