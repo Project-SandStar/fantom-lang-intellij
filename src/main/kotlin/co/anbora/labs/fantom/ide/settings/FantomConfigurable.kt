@@ -20,7 +20,6 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.Align
@@ -99,7 +98,7 @@ class FantomConfigurable(private val project: Project) : BoundConfigurable("Fant
             visibleRowCount = 8
         }
         defaultTargetBox = ComboBox<FantomInstall>().apply {
-            renderer = SimpleListCellRenderer.create("") { it.name }
+            renderer = FantomTextRenderer<FantomInstall> { it.name }
             addActionListener { if (!refreshing) defaultPath = (selectedItem as? FantomInstall)?.path }
         }
         reset()
@@ -140,7 +139,7 @@ class FantomConfigurable(private val project: Project) : BoundConfigurable("Fant
     }
 
     private fun fantomCombo() = ComboBox<FantomOption>().apply {
-        renderer = SimpleListCellRenderer.create("") { it.label }
+        renderer = FantomTextRenderer<FantomOption> { it.label }
     }
 
     /** One choice of the Fantom column: a Fantom install, or "(auto)" when [path] is null. */

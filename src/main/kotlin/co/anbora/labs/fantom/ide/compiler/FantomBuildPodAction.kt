@@ -27,7 +27,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.SimpleListCellRenderer
+import co.anbora.labs.fantom.ide.settings.FantomTextRenderer
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.AlignX
@@ -230,11 +230,11 @@ class FantomBuildPodAction : DumbAwareAction() {
         preferred: FantomInstall?,
     ) : DialogWrapper(project) {
         private val targetBox = ComboBox(DefaultComboBoxModel(targets.toTypedArray())).apply {
-            renderer = SimpleListCellRenderer.create("") { it.name }
+            renderer = FantomTextRenderer<FantomInstall> { it.name }
             selectedItem = targets.firstOrNull { it == preferred } ?: targets.firstOrNull()
         }
         private val podsBox = ComboBox<Pair<HaxallPods, String>>().apply {
-            renderer = SimpleListCellRenderer.create("") { it.second }
+            renderer = FantomTextRenderer<Pair<HaxallPods, String>> { it.second }
         }
         private val writeBox = JBCheckBox("Write pod into the target's lib/fan", false)
 
