@@ -1,5 +1,6 @@
 package co.anbora.labs.fantom.ide.run
 
+import co.anbora.labs.fantom.ide.run.test.FantomTestRunState
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.Executor
 import com.intellij.execution.configuration.EnvironmentVariablesComponent
@@ -50,13 +51,17 @@ class FantomTestRunConfiguration(project: Project, factory: ConfigurationFactory
         else -> "$testClass.$testMethod"
     }
 
-    /** `<home>/bin/fant <spec>`. Throws when there is no home. */
+    /** `<home>/bin/fant <specs>`, by default this configuration's [testSpec]. Throws when there is no home. */
     @Throws(ExecutionException::class)
-    fun buildCommandLine(home: File? = FantomCommandLine.home(project)): GeneralCommandLine =
-        FantomCommandLine.build(project, home, "fant", listOf(testSpec()), workingDir, envs, passParentEnvs)
+    fun buildCommandLine(
+        home: File? = FantomCommandLine.home(project),
+        specs: List<String> = listOf(testSpec()),
+    ): GeneralCommandLine =
+        FantomCommandLine.build(project, home, "fant", specs, workingDir, envs, passParentEnvs)
 
+    /** Results go to the test tree; see [FantomTestRunState]. */
     override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState =
-        FantomCommandLine.state(environment) { buildCommandLine() }
+        FantomTestRunState(environment, this, listOf(testSpec()))
 
     override fun writeExternal(element: Element) {
         super.writeExternal(element)
