@@ -365,3 +365,4 @@ src/test/testData/snippets/*.tree.txt
 # Internal material lives in the private GitLab repo (see docs/engineering/README.md locally)
 /docs/engineering/
 /marketing/
+/docs/video/
