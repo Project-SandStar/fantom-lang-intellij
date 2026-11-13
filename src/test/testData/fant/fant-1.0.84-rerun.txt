@@ -1,0 +1,41 @@
+-- Run: footest::FooTest.testA
+   Pass: footest::FooTest.testA [1]
+
+-- Run: footest::FooTest.testB
+
+TEST FAILED
+sys::TestErr: Test failed: 1 [sys::Int] != 2 [sys::Int]
+  fan.sys.Test.err (Test.java:239)
+  fan.sys.Test.fail (Test.java:231)
+  fan.sys.Test.verifyEq (Test.java:124)
+  fan.sys.Test.verifyEq (Test.java:93)
+  footest::FooTest.testB (FooTest.fan:1)
+  jdk.internal.reflect.DirectMethodHandleAccessor.invoke (DirectMethodHandleAccessor.java:104)
+  java.lang.reflect.Method.invoke (Method.java:565)
+  fan.sys.Method.invoke (Method.java:573)
+  fan.sys.Method$MethodFunc.callOn (Method.java:244)
+  fan.sys.Method.callOn (Method.java:139)
+  util::TestRunner.runMethod (TestRunner.fan:220)
+  util::TestRunner.runTarget (TestRunner.fan:169)
+  util::TestRunner.runTargets (TestRunner.fan:145)
+  fan.sys.List.each (List.java:667)
+  util::TestRunner.runTargets (TestRunner.fan:142)
+  util::TestRunner.main (TestRunner.fan:80)
+  jdk.internal.reflect.DirectMethodHandleAccessor.invoke (DirectMethodHandleAccessor.java:104)
+  java.lang.reflect.Method.invoke (Method.java:565)
+  fan.sys.Method.invoke (Method.java:573)
+  fan.sys.Method$MethodFunc.callList (Method.java:212)
+  fan.sys.Method.callList (Method.java:138)
+  fanx.tools.Fan.callMain (Fan.java:183)
+  fanx.tools.Fan.executeType (Fan.java:147)
+  fanx.tools.Fan.execute (Fan.java:41)
+  fanx.tools.Fan.run (Fan.java:327)
+
+Time: 5ms
+
+Failed:
+  footest::FooTest.testB
+
+***
+*** 1 FAILURES [0 types, 2 methods, 1 verifies]
+***
