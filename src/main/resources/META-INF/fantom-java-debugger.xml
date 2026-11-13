@@ -9,8 +9,8 @@
         <debuggerClassFilterProvider implementation="co.anbora.labs.fantom.ide.debugger.FantomDebuggerClassFilterProvider"/>
         <!-- Evaluate Expression, Watches and breakpoint conditions in .fan frames: ide.debugger.eval -->
         <debugger.codeFragmentFactory implementation="co.anbora.labs.fantom.ide.debugger.eval.FantomCodeFragmentFactory"/>
-        <debugger.compoundRendererProvider implementation="co.anbora.labs.fantom.ide.debugger.eval.FantomListRendererProvider"/>
-        <debugger.compoundRendererProvider implementation="co.anbora.labs.fantom.ide.debugger.eval.FantomMapRendererProvider"/>
-        <debugger.compoundRendererProvider implementation="co.anbora.labs.fantom.ide.debugger.eval.FantomObjectRendererProvider"/>
+        <debugger.compoundRendererProvider order="first" implementation="co.anbora.labs.fantom.ide.debugger.eval.FantomListRendererProvider"/>
+        <debugger.compoundRendererProvider order="first" implementation="co.anbora.labs.fantom.ide.debugger.eval.FantomMapRendererProvider"/>
+        <debugger.compoundRendererProvider order="first" implementation="co.anbora.labs.fantom.ide.debugger.eval.FantomObjectRendererProvider"/>
     </extensions>
 </idea-plugin>

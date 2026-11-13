@@ -11,7 +11,7 @@ import com.intellij.debugger.ui.tree.render.ChildrenBuilder
 import com.intellij.debugger.ui.tree.render.ChildrenRenderer
 import com.intellij.debugger.ui.tree.render.CompoundRendererProvider
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener
-import com.intellij.debugger.ui.tree.render.Renderer
+import com.intellij.debugger.ui.tree.render.ReferenceRenderer
 import com.intellij.debugger.ui.tree.render.ValueLabelRenderer
 import com.intellij.psi.PsiElement
 import com.sun.jdi.ArrayReference
@@ -21,7 +21,6 @@ import com.sun.jdi.ObjectReference
 import com.sun.jdi.Type
 import com.sun.jdi.Value
 import java.util.concurrent.CompletableFuture
-import org.jdom.Element
 import java.util.function.Function
 
 /*
@@ -29,12 +28,12 @@ import java.util.function.Function
  * long/double/boolean/String, which the platform already shows as numbers and strings.
  */
 
-/** The parts of [com.intellij.debugger.ui.tree.render.Renderer] these renderers do not use. */
-abstract class FantomRendererBase(private val id: String) : Renderer {
+/**
+ * Base of the label and children renderers. [CompoundReferenceRenderer] asserts that its parts
+ * are [ReferenceRenderer]s; it sets their class name itself.
+ */
+abstract class FantomRendererBase(private val id: String) : ReferenceRenderer() {
     override fun getUniqueId(): String = id
-    override fun clone(): Renderer = this
-    override fun readExternal(element: Element) {}
-    override fun writeExternal(element: Element) {}
 }
 
 /** A label renderer from a function of the value. */
