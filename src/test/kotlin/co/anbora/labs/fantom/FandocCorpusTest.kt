@@ -11,8 +11,9 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import java.io.File
 
 /**
- * Renders the fandoc of every type and slot in `sys/fan/Str.fan` and `List.fan`
- * and checks that no exception is thrown and that the HTML tags balance.
+ * Renders the fandoc of every type and slot in `sys/fan/Str.fan`, `List.fan` and
+ * `Map.fan` without the whole-doc fallback, and checks that no exception is
+ * thrown and that the HTML tags balance.
  * Skips when the Fantom source tree is not on this machine.
  */
 class FandocCorpusTest : BasePlatformTestCase() {
@@ -28,7 +29,8 @@ class FandocCorpusTest : BasePlatformTestCase() {
         var docs = 0
         val tags = sortedMapOf<String, Int>()
         val bad = ArrayList<String>()
-        for (name in listOf("Str.fan", "List.fan")) {
+        var inlineFallbacks = 0
+        for (name in listOf("Str.fan", "List.fan", "Map.fan")) {
             val f = File(sysDir, name)
             if (!f.isFile) continue
             val psi = myFixture.configureByText(name, StringUtil.convertLineSeparators(f.readText()))
@@ -37,15 +39,19 @@ class FandocCorpusTest : BasePlatformTestCase() {
                 val lines = FantomDocumentationProvider.fandocLines(decl)
                 if (lines.isEmpty()) continue
                 docs++
-                val html = FandocRenderer.render(lines)
+                // Strict: a block parse error throws here instead of falling back to <pre>.
+                val (html, fallbacks) = FandocRenderer.renderStrict(lines)
+                inlineFallbacks += fallbacks
+                if (fallbacks > 0) println("FandocCorpusTest: inline fallback in $name ${decl.name}")
                 if (!FandocHtml.balanced(html)) bad += "$name ${decl.name}: $html"
                 Regex("<([a-z0-9]+)").findAll(html).forEach { tags.merge(it.groupValues[1], 1, Int::plus) }
                 assertNotNull(provider.generateDoc(decl, null))
             }
         }
-        println("FandocCorpusTest: docs=$docs tags=$tags bad=${bad.size}")
+        println("FandocCorpusTest: docs=$docs tags=$tags bad=${bad.size} inlineFallbacks=$inlineFallbacks")
         assertTrue("expected fandoc in Str.fan and List.fan", docs > 50)
         assertTrue("expected <code> in rendered sys docs", (tags["code"] ?: 0) > 0)
         assertTrue("unbalanced:\n" + bad.take(10).joinToString("\n"), bad.isEmpty())
+        assertEquals("blocks shown as plain text because inline markup failed", 0, inlineFallbacks)
     }
 }

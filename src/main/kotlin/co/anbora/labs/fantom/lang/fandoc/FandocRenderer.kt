@@ -10,6 +10,8 @@ package co.anbora.labs.fantom.lang.fandoc
  * - `'x'` is code; a bare backtick `` `x` `` is a link (to a type, a slot, a doc
  *   or a URI). Links that are not URIs render as `<code>`.
  * - `[text]`uri`` is a link with a label. `[#id]` is an anchor and is dropped.
+ *   Two markdown forms used by the sys docs since 1.0.84 are accepted too:
+ *   `[text](uri)` and a bare `[slot]`, which renders as code.
  * - `*em*`, `**strong**`, `'code'`, links and `[` only start after a space,
  *   `*`, `/` or `(` (or at the start of the text): `a*b` is plain text.
  * - A heading is a line followed by a line that starts with `###` (level 1),
@@ -36,6 +38,22 @@ object FandocRenderer {
             root.kids.clear()
             root.add(Elem("pre").add(Text(lines.joinToString("\n"))))
         }
+        return html(root)
+    }
+
+    /**
+     * For tests: renders without the whole-doc fallback, so a block parse error
+     * throws. Returns the HTML and the number of blocks whose inline parse failed.
+     */
+    internal fun renderStrict(lines: List<String>): Pair<String, Int> {
+        if (lines.all { it.isBlank() }) return "" to 0
+        val root = Elem("")
+        val parser = BlockParser(lines)
+        parser.parse(root)
+        return html(root) to parser.inlineFallbacks
+    }
+
+    private fun html(root: Elem): String {
         val sb = StringBuilder()
         root.kids.forEach { write(it, sb) }
         return sb.toString()
@@ -116,6 +134,8 @@ object FandocRenderer {
     private class FandocError(msg: String) : RuntimeException(msg)
 
     private class BlockParser(private val lines: List<String>) {
+        /** Blocks shown as plain text because their inline markup did not parse. */
+        var inlineFallbacks = 0
         private var lineIndex = 0
         private var cur: String = ""
         private var curt = LineType.NONE
@@ -264,6 +284,7 @@ object FandocRenderer {
             try {
                 InlineParser(text).parse(elem)
             } catch (e: FandocError) {
+                inlineFallbacks++
                 while (elem.kids.size > before) elem.kids.removeAt(elem.kids.size - 1)
                 elem.add(Text(text))
             }
@@ -451,6 +472,11 @@ object FandocRenderer {
                 body = Text(s)
             }
             if (cur == '`'.code) return Link(uri()).add(body)
+            // Markdown doc comments (`doc.format: markdown`, sys and most pods since
+            // Fantom 1.0.84): `[text](uri)` and a bare `[slot]` reference. Fandoc
+            // rejects both and shows the block as plain text; accept them instead.
+            if (cur == '('.code) return Link(parens()).add(body)
+            if (body is Text) return Link(body.str).add(Text(body.str))
             throw FandocError("Invalid annotation []")
         }
 
@@ -468,6 +494,18 @@ object FandocRenderer {
             val buf = StringBuilder()
             while (cur != '`'.code) {
                 if (cur <= 0) throw FandocError("Invalid uri")
+                buf.append(cur.toChar())
+                consume()
+            }
+            consume()
+            return buf.toString()
+        }
+
+        private fun parens(): String {
+            consume() // (
+            val buf = StringBuilder()
+            while (cur != ')'.code) {
+                if (cur <= 0) throw FandocError("Invalid ()")
                 buf.append(cur.toChar())
                 consume()
             }

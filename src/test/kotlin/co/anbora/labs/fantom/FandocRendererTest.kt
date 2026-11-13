@@ -47,6 +47,11 @@ class FandocRendererTest : TestCase() {
         assertEquals("<p>x [] y</p>", html("x [] y"))
     }
 
+    fun testMarkdownStyleLinks() {
+        assertEquals("<p>Also see <code>upper</code>, <code>Int.lower</code>.</p>", html("Also see [upper], [Int.lower]."))
+        assertEquals("<p>See <a href=\"https://x/\">site</a> and the size.</p>", html("See [site](https://x/) and [the size](#size)."))
+    }
+
     fun testAnchorAndImage() {
         assertEquals("<p>some text</p>", html("[#xyz]some text"))
         assertEquals("<p>alpha x beta</p>", html("alpha ![x]`img.png` beta"))
@@ -58,6 +63,28 @@ class FandocRendererTest : TestCase() {
         assertEquals("<ul><li>a more</li></ul>", html("- a", "  more"))
         assertEquals("<ul><li>a<ul><li>b</li></ul></li><li>c</li></ul>", html("- a", "  - b", "- c"))
         assertEquals("<p>intro</p><ul><li><code>x</code></li></ul>", html("intro", "", "- 'x'"))
+    }
+
+    /** Cases copied from `fandoc::FandocTest.testUL` and `testOL`. */
+    fun testListsFromFandocTest() {
+        assertEquals(
+            "<ul><li>one<ul><li>a</li><li>b</li></ul></li><li>two<ul><li>c</li><li>d</li></ul></li></ul>",
+            html("- one", "  - a", "  - b", "- two", "  - c", "  - d")
+        )
+        assertEquals(
+            "<ul><li>a b c d e f</li><li>g h i j k l m n o</li><li>p q<pre>r s</pre></li></ul>",
+            html("  - a b c", "    d e f", "  - g h i j k", "l m n o", "  - p q", "      r s")
+        )
+        assertEquals("<p>This is it. Right?</p>", html("This is", "it. Right?"))
+        assertEquals("<ol type=\"a\"><li>one two three</li></ol>", html("a. one", "two", "three"))
+        assertEquals(
+            "<ol><li>1-a 1-b</li><li>2-a 2-b<p>2-c 2-d</p></li></ol>",
+            html("1. 1-a", "   1-b", "2. 2-a", "   2-b", "", "   2-c", "   2-d")
+        )
+        assertEquals(
+            "<ol type=\"i\"><li>1-a 1-b</li><li>2-a 2-b</li><li>3-a 3-b</li></ol>",
+            html("i. 1-a", "   1-b", "ii. 2-a", "    2-b", "iii. 3-a", "     3-b")
+        )
     }
 
     fun testNumberedLists() {
