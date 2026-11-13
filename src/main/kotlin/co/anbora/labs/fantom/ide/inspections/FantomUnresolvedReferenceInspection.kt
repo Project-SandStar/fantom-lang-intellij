@@ -78,7 +78,7 @@ class FantomUnresolvedReferenceInspection : LocalInspectionTool() {
             FantomReference.Kind.TYPE, FantomReference.Kind.BARE -> FantomFfi.mayBeJavaType(ref.name, file)
             FantomReference.Kind.SLOT -> {
                 val owner = ref.ffiOwnerName() ?: return false
-                FantomTypeInference.typeDefinitions(owner, file.project).isEmpty() && FantomFfi.mayBeJavaType(owner, file)
+                FantomFfi.isJavaType(owner, file)
             }
         }
     }

@@ -1,5 +1,6 @@
 package co.anbora.labs.fantom.lang.resolve
 
+import co.anbora.labs.fantom.lang.types.FantomTypeInference
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
@@ -61,6 +62,22 @@ object FantomFfi {
     fun mayBeJavaType(name: String, file: PsiFile): Boolean {
         val imports = javaImports(file)
         return name in imports.types || imports.packages.isNotEmpty()
+    }
+
+    /**
+     * True when the type name [name] in [file] means a Java class, by the same rule as a
+     * type reference: a class imported by name wins; with a package import, a Fantom type
+     * the file's `using` lines make visible wins, else the Java class when it exists.
+     * Without the Java plugin the same rule, with "it may be one" ([mayBeJavaType]) for "it exists".
+     */
+    fun isJavaType(name: String, file: PsiFile): Boolean {
+        val imports = javaImports(file)
+        if (imports.isEmpty) return false
+        val fan = FantomTypeInference.typeDefinitions(name, file.project)
+        val noJava = resolver() == null
+        if (name in imports.types) return noJava || resolveType(name, file).isNotEmpty()
+        if (fan.any { FantomUsingScope.isVisible(it, file) }) return false
+        return if (noJava) mayBeJavaType(name, file) else resolveType(name, file).isNotEmpty()
     }
 
     /** The Java classes [name] can mean in [file]; empty without the Java plugin. */

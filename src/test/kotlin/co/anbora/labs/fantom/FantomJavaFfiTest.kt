@@ -68,6 +68,8 @@ class FantomJavaFfiTest : FantomInspectionTestBase() {
             Cipher c := Cipher.getInstance(algorithm)
             c.init(Cipher.ENCRYPT_MODE, key, IvParameterSpec(toByteArray(iv.toBuf)))
             encoded := c.doFinal(toByteArray(data.toBuf))
+            alg := key.getAlgorithm()
+            echo(alg)
             return Base64.getEncoder().encodeToString(encoded)
           }
 
@@ -125,6 +127,9 @@ class FantomJavaFfiTest : FantomInspectionTestBase() {
         assertTrue(targetsAt("doFinal").size > 1) // overloads
         assertTrue(targetsAt("ENCRYPT_MODE").single() is PsiField)
         assertEquals("make", (targetsAt("make(buf").single() as PsiMethod).name)
+        // `Key` is a Java class here (package import), though some Fantom pod may declare a `Key`.
+        assertTrue(targetsAt("getAlgorithm").all { it is PsiMethod && it.name == "getAlgorithm" })
+        assertTrue(targetsAt("getAlgorithm").isNotEmpty())
     }
 
     fun testCompletionAfterJavaReceiver() {

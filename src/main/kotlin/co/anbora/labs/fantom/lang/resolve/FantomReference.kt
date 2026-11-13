@@ -54,9 +54,10 @@ class FantomReference(
     /**
      * [resolveAll], plus Java classes and members the file's `using [java]` lines bring in
      * ([FantomFfi]; empty without the Java plugin). A class imported by name wins over a
-     * Fantom type of that name; a slot on a receiver whose type is a Java class (no Fantom
-     * type has the name) resolves to the Java members, every overload. Otherwise Java is the
-     * fallback when nothing in Fantom matches.
+     * Fantom type of that name; with a package import, a Fantom type the `using` lines make
+     * visible wins, else the Java class. A slot on a receiver whose type is a Java class by
+     * that rule ([FantomFfi.isJavaType]) resolves to the Java members, every overload.
+     * Otherwise Java is the fallback when nothing in Fantom matches.
      */
     fun resolveWithFfi(): List<PsiElement> {
         val file = element.containingFile ?: return resolveAll()
@@ -73,7 +74,7 @@ class FantomReference(
             }
             Kind.SLOT -> if (!thisReceiver) {
                 val owner = ownerName ?: receiverTypeName()
-                if (owner != null && FantomTypeInference.typeDefinitions(owner, element.project).isEmpty()) {
+                if (owner != null && FantomFfi.isJavaType(owner, file)) {
                     val java = FantomFfi.resolveSlot(owner, name, file)
                     if (java.isNotEmpty()) return java
                 }

@@ -5,6 +5,7 @@ import co.anbora.labs.fantom.ide.navigation.FantomGotoSymbolContributor
 import com.intellij.navigation.ChooseByNameContributor
 import com.intellij.navigation.ChooseByNameContributorEx
 import com.intellij.navigation.NavigationItem
+import com.intellij.navigation.ItemPresentationProviders
 import com.intellij.navigation.PsiElementNavigationItem
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.search.GlobalSearchScope
@@ -104,8 +105,12 @@ class FantomGotoContributorTest : BasePlatformTestCase() {
             assertEquals("MilesightClient", psi.presentation!!.presentableText)
             assertEquals("MilesightClient.fan", psi.presentation!!.locationString)
         }
-        val login = (items(FantomGotoSymbolContributor(), "login").single() as PsiElementNavigationItem).targetElement as NavigatablePsiElement
-        assertEquals("login(): Void", login.presentation!!.presentableText)
-        assertEquals("MilesightClient (MilesightClient.fan)", login.presentation!!.locationString)
+        val loginRow = items(FantomGotoSymbolContributor(), "login").single()
+        val login = (loginRow as PsiElementNavigationItem).targetElement as NavigatablePsiElement
+        // The row (Go to Symbol) and the PSI (Search Everywhere, MCP search_symbol) render alike.
+        for (p in listOf(loginRow.presentation!!, login.presentation!!, ItemPresentationProviders.getItemPresentation(login)!!)) {
+            assertEquals("login(): Void", p.presentableText)
+            assertEquals("MilesightClient (MilesightClient.fan)", p.locationString)
+        }
     }
 }
