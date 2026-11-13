@@ -5,8 +5,7 @@ rename across files, the Fantom installation as a library, type inference,
 completion, quick documentation, inspections, auto-import, run configurations,
 templates, a formatter and a full colour scheme.
 
-Done on `master`: items 1 to 16 below. Items 1 to 15 shipped in 2.1.0; the
-full debugger (item 16) ships in the next release.
+Items 1 to 15 shipped in 2.1.0; items 16 and 17 shipped in 3.0.0.
 
 ## 2.1: the compiler in the loop
 
@@ -51,7 +50,7 @@ full debugger (item 16) ships in the next release.
 15. **Completion hint when the receiver type is unknown** instead of an empty
     list.
 
-## 3.0: debugger
+## 3.0: debugger (shipped in 3.0.0)
 
 16. **Debugger.** Done: breakpoints in `.fan` files, Fantom Test
     configurations and standalone scripts; Fantom frames and named locals;
@@ -62,7 +61,7 @@ full debugger (item 16) ships in the next release.
     interpolation in the evaluator; breakpoints in a script inside a pod
     folder.
 
-## 3.1: many installs and build targets
+## 3.1: many installs and build targets (shipped in 3.0.0)
 
 17. **Install table and build targets.** The Fantom settings page gets three
     root folders (Fantom, Haxall, SkySpark). The plugin lists every install
