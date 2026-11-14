@@ -13,6 +13,10 @@ class FantomIntroduceVariableTest : BasePlatformTestCase() {
     override fun setUp() {
         super.setUp()
         TemplateManagerImpl.setTemplateTesting(testRootDisposable)
+        // The sys types the tests use, so naming does not depend on a Fantom install (CI has none).
+        myFixture.addFileToProject("sys/fan/Int.fan", "const class Int {}")
+        myFixture.addFileToProject("sys/fan/Void.fan", "class Void {}")
+        myFixture.addFileToProject("sys/fan/List.fan", "class List { Void each(|V item, Int index| c) {} }")
     }
 
     private fun introduce(before: String, after: String) {
