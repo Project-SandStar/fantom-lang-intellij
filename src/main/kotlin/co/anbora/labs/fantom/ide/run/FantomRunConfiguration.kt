@@ -29,6 +29,8 @@ class FantomRunConfiguration(project: Project, factory: ConfigurationFactory, na
     var workingDir: String = ""
     var envs: MutableMap<String, String> = LinkedHashMap()
     var passParentEnvs: Boolean = true
+    /** True once the "Build Fantom pod" step was given to this configuration; see [FantomBuildStepMigration]. */
+    var buildStepAdded: Boolean = false
 
     override fun getConfigurationEditor(): SettingsEditor<out RunConfiguration> = FantomRunSettingsEditor(project)
 
@@ -47,11 +49,12 @@ class FantomRunConfiguration(project: Project, factory: ConfigurationFactory, na
 
     /** `<home>/bin/fan <target> <args>`. Throws when there is no home. */
     @Throws(ExecutionException::class)
-    fun buildCommandLine(home: File? = FantomCommandLine.home(project)): GeneralCommandLine =
-        FantomCommandLine.build(project, home, "fan", parameters(), workingDir, envs, passParentEnvs)
+    fun buildCommandLine(home: File? = FantomCommandLine.home(project), podWorkDir: File? = null): GeneralCommandLine =
+        FantomCommandLine.build(project, home, "fan", parameters(), workingDir, envs, passParentEnvs, podWorkDir)
 
+    /** Runs in the pod's work folder when the "Build Fantom pod" step built it; see [FantomPodLaunch]. */
     override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState =
-        FantomCommandLine.state(environment) { buildCommandLine() }
+        FantomCommandLine.state(environment) { buildCommandLine(podWorkDir = FantomPodLaunch.builtWorkDir(environment)) }
 
     /**
      * `java <jdwp agent> ... fanx.tools.Fan <target> <args>`: the same program as [buildCommandLine],
@@ -62,14 +65,16 @@ class FantomRunConfiguration(project: Project, factory: ConfigurationFactory, na
      * A value the user set in the configuration wins.
      */
     @Throws(ExecutionException::class)
-    fun buildDebugCommandLine(port: Int, home: File? = FantomCommandLine.home(project)): GeneralCommandLine {
+    fun buildDebugCommandLine(port: Int, home: File? = FantomCommandLine.home(project), podWorkDir: File? = null): GeneralCommandLine {
         val debugEnvs = LinkedHashMap<String, String>().apply { put(FAN_DEBUG, "true"); putAll(envs) }
-        return FantomCommandLine.buildJava(project, home, parameters(), workingDir, debugEnvs, passParentEnvs, listOf(jdwpAgent(port)))
+        return FantomCommandLine.buildJava(
+            project, home, parameters(), workingDir, debugEnvs, passParentEnvs, listOf(jdwpAgent(port)), podWorkDir = podWorkDir,
+        )
     }
 
-    /** The state the Debug runner starts: [buildDebugCommandLine] in a console. */
+    /** The state the Debug runner starts: [buildDebugCommandLine] in a console, in the pod's work folder when it was built. */
     fun debugState(environment: ExecutionEnvironment, port: Int): RunProfileState =
-        FantomCommandLine.state(environment) { buildDebugCommandLine(port) }
+        FantomCommandLine.state(environment) { buildDebugCommandLine(port, podWorkDir = FantomPodLaunch.builtWorkDir(environment)) }
 
     override fun writeExternal(element: Element) {
         super.writeExternal(element)
@@ -77,6 +82,7 @@ class FantomRunConfiguration(project: Project, factory: ConfigurationFactory, na
         JDOMExternalizerUtil.writeField(element, ARGS, programArgs)
         JDOMExternalizerUtil.writeField(element, WORK_DIR, workingDir)
         JDOMExternalizerUtil.writeField(element, PASS_PARENT, passParentEnvs.toString())
+        if (buildStepAdded) JDOMExternalizerUtil.writeField(element, BUILD_STEP, "true")
         EnvironmentVariablesComponent.writeExternal(element, envs)
     }
 
@@ -86,6 +92,7 @@ class FantomRunConfiguration(project: Project, factory: ConfigurationFactory, na
         programArgs = JDOMExternalizerUtil.readField(element, ARGS, "")
         workingDir = JDOMExternalizerUtil.readField(element, WORK_DIR, "")
         passParentEnvs = JDOMExternalizerUtil.readField(element, PASS_PARENT, "true").toBoolean()
+        buildStepAdded = JDOMExternalizerUtil.readField(element, BUILD_STEP, "false").toBoolean()
         val read = LinkedHashMap<String, String>()
         EnvironmentVariablesComponent.readExternal(element, read)
         envs = read
@@ -108,5 +115,6 @@ class FantomRunConfiguration(project: Project, factory: ConfigurationFactory, na
         private const val ARGS = "programArgs"
         private const val WORK_DIR = "workingDir"
         private const val PASS_PARENT = "passParentEnvs"
+        private const val BUILD_STEP = "buildStepAdded"
     }
 }

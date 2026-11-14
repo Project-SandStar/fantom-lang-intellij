@@ -114,6 +114,9 @@
         <runConfigurationProducer implementation="co.anbora.labs.fantom.ide.run.FantomRunConfigurationProducer"/>
         <runConfigurationProducer implementation="co.anbora.labs.fantom.ide.run.FantomTestRunConfigurationProducer"/>
         <runLineMarkerContributor language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.run.FantomRunLineMarkerContributor"/>
+        <!-- Before launch: "Build Fantom pod", so Run and Debug use the pod built from the current sources -->
+        <stepsBeforeRunProvider implementation="co.anbora.labs.fantom.ide.run.FantomBuildBeforeRunTaskProvider"/>
+        <postStartupActivity implementation="co.anbora.labs.fantom.ide.run.FantomBuildStepMigration"/>
         <!-- Compiler diagnostics: `fan build.fan compile` on save, messages painted in the editor -->
         <externalAnnotator language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.compiler.FantomCompilerAnnotator"/>
         <!-- Editor basics: type declaration, implementations, breadcrumbs, TODO -->

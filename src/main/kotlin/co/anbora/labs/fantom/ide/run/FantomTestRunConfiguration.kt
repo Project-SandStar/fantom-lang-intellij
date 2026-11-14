@@ -28,6 +28,8 @@ class FantomTestRunConfiguration(project: Project, factory: ConfigurationFactory
     var workingDir: String = ""
     var envs: MutableMap<String, String> = LinkedHashMap()
     var passParentEnvs: Boolean = true
+    /** True once the "Build Fantom pod" step was given to this configuration; see [FantomBuildStepMigration]. */
+    var buildStepAdded: Boolean = false
 
     override fun getConfigurationEditor(): SettingsEditor<out RunConfiguration> = FantomTestSettingsEditor(project)
 
@@ -57,8 +59,9 @@ class FantomTestRunConfiguration(project: Project, factory: ConfigurationFactory
     fun buildCommandLine(
         home: File? = FantomCommandLine.home(project),
         specs: List<String> = listOf(testSpec()),
+        podWorkDir: File? = null,
     ): GeneralCommandLine =
-        FantomCommandLine.build(project, home, "fant", specs, workingDir, envs, passParentEnvs)
+        FantomCommandLine.build(project, home, "fant", specs, workingDir, envs, passParentEnvs, podWorkDir)
 
     /**
      * The `java` command that `bin/fant` would exec, with a JDWP agent that waits on [port] and
@@ -70,19 +73,22 @@ class FantomTestRunConfiguration(project: Project, factory: ConfigurationFactory
         port: Int,
         home: File? = FantomCommandLine.home(project),
         specs: List<String> = listOf(testSpec()),
+        podWorkDir: File? = null,
     ): GeneralCommandLine {
         val fantomHome = home ?: throw ExecutionException(FantomCommandLine.NO_HOME)
         val (mainClass, leading) = FantomCommandLine.fantLauncher(fantomHome)
         val debugEnvs = LinkedHashMap<String, String>().apply { put(FantomRunConfiguration.FAN_DEBUG, "true"); putAll(envs) }
         return FantomCommandLine.buildJava(
             project, fantomHome, leading + specs, workingDir, debugEnvs, passParentEnvs,
-            listOf(FantomRunConfiguration.jdwpAgent(port)), mainClass,
+            listOf(FantomRunConfiguration.jdwpAgent(port)), mainClass, podWorkDir,
         )
     }
 
     /** The state the Debug runner starts: [buildDebugCommandLine] with the results in the test tree. */
     override fun debugState(environment: ExecutionEnvironment, port: Int): RunProfileState =
-        FantomTestRunState(environment, this, listOf(testSpec())) { specs -> buildDebugCommandLine(port, specs = specs) }
+        FantomTestRunState(environment, this, listOf(testSpec())) { specs ->
+            buildDebugCommandLine(port, specs = specs, podWorkDir = FantomPodLaunch.builtWorkDir(environment))
+        }
 
     /** Results go to the test tree; see [FantomTestRunState]. */
     override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState =
@@ -95,6 +101,7 @@ class FantomTestRunConfiguration(project: Project, factory: ConfigurationFactory
         JDOMExternalizerUtil.writeField(element, METHOD, testMethod)
         JDOMExternalizerUtil.writeField(element, WORK_DIR, workingDir)
         JDOMExternalizerUtil.writeField(element, PASS_PARENT, passParentEnvs.toString())
+        if (buildStepAdded) JDOMExternalizerUtil.writeField(element, BUILD_STEP, "true")
         EnvironmentVariablesComponent.writeExternal(element, envs)
     }
 
@@ -105,6 +112,7 @@ class FantomTestRunConfiguration(project: Project, factory: ConfigurationFactory
         testMethod = JDOMExternalizerUtil.readField(element, METHOD, "")
         workingDir = JDOMExternalizerUtil.readField(element, WORK_DIR, "")
         passParentEnvs = JDOMExternalizerUtil.readField(element, PASS_PARENT, "true").toBoolean()
+        buildStepAdded = JDOMExternalizerUtil.readField(element, BUILD_STEP, "false").toBoolean()
         val read = LinkedHashMap<String, String>()
         EnvironmentVariablesComponent.readExternal(element, read)
         envs = read
@@ -122,5 +130,6 @@ class FantomTestRunConfiguration(project: Project, factory: ConfigurationFactory
         const val METHOD = "testMethod"
         const val WORK_DIR = "workingDir"
         const val PASS_PARENT = "passParentEnvs"
+        private const val BUILD_STEP = "buildStepAdded"
     }
 }

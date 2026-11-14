@@ -1,5 +1,6 @@
 package co.anbora.labs.fantom.ide.run.test
 
+import co.anbora.labs.fantom.ide.run.FantomPodLaunch
 import co.anbora.labs.fantom.ide.run.FantomTestRunConfiguration
 import com.intellij.execution.Executor
 import com.intellij.execution.configurations.RunProfileState
@@ -27,7 +28,9 @@ class FantomRerunFailedTestsAction(
                 FantomTestRunState(env, configuration, specs)
 
             override fun debugState(environment: ExecutionEnvironment, port: Int): RunProfileState =
-                FantomTestRunState(environment, configuration, specs) { configuration.buildDebugCommandLine(port, specs = it) }
+                FantomTestRunState(environment, configuration, specs) {
+                    configuration.buildDebugCommandLine(port, specs = it, podWorkDir = FantomPodLaunch.builtWorkDir(environment))
+                }
         }
     }
 

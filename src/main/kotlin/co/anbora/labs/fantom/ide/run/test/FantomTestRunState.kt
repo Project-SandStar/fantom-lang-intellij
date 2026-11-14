@@ -1,5 +1,6 @@
 package co.anbora.labs.fantom.ide.run.test
 
+import co.anbora.labs.fantom.ide.run.FantomPodLaunch
 import co.anbora.labs.fantom.ide.run.FantomTestRunConfiguration
 import com.intellij.execution.DefaultExecutionResult
 import com.intellij.execution.ExecutionException
@@ -26,7 +27,9 @@ class FantomTestRunState(
     private val configuration: FantomTestRunConfiguration,
     private val specs: List<String>,
     /** Builds the process for [specs]; the Debug runner passes a JDWP command line here. */
-    private val commandLine: (List<String>) -> GeneralCommandLine = { configuration.buildCommandLine(specs = it) },
+    /** By default `fant`, in the pod's work folder when the "Build Fantom pod" step built it. */
+    private val commandLine: (List<String>) -> GeneralCommandLine =
+        { configuration.buildCommandLine(specs = it, podWorkDir = FantomPodLaunch.builtWorkDir(environment)) },
 ) : CommandLineState(environment) {
 
     @Throws(ExecutionException::class)

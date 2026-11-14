@@ -20,7 +20,8 @@ object FantomCommandLine {
 
     /**
      * `<home>/bin/<tool> <params>` with [envs] applied and `<home>/bin` first on PATH.
-     * A blank [workingDir] means the project base folder.
+     * A blank [workingDir] means the project base folder. A non-null [podWorkDir] (the folder the
+     * "Build Fantom pod" step built into) replaces it; see [FantomPodLaunch.applyWorkDir].
      */
     @Throws(ExecutionException::class)
     fun build(
@@ -31,6 +32,7 @@ object FantomCommandLine {
         workingDir: String?,
         envs: Map<String, String>,
         passParentEnvs: Boolean,
+        podWorkDir: File? = null,
     ): GeneralCommandLine {
         val fantomHome = home ?: throw ExecutionException(NO_HOME)
         val bin = File(fantomHome, "bin")
@@ -46,6 +48,7 @@ object FantomCommandLine {
         val parentPath = envs["PATH"] ?: (if (passParentEnvs) EnvironmentUtil.getValue("PATH") else null)
         val path = listOfNotNull(bin.path, parentPath?.takeIf { it.isNotBlank() }).joinToString(File.pathSeparator)
         cmd.withEnvironment("PATH", path)
+        if (podWorkDir != null) FantomPodLaunch.applyWorkDir(cmd, podWorkDir)
         return cmd
     }
 
@@ -65,6 +68,7 @@ object FantomCommandLine {
         passParentEnvs: Boolean,
         jvmArgs: List<String>,
         mainClass: String = FAN_MAIN,
+        podWorkDir: File? = null,
     ): GeneralCommandLine {
         val fantomHome = home ?: throw ExecutionException(NO_HOME)
         fun env(name: String): String? =
@@ -77,7 +81,7 @@ object FantomCommandLine {
             ?: listOf("sys.jar", "jline.jar").joinToString(File.pathSeparator) { File(fantomHome, "lib/java/$it").path }
         val classPath = listOfNotNull(fanCp, env("CLASSPATH")).joinToString(File.pathSeparator)
 
-        val cmd = build(project, home, "fan", params, workingDir, envs, passParentEnvs)
+        val cmd = build(project, home, "fan", params, workingDir, envs, passParentEnvs, podWorkDir)
         cmd.exePath = java
         cmd.parametersList.clearAll()
         cmd.addParameters(configJavaOptions(fantomHome))
