@@ -1,10 +1,11 @@
 Versions:
 <ul>
-    <li>All Intellij products support: 3.0.1</li>
+    <li>All Intellij products support: 3.0.2</li>
 </ul>
 <br>
 Plugin updates:
 <ul>
+    <li><b>3.0.2</b> <em>(2026-11-14)</em> - Java FFI: using [java] imports resolve to JDK classes, Fantom's fanx.interop types and jars bundled in the pod (jar/, jars/, lib/java/); inherited fields of SkySpark stub supertypes resolve; symbol search finds Fantom types; Run and Debug build the pod from the current sources first, so tests and breakpoints never run against a stale installed pod; no false "not in depends" warning when build.fan adds depends in code; no UI freeze when opening a file </li>
     <li><b>3.0.1</b> <em>(2026-11-13)</em> - SkySpark pods now come from the Haxall source of the same version, with stubs only as a fallback; project pods come from source roots you add, versioned by git tags such as bassgCommon/4.0.6.2.2 (nearest lower tag when the target has none); a status bar widget switches the build target in one click; a dependencies table in Settings shows where each pod comes from </li>
     <li><b>3.0.0</b> <em>(2026-11-13)</em> - debugger: breakpoints in pods, Fantom Test configurations and standalone scripts, stepping into closures, named variables, Fantom expressions in Evaluate, Watches and breakpoint conditions (needs the Java plugin); install table: Fantom, Haxall and SkySpark roots, every install listed with its Fantom paired automatically from sys.pod, custom folders, and a Build Pod target menu that can build for any install; no deprecated API </li>
     <li><b>2.1.0</b> <em>(2026-11-13)</em> - compiler errors inline on save; fant results in the Test tool window; parameter name hints; go to type declaration and implementation, breadcrumbs, TODO and spell check; rendered fandoc in Quick Documentation; Haxall and SkySpark as a Fantom home, with SkySpark pods browsable from their API docs; build.fan depends drive imports, an undeclared dependency inspection and a Build Pod action; Axon colouring in strings and .trio files, plus .fandoc and fan.props file types; introduce variable, surround with, unwrap and extract method; rename across the override hierarchy; typing gaps closed and a null check that understands guards; a debugger with breakpoints, stepping and named variables (needs the Java plugin) </li>
