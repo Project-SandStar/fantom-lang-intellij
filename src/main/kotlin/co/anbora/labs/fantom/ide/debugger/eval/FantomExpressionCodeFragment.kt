@@ -4,6 +4,7 @@ import co.anbora.labs.fantom.lang.FantomLanguage
 import co.anbora.labs.fantom.lang.core.parser.FantomParser
 import co.anbora.labs.fantom.lang.lexer.FantomLexer
 import com.intellij.lang.ASTNode
+import com.intellij.lang.LanguageParserDefinitions
 import com.intellij.lang.PsiBuilder
 import com.intellij.lang.PsiBuilderFactory
 import com.intellij.openapi.project.Project
@@ -60,11 +61,20 @@ class FantomExpressionCodeFragment private constructor(viewProvider: FileViewPro
 
 /** Root element type of [FantomExpressionCodeFragment]: one Fantom expression. */
 object FantomExpressionFragmentElementType : IFileElementType("FANTOM_EXPRESSION_FRAGMENT", FantomLanguage) {
-    override fun doParseContents(chameleon: ASTNode, psi: PsiElement): ASTNode? {
-        val builder = PsiBuilderFactory.getInstance()
-            .createBuilder(psi.project, chameleon, FantomLexer(), FantomLanguage, chameleon.chars)
+    /**
+     * Parses without asking [chameleon] for its PSI. After Undo or a paste replaces all of the
+     * text, the platform reparses into a fresh root that has no PSI; the default
+     * `parseContents` would then ask the parser definition to create one for this element
+     * type, which fails ("Unknown element type: FANTOM_EXPRESSION_FRAGMENT").
+     */
+    override fun parseContents(chameleon: ASTNode): ASTNode? {
+        val builder = PsiBuilderFactory.getInstance().createBuilder(
+            LanguageParserDefinitions.INSTANCE.forLanguage(FantomLanguage), FantomLexer(), chameleon.chars,
+        )
         return FantomExpressionParser().parse(this, builder).firstChildNode
     }
+
+    override fun doParseContents(chameleon: ASTNode, psi: PsiElement): ASTNode? = parseContents(chameleon)
 }
 
 /** [FantomParser] with `expr` as its root rule; tokens after the expression become one error. */
