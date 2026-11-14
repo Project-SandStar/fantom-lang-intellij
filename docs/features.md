@@ -129,6 +129,25 @@ A green arrow appears next to `static Void main`, next to each `Test`
 subclass, and next to each `test*` method. Run configurations call `fan` and
 `fant` from the configured Fantom installation.
 
+Before launch, a Fantom or Fantom Test configuration builds its pod from the
+current sources. This is the **Build Fantom pod** step in the configuration's
+**Before launch** list. It is on for new configurations, like Java's
+**Build**:
+
+- The step compiles the pod with the current build target into a private
+  temp folder. It does not write into the `lib/fan` of any install.
+- `fan` or `fant` then starts in that folder. Its `fan.props` puts the new pod
+  in front of the installed one, so a test you added today runs, not the
+  older pod in the install.
+- If the build fails, the launch stops. The errors show in the editor and in
+  a notification. Nothing runs against the old pod.
+- When the step ran, the configuration's working directory is not used.
+- A script target (a `.fan` path) is not built: it compiles when it runs.
+- To run against the installed pod, remove the step from **Before launch**.
+
+Configurations saved before this version get the step once, when the
+project opens. If you remove it, it stays removed.
+
 ## Debug
 
 Debug needs the Java plugin, so it works in IntelliJ IDEA. In IDEs without
@@ -141,8 +160,9 @@ debugger.
 
 What works:
 
-- Line breakpoints in the `.fan` files of a pod. The pod must be built
-  (Build Pod) before you debug.
+- Line breakpoints in the `.fan` files of a pod. The **Build Fantom pod**
+  step (see Run) builds the pod before the debugger starts, so breakpoints
+  in new code stop.
 - Debug on a Fantom Test configuration. Breakpoints in `test*` methods stop,
   and the test tree still shows which tests pass and fail.
 - Line breakpoints in scripts (a run target that is a `.fan` path), when the
