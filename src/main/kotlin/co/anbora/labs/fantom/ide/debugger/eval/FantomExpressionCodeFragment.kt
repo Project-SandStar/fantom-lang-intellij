@@ -45,13 +45,23 @@ class FantomExpressionCodeFragment private constructor(viewProvider: FileViewPro
         resolveScope = scope
     }
     override fun getForcedResolveScope(): GlobalSearchScope? = resolveScope
-    override fun clone(): PsiFileImpl = create(project, name, text, contextElement).also { it.resolveScope = resolveScope }
+    /**
+     * Completion and other features work on a copy. Like the platform's code fragments, the copy
+     * is non-physical (no PSI events) and its original file is this fragment.
+     */
+    override fun clone(): PsiFileImpl =
+        create(project, name, text, contextElement, physical = false).also {
+            it.resolveScope = resolveScope
+            it.originalFile = this
+        }
     override fun toString(): String = "Fantom expression fragment"
 
     companion object {
-        fun create(project: Project, name: String, text: CharSequence, context: PsiElement?): FantomExpressionCodeFragment {
+        fun create(
+            project: Project, name: String, text: CharSequence, context: PsiElement?, physical: Boolean = true,
+        ): FantomExpressionCodeFragment {
             val file = LightVirtualFile(name, FantomLanguage, text)
-            val viewProvider = SingleRootFileViewProvider(PsiManager.getInstance(project), file, true)
+            val viewProvider = SingleRootFileViewProvider(PsiManager.getInstance(project), file, physical)
             val fragment = FantomExpressionCodeFragment(viewProvider, context)
             viewProvider.forceCachedPsi(fragment)
             return fragment
