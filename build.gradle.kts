@@ -127,6 +127,7 @@ tasks {
         systemProperty("fantom.snippets", System.getenv("FANTOM_SNIPPETS") ?: "")
         // Library tests read the real Fantom install outside the test project root.
         systemProperty("NO_FS_ROOTS_ACCESS_CHECK", "true")
+        System.getenv("FANTOM_TEST_USER_HOME")?.let { systemProperty("user.home", it) }
         testLogging {
             showStandardStreams = true
             events("passed", "failed", "skipped")

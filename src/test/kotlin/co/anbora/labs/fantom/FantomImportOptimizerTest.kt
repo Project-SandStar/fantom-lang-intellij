@@ -14,6 +14,8 @@ class FantomImportOptimizerTest : BasePlatformTestCase() {
     override fun setUp() {
         super.setUp()
         myFixture.addFileToProject("sys/fan/Str.fan", "class Str {}")
+        // Declared here so the tests do not depend on a Fantom install (CI has none).
+        myFixture.addFileToProject("sys/fan/Void.fan", "class Void {}")
         myFixture.addFileToProject("a/fan/Foo.fan", "class Foo {}")
         myFixture.addFileToProject("a/fan/Bar.fan", "class Bar {}")
         myFixture.addFileToProject("b/fan/Baz.fan", "class Baz {}")
