@@ -164,4 +164,26 @@ class FantomEvaluatorTest : BasePlatformTestCase() {
         // The reparsed tree is a real expression again, not an error node.
         assertEquals(3L, FantomInterpreter(fake).eval(FantomEvalAstBuilder.build(fragment.node)))
     }
+
+    /**
+     * Completion in the Evaluate box works on a copy of the fragment. The copy must be
+     * non-physical, outside the event system, and point back to the fragment; otherwise the
+     * platform logs "File copy should be non-physical" and "New copied file doesn't have
+     * correct original" on every keystroke that opens completion.
+     */
+    fun testCopyIsNonPhysicalAndKnowsItsOriginal() {
+        val fragment = FantomExpressionCodeFragment.create(project, "fragment.fan", "s.", null)
+        val copy = fragment.copy() as com.intellij.psi.PsiFile
+        assertFalse(copy.isPhysical)
+        assertFalse(copy.viewProvider.isEventSystemEnabled)
+        assertSame(fragment, copy.originalFile)
+        assertEquals("s.", copy.text)
+    }
+
+    fun testCompletionInTheFragmentLogsNoError() {
+        val fragment = FantomExpressionCodeFragment.create(project, "fragment.fan", "s.", null)
+        myFixture.openFileInEditor(fragment.virtualFile)
+        myFixture.editor.caretModel.moveToOffset(2)
+        myFixture.completeBasic()
+    }
 }
