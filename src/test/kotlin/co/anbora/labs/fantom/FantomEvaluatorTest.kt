@@ -143,4 +143,25 @@ class FantomEvaluatorTest : BasePlatformTestCase() {
         assertTrue(error("x +").startsWith("Syntax error"))
         assertEquals("Null value: cannot get 'name' (use ?. for a null-safe call)", error("n.name"))
     }
+
+    /**
+     * Undo or a paste in the Evaluate box replaces all of the fragment's text. The platform then
+     * reparses the fragment in a dummy holder, where the root node has no PSI yet. That failed
+     * with "Unknown element type: FANTOM_EXPRESSION_FRAGMENT" (IDE error after Undo).
+     */
+    fun testWholeTextChangeReparsesTheFragment() {
+        val fragment = FantomExpressionCodeFragment.create(project, "fragment.fan", "data.size", null)
+        val documents = com.intellij.psi.PsiDocumentManager.getInstance(project)
+        val document = documents.getDocument(fragment)!!
+        for (text in listOf("x + 1", "s.upper", "list.size")) {
+            com.intellij.openapi.command.WriteCommandAction.runWriteCommandAction(project) {
+                document.setText(text)
+                documents.commitDocument(document)
+            }
+            assertEquals(text, fragment.text)
+            assertEquals(text, fragment.node.text)
+        }
+        // The reparsed tree is a real expression again, not an error node.
+        assertEquals(3L, FantomInterpreter(fake).eval(FantomEvalAstBuilder.build(fragment.node)))
+    }
 }
