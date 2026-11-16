@@ -97,7 +97,7 @@ class FantomParameterHintsTest : DeclarativeInlayHintsProviderTestCase() {
     /** Enables the Fantom home as a library; false (test skipped) when none is installed. */
     private fun enableLibrary(): Boolean {
         val h = FantomHome.detect() ?: run {
-            println("FantomParameterHintsTest: skipped, no Fantom home found")
+            TestInstalls.requireInstall(null, "a Fantom home")
             return false
         }
         home = h

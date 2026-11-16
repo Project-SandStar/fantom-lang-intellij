@@ -118,7 +118,7 @@ class FantomDebuggerTest : HeavyPlatformTestCase() {
     }
 
     fun testBreakpointInMainSuspendsAtFanLine() {
-        if (!File(home, "bin/fan").isFile) return
+        if (!TestInstalls.requireInstall(File(home, "bin/fan"), "Fantom 1.0.84 bin/fan")) return
         val root = Files.createTempDirectory("fantom-debug").toFile()
         val work = compilePod(root)
         FantomSettings.getInstance(project).homePath = home.path

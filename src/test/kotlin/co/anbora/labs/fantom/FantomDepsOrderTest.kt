@@ -53,8 +53,13 @@ class FantomDepsOrderTest : BasePlatformTestCase() {
 
     private fun missing(vararg dirs: File): Boolean {
         val m = dirs.filter { !it.isDirectory }
-        if (m.isNotEmpty()) println("FantomDepsOrderTest.$name skipped: missing $m")
-        return m.isNotEmpty()
+        if (m.isEmpty()) return false
+        // ~/Code is not on CI: a missing working copy stays a local skip.
+        if (m.any { it.path.startsWith(File(user, "Code").path) }) {
+            println("FantomDepsOrderTest.$name skipped: missing $m")
+            return true
+        }
+        return !TestInstalls.requireInstall(false, "$m")
     }
 
     /** Ticks [ticked] (first is the default target) from the real roots, paired as the settings page pairs them. */

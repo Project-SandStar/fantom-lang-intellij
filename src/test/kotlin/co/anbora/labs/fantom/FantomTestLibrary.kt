@@ -10,7 +10,7 @@ import com.intellij.openapi.util.EmptyRunnable
 /** Runs [block] with the detected Fantom install attached to [project]; false when there is none. */
 object FantomTestLibrary {
     fun with(project: Project, block: () -> Unit): Boolean {
-        val home = FantomHome.detect() ?: run { println("skipped: no Fantom home"); return false }
+        val home = FantomHome.detect() ?: run { TestInstalls.requireInstall(null, "a Fantom home"); return false }
         FantomSettings.getInstance(project).homePath = home.path
         try {
             WriteAction.runAndWait<RuntimeException> {

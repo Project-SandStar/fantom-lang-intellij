@@ -47,8 +47,7 @@ class FantomJavaFfiTest : FantomInspectionTestBase() {
     }
 
     private fun skip(): Boolean {
-        if (home == null || !File(home, "lib/java/sys.jar").isFile) println("FantomJavaFfiTest skipped: no Fantom home with lib/java/sys.jar")
-        return home == null || !File(home, "lib/java/sys.jar").isFile
+        return !TestInstalls.requireInstall(home?.let { File(it, "lib/java/sys.jar") }, "a Fantom home with lib/java/sys.jar")
     }
 
     private val crypto = """

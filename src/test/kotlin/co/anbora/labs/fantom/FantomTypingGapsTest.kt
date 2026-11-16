@@ -34,7 +34,7 @@ class FantomTypingGapsTest : BasePlatformTestCase() {
 
     private fun enableLibrary(): Boolean {
         val h = FantomHome.detect() ?: run {
-            println("FantomTypingGapsTest: skipped, no Fantom home found")
+            TestInstalls.requireInstall(null, "a Fantom home")
             return false
         }
         home = h

@@ -41,8 +41,7 @@ class FantomLibraryTest : BasePlatformTestCase() {
     }
 
     private fun skip(): Boolean {
-        if (home == null) println("FantomLibraryTest skipped: no Fantom home found")
-        return home == null
+        return !TestInstalls.requireInstall(home, "a Fantom home")
     }
 
     fun testProviderReturnsOneLibraryPerPod() {

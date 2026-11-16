@@ -47,10 +47,7 @@ class FantomUnresolvedInspectionCorpusTest : BasePlatformTestCase() {
     }
 
     fun testUtilPodWarningCount() {
-        if (home == null) {
-            println("$tag skipped: no Fantom home found")
-            return
-        }
+        if (!TestInstalls.requireInstall(home, "a Fantom home")) return
         val podDir = System.getProperty("fantom.pod.dir")?.takeIf { it.isNotBlank() }?.let(::File)
             ?: File(home, "src/util/fan")
         assertTrue("$podDir is not a folder", podDir.isDirectory)

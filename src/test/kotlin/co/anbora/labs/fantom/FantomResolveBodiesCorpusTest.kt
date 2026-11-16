@@ -88,8 +88,7 @@ class FantomResolveBodiesCorpusTest : BasePlatformTestCase() {
     }
 
     private fun skip(): Boolean {
-        if (home == null) println("$tag skipped: no Fantom home found")
-        return home == null
+        return !TestInstalls.requireInstall(home, "a Fantom home")
     }
 
     fun testUtilPodResolveWithSysLibrary() {

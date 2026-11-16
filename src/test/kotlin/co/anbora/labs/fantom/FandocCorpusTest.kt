@@ -21,10 +21,7 @@ class FandocCorpusTest : BasePlatformTestCase() {
     private val sysDir = File(System.getProperty("fantom.sys.dir") ?: (FantomHome.detect()?.path + "/src/sys/fan"))
 
     fun testStrAndListFandoc() {
-        if (!sysDir.isDirectory) {
-            println("FandocCorpusTest: $sysDir missing, skipped")
-            return
-        }
+        if (!TestInstalls.requireInstall(sysDir, "the sys pod sources")) return
         val provider = FantomDocumentationProvider()
         var docs = 0
         val tags = sortedMapOf<String, Int>()

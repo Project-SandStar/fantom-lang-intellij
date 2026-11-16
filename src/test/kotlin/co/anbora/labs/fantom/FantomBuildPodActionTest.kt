@@ -38,7 +38,7 @@ class FantomBuildPodActionTest : BasePlatformTestCase() {
 
     private fun effectiveHome(): File? {
         val h = home?.let { FantomSettings.getInstance(project).effectiveHome() }
-        if (h == null) println("FantomBuildPodActionTest skipped: no Fantom home found")
+        TestInstalls.requireInstall(h, "a Fantom home")
         return h
     }
 

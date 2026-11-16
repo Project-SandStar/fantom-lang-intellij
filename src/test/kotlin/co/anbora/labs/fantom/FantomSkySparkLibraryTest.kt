@@ -51,8 +51,7 @@ class FantomSkySparkLibraryTest : BasePlatformTestCase() {
     }
 
     private fun skip(): Boolean {
-        if (!ready) println("FantomSkySparkLibraryTest skipped: ${skyspark.path} or ${fantom.path} missing")
-        return !ready
+        return !TestInstalls.requireInstall(ready, "${skyspark.path} and ${fantom.path}")
     }
 
     private fun resolveAt(text: String): PsiElement {

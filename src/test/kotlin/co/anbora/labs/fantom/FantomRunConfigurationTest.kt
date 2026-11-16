@@ -121,10 +121,7 @@ class FantomRunConfigurationTest : BasePlatformTestCase() {
 
     fun testCommandLines() {
         val home = FantomHome.detect()
-        if (home == null) {
-            println("FantomRunConfigurationTest.testCommandLines skipped: no Fantom home found")
-            return
-        }
+        if (!TestInstalls.requireInstall(home, "a Fantom home") || home == null) return
         val type = FantomRunConfigurationType.instance
         val run = FantomRunConfiguration(project, type.mainFactory, "Foo.main").apply {
             target = "mypod::Foo.main"

@@ -25,10 +25,7 @@ class FantomFormatterCorpusTest : BasePlatformTestCase() {
 
     fun testSysAndUtilAreStable() {
         val home = FantomHome.detect()
-        if (home == null) {
-            println("$tag no Fantom home, skipped")
-            return
-        }
+        if (!TestInstalls.requireInstall(home, "a Fantom home") || home == null) return
         val files = listOf("sys", "util")
             .map { File(home, "src/$it/fan") }
             .flatMap { it.listFiles { f -> f.extension == "fan" }?.toList() ?: emptyList() }

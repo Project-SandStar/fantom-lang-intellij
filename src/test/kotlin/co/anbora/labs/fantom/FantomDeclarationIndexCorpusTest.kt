@@ -20,10 +20,7 @@ class FantomDeclarationIndexCorpusTest : BasePlatformTestCase() {
     private val tag = "FantomDeclarationIndexCorpusTest:"
 
     fun testSysPodIndex() {
-        if (!sysDir.isDirectory) {
-            println("$tag $sysDir missing, skipped")
-            return
-        }
+        if (!TestInstalls.requireInstall(sysDir, "the sys pod sources")) return
         val files = sysDir.listFiles { f -> f.isFile && f.extension == "fan" }?.sortedBy { it.name }.orEmpty()
         assertFalse("no .fan files in $sysDir", files.isEmpty())
 

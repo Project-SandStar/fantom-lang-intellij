@@ -135,7 +135,7 @@ class FantomOverrideTest : BasePlatformTestCase() {
     }
 
     fun testObjSlotsOfferedWithLibrary() {
-        val home = FantomHome.detect() ?: run { println("skipped: no Fantom home"); return }
+        val home = FantomHome.detect() ?: run { TestInstalls.requireInstall(null, "a Fantom home"); return }
         FantomSettings.getInstance(project).homePath = home.path
         WriteAction.runAndWait<RuntimeException> {
             ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.getInstance(), false, true)
