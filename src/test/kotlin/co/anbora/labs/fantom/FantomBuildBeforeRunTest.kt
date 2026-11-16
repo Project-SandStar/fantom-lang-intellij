@@ -258,7 +258,7 @@ class FantomBuildBeforeRunTest : HeavyPlatformTestCase() {
     }
 
     fun testRunUsesThePodBuiltFromTheSources() {
-        if (!File(home, "bin/fant").isFile) return
+        if (!TestInstalls.requireInstall(File(home, "bin/fant"), "Fantom 1.0.84 bin/fant")) return
         val fx = staleInstall()
         val before = fx.installedPod.lastModified() to fx.installedPod.length()
         val installFiles = fx.install.walkTopDown().map { it.path }.toSet()
@@ -280,7 +280,7 @@ class FantomBuildBeforeRunTest : HeavyPlatformTestCase() {
     }
 
     fun testCompileErrorStopsTheLaunch() {
-        if (!File(home, "bin/fant").isFile) return
+        if (!TestInstalls.requireInstall(File(home, "bin/fant"), "Fantom 1.0.84 bin/fant")) return
         val fx = staleInstall(brokenTest)
         val l = launch(testConfig(fx), debug = false)
         PlatformTestUtil.waitWithEventsDispatching("the launch did not end", { l.done }, 180)
@@ -294,7 +294,7 @@ class FantomBuildBeforeRunTest : HeavyPlatformTestCase() {
 
     /** Run with the step, then remove it and run the same environment again: the old work dir is not reused. */
     fun testRerunAfterRemovingTheStepDoesNotReuseTheBuild() {
-        if (!File(home, "bin/fant").isFile) return
+        if (!TestInstalls.requireInstall(File(home, "bin/fant"), "Fantom 1.0.84 bin/fant")) return
         val fx = staleInstall()
         val settings = testConfig(fx)
         val first = launch(settings, debug = false)
@@ -308,7 +308,7 @@ class FantomBuildBeforeRunTest : HeavyPlatformTestCase() {
     }
 
     private fun stepOff(remove: Boolean) {
-        if (!File(home, "bin/fant").isFile) return
+        if (!TestInstalls.requireInstall(File(home, "bin/fant"), "Fantom 1.0.84 bin/fant")) return
         val fx = staleInstall()
         val settings = testConfig(fx)
         if (remove) settings.configuration.beforeRunTasks = emptyList()
@@ -326,7 +326,7 @@ class FantomBuildBeforeRunTest : HeavyPlatformTestCase() {
     }
 
     fun testDebugStopsInTheNewTestMethod() {
-        if (!File(home, "bin/fant").isFile) return
+        if (!TestInstalls.requireInstall(File(home, "bin/fant"), "Fantom 1.0.84 bin/fant")) return
         val fx = staleInstall()
         val file = fx.podDir.findFileByRelativePath("fan/FooTest.fan")!!
         val line = 9 // 0-based: `n := 41` in testNew

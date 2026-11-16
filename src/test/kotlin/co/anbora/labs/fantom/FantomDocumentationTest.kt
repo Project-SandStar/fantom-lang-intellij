@@ -36,7 +36,7 @@ class FantomDocumentationTest : BasePlatformTestCase() {
     /** Configures the Fantom install as a library. Returns false when no home is on this machine. */
     private fun configureHome(): Boolean {
         home = FantomHome.detect()
-        val h = home ?: run { println("FantomDocumentationTest: no Fantom home found, test skipped"); return false }
+        val h = home ?: run { TestInstalls.requireInstall(null, "a Fantom home"); return false }
         FantomSettings.getInstance(project).homePath = h.path
         WriteAction.runAndWait<RuntimeException> {
             ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.getInstance(), false, true)

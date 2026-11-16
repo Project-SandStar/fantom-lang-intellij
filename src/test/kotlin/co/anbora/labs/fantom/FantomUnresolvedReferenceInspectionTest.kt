@@ -40,8 +40,7 @@ class FantomUnresolvedReferenceInspectionTest : FantomInspectionTestBase() {
     }
 
     private fun skip(): Boolean {
-        if (home == null) println("FantomUnresolvedReferenceInspectionTest skipped: no Fantom home found")
-        return home == null
+        return !TestInstalls.requireInstall(home, "a Fantom home")
     }
 
     fun testUnresolvedLocal() {

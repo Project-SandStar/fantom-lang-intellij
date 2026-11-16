@@ -52,10 +52,7 @@ class FantomResolveCorpusTest : BasePlatformTestCase() {
     private val files = LinkedHashMap<String, PsiFile>()
 
     fun testSysPodResolve() {
-        if (!sysDir.isDirectory) {
-            println("$tag $sysDir missing, skipped")
-            return
-        }
+        if (!TestInstalls.requireInstall(sysDir, "the sys pod sources")) return
         val sources = sysDir.listFiles { f -> f.isFile && f.extension == "fan" }?.sortedBy { it.name }.orEmpty()
         assertFalse("no .fan files in $sysDir", sources.isEmpty())
 

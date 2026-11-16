@@ -19,10 +19,7 @@ class FantomInstallScanTest : TestCase() {
     private val skysparkRoot = File(user, "skyspark")
 
     private fun realRows(): List<FantomInstall>? {
-        if (!fantomRoot.isDirectory || !skysparkRoot.isDirectory) {
-            println("FantomInstallScanTest skipped: no ~/fantom or ~/skyspark")
-            return null
-        }
+        if (!TestInstalls.requireInstall(fantomRoot.isDirectory && skysparkRoot.isDirectory, "~/fantom and ~/skyspark")) return null
         return FantomInstalls.pair(FantomInstalls.scan(listOf(fantomRoot, haxallRoot, skysparkRoot)))
     }
 

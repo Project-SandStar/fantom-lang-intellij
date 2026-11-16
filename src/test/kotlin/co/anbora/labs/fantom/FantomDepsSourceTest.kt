@@ -79,7 +79,7 @@ class FantomDepsSourceTest : TestCase() {
     fun testRealSkySpark407PairsWithHaxall407() {
         val sky = File(user, "skyspark/skyspark-4.0.7")
         val hx = File(user, "haxall/haxall-4.0.7")
-        if (skip(sky, hx)) return
+        if (!TestInstalls.requireInstall(sky, "SkySpark 4.0.7") || !TestInstalls.requireInstall(hx, "Haxall 4.0.7")) return
         val rows = FantomInstalls.pair(FantomInstalls.scan(listOf(File(user, "fantom"), File(user, "haxall"), File(user, "skyspark"))))
         assertEquals(hx.path, rows.single { it.path == sky.path }.haxallPath)
         assertEquals(listOf("haystack"), FantomHome.podSources(hx).map { it.pod }.filter { it == "haystack" })

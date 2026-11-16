@@ -43,8 +43,7 @@ class FantomBuildTargetsTest : BasePlatformTestCase() {
 
     private fun ready(): Boolean {
         val ok = sky.isDirectory && fantom.isDirectory && File(fantom, "lib/fan/sys.pod").isFile
-        if (!ok) println("FantomBuildTargetsTest skipped: needs ~/skyspark/skyspark-4.0.7 and ~/fantom/fantom-1.0.84")
-        return ok
+        return TestInstalls.requireInstall(ok, "~/skyspark/skyspark-4.0.7 and ~/fantom/fantom-1.0.84 (with lib/fan/sys.pod)")
     }
 
     private fun tempDir(prefix: String) = FileUtil.createTempDirectory(prefix, null, true).also { temps += it }
@@ -96,7 +95,7 @@ class FantomBuildTargetsTest : BasePlatformTestCase() {
 
     /** A pod using haystack, for Haxall 4.0.7: SkySpark 4.0.7's pods are borrowed, and the next build does not keep them. */
     fun testHaxallTargetBorrowsSkySparkPods() {
-        if (!ready() || !hx.isDirectory) return
+        if (!ready() || !TestInstalls.requireInstall(hx, "Haxall 4.0.7")) return
         val targets = tick(listOf(File(user, "fantom"), File(user, "haxall"), File(user, "skyspark")), emptyList(), hx.path)
         val target = targets.single()
         assertEquals(sky.path, target.skysparkPath)
@@ -131,7 +130,7 @@ class FantomBuildTargetsTest : BasePlatformTestCase() {
     /** SkySpark 3.0.29 has no Fantom 1.0.76: building for it is refused with the warning. */
     fun testMissingFantomRefusesBuild() {
         val old = File(user, "skyspark/skyspark-3.0.29")
-        if (!old.isDirectory) return
+        if (!TestInstalls.requireInstall(old, "SkySpark 3.0.29")) return
         val target = tick(listOf(File(user, "fantom"), File(user, "skyspark")), emptyList(), old.path).single()
         assertNull(target.runner)
         val out = FantomBuildTargets.build(project, pod("ijold", "\"sys 1.0\"", "class Foo {}\n"), "ijold", FantomBuildRequest(target), null)

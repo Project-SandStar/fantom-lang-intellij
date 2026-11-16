@@ -128,7 +128,7 @@ class FantomDebuggerGapsTest : HeavyPlatformTestCase() {
 
     /** The debug command line of a Test configuration: the `fant` main class, JDWP, FAN_DEBUG and the specs. */
     fun testTestDebugCommandLine() {
-        if (!File(home, "bin/fant").isFile) return
+        if (!TestInstalls.requireInstall(File(home, "bin/fant"), "Fantom 1.0.84 bin/fant")) return
         val settings = RunManager.getInstance(project)
             .createConfiguration("FooTest", FantomRunConfigurationType.instance.testFactory)
         val config = settings.configuration as FantomTestRunConfiguration
@@ -145,7 +145,7 @@ class FantomDebuggerGapsTest : HeavyPlatformTestCase() {
 
     /** Debug the Test configuration: stop in `testB`, resume, and the tree shows one pass and one fail. */
     fun testDebugTestConfigurationStopsInTestMethod() {
-        if (!File(home, "bin/fant").isFile) return
+        if (!TestInstalls.requireInstall(File(home, "bin/fant"), "Fantom 1.0.84 bin/fant")) return
         val root = Files.createTempDirectory("fantom-debug-test").toFile()
         val pod = File(root, "dbgtestpod").apply { File(this, "fan").mkdirs() }
         File(pod, "build.fan").writeText(buildSource)
@@ -190,7 +190,7 @@ class FantomDebuggerGapsTest : HeavyPlatformTestCase() {
 
     /** Debug `fan Hello.fan`: the script pod is `Hello_0`, and the breakpoint in `main` hits. */
     fun testDebugScriptStopsInMain() {
-        if (!File(home, "bin/fan").isFile) return
+        if (!TestInstalls.requireInstall(File(home, "bin/fan"), "Fantom 1.0.84 bin/fan")) return
         val root = Files.createTempDirectory("fantom-debug-script").toFile()
         val scripts = File(root, "scripts").apply { mkdirs() }
         File(scripts, "Hello.fan").writeText(scriptSource)

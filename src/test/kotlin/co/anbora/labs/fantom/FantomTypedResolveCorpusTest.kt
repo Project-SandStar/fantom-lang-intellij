@@ -78,10 +78,7 @@ class FantomTypedResolveCorpusTest : BasePlatformTestCase() {
     )
 
     fun testUtilPodTypedResolve() {
-        if (home == null) {
-            println("$tag skipped: no Fantom home found")
-            return
-        }
+        if (!TestInstalls.requireInstall(home, "a Fantom home")) return
         val podDir = File(home, "src/util/fan")
         assertTrue("$podDir is not a folder", podDir.isDirectory)
         val sources = podDir.listFiles { f -> f.isFile && f.extension == "fan" }?.sortedBy { it.name }.orEmpty()

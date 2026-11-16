@@ -17,10 +17,11 @@ class FantomTestRunnerIntegrationTest : BasePlatformTestCase() {
 
     fun testRealFant() {
         val home = FantomHome.detect()
-        if (home == null || SystemInfo.isWindows) {
-            println("FantomTestRunnerIntegrationTest skipped: no Fantom home found")
+        if (SystemInfo.isWindows) {
+            println("FantomTestRunnerIntegrationTest skipped: Windows")
             return
         }
+        if (!TestInstalls.requireInstall(home, "a Fantom home") || home == null) return
         val root = FileUtil.createTempDirectory("fant-run", null, true)
         val pod = File(root, "ijfanttest").apply { mkdirs() }
         File(pod, "build.fan").writeText(

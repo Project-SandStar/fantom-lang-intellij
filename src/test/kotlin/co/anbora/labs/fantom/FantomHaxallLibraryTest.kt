@@ -57,8 +57,7 @@ class FantomHaxallLibraryTest : BasePlatformTestCase() {
     }
 
     private fun skip(): Boolean {
-        if (!ready) println("FantomHaxallLibraryTest skipped: ${haxall.path} or ${fantom.path} missing")
-        return !ready
+        return !TestInstalls.requireInstall(ready, "${haxall.path} and ${fantom.path}")
     }
 
     private fun resolveAt(text: String): PsiElement {

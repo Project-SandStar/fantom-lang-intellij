@@ -27,7 +27,7 @@ class FantomCompletionRankingTest : BasePlatformTestCase() {
     }
 
     private fun withSysLibrary(block: () -> Unit): Boolean {
-        val home = FantomHome.detect() ?: run { println("skipped: no Fantom home"); return false }
+        val home = FantomHome.detect() ?: run { TestInstalls.requireInstall(null, "a Fantom home"); return false }
         FantomSettings.getInstance(project).homePath = home.path
         try {
             WriteAction.runAndWait<RuntimeException> {

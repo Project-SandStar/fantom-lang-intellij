@@ -21,7 +21,7 @@ class FantomHomeKindTest {
     private val skyspark = File(user, "skyspark/skyspark-3.0.29")
 
     private fun present(dir: File): Boolean =
-        dir.isDirectory.also { if (!it) println("FantomHomeKindTest: ${dir.path} missing, check skipped") }
+        TestInstalls.requireInstall(dir.isDirectory, dir.path)
 
     @Test
     fun fantomInstallIsFantom() {

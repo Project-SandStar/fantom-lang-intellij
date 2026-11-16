@@ -20,10 +20,7 @@ class FantomNamedElementCorpusTest : BasePlatformTestCase() {
     private data class Bad(val file: String, val cls: String, val offset: Int, val name: String?, val text: String, val fileHasErrors: Boolean)
 
     fun testSysPodNames() {
-        if (!sysDir.isDirectory) {
-            println("FantomNamedElementCorpusTest: $sysDir missing, skipped")
-            return
-        }
+        if (!TestInstalls.requireInstall(sysDir, "the sys pod sources")) return
         val files = sysDir.listFiles { f -> f.isFile && f.extension == "fan" }
             ?.sortedBy { it.name }
             ?.take(20)

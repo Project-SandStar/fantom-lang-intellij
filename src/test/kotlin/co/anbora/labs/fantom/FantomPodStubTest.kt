@@ -70,7 +70,7 @@ class FantomPodStubTest : ParsingTestCase("", "fan", FantomParserDefinition()) {
 
     fun testHaystackStubs() {
         val pod = File(lib, "haystack.pod")
-        if (!pod.isFile) { println("FantomPodStubTest skipped: ${pod.path} missing"); return }
+        if (!TestInstalls.requireInstall(pod, "SkySpark 3.0.29 haystack.pod")) return
         val base = tempBase()
         try {
             assertTrue(FantomPodStubs.needsGeneration(pod, base))
@@ -99,7 +99,7 @@ class FantomPodStubTest : ParsingTestCase("", "fan", FantomParserDefinition()) {
     }
 
     fun testAllSkySparkPodsParse() {
-        if (!lib.isDirectory) { println("FantomPodStubTest skipped: ${lib.path} missing"); return }
+        if (!TestInstalls.requireInstall(lib, "SkySpark 3.0.29 lib/fan")) return
         val base = tempBase()
         try {
             val pods = FantomPodStubs.podFiles(skyspark)

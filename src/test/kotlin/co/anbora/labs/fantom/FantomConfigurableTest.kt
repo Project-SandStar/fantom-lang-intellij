@@ -63,7 +63,7 @@ class FantomConfigurableTest : BasePlatformTestCase() {
 
     fun testOpeningThePageChangesNothing() {
         assertFalse(configurable.isModified)
-        val home = FantomHome.detect() ?: return
+        val home = FantomHome.detect() ?: run { TestInstalls.requireInstall(null, "a Fantom home"); return }
         // migration: the detected home is the one ticked row and the default target
         val ticked = configurable.currentRows().filter { it.enabled }
         assertEquals(listOf(home.path), ticked.map { it.path })
@@ -79,7 +79,7 @@ class FantomConfigurableTest : BasePlatformTestCase() {
     /** A SkySpark dev build outside the roots, added as a custom folder, ticked and paired. */
     fun testAddCustomFolder() {
         val sky = File(user, "skyspark/skyspark-4.0.7")
-        if (!sky.isDirectory || !File(user, "fantom/fantom-1.0.84").isDirectory) return
+        if (!TestInstalls.requireInstall(sky, "SkySpark 4.0.7") || !TestInstalls.requireInstall(File(user, "fantom/fantom-1.0.84"), "Fantom 1.0.84")) return
         val root = FileUtil.createTempDirectory("roots", null).also { temp = it }
         val dev = File(root, "dev/skyspark-4.0.8 dev1")
         File(dev, "lib/fan").mkdirs()
@@ -103,7 +103,7 @@ class FantomConfigurableTest : BasePlatformTestCase() {
     fun testTickSkySparkAsDefaultTarget() {
         val sky = File(user, "skyspark/skyspark-4.0.7")
         val fantom = File(user, "fantom/fantom-1.0.84")
-        if (!sky.isDirectory || !fantom.isDirectory) return
+        if (!TestInstalls.requireInstall(sky, "SkySpark 4.0.7") || !TestInstalls.requireInstall(fantom, "Fantom 1.0.84")) return
         configurable.setEnabled(sky.path, true)
         configurable.selectDefault(sky.path)
         assertTrue(configurable.isModified)
@@ -123,7 +123,7 @@ class FantomConfigurableTest : BasePlatformTestCase() {
     fun testDefaultTargetWinsOnDuplicatePods() {
         val hx = File(user, "haxall/haxall-4.0.7")
         val fantom = File(user, "fantom/fantom-1.0.84")
-        if (!hx.isDirectory || !fantom.isDirectory) return
+        if (!TestInstalls.requireInstall(hx, "Haxall 4.0.7") || !TestInstalls.requireInstall(fantom, "Fantom")) return
         configurable.setEnabled(hx.path, true)
         configurable.setEnabled(fantom.path, true)
         configurable.selectDefault(hx.path)
@@ -141,7 +141,7 @@ class FantomConfigurableTest : BasePlatformTestCase() {
     fun testChosenFantomRoundTrip() {
         val sky = File(user, "skyspark/skyspark-4.0.7")
         val other = File(user, "fantom/fantom-1.0.83")
-        if (!sky.isDirectory || !other.isDirectory) return
+        if (!TestInstalls.requireInstall(sky, "SkySpark 4.0.7") || !TestInstalls.requireInstall(other, "Fantom 1.0.83")) return
         configurable.setEnabled(sky.path, true)
         configurable.choose(sky.path, other.path)
         configurable.apply()
@@ -175,7 +175,7 @@ class FantomConfigurableTest : BasePlatformTestCase() {
     fun testMigrationFromHaxallHome() {
         val hx = File(user, "haxall/haxall-4.0.7")
         val fantom = File(user, "fantom/fantom-1.0.83")
-        if (!hx.isDirectory || !fantom.isDirectory) return
+        if (!TestInstalls.requireInstall(hx, "Haxall 4.0.7") || !TestInstalls.requireInstall(fantom, "Fantom")) return
         val s = FantomSettings.getInstance(project)
         s.homePath = hx.path
         s.sourcesPath = fantom.path
