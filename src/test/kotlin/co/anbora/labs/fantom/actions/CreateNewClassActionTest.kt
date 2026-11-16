@@ -26,12 +26,10 @@ class CreateNewClassActionTest : BasePlatformTestCase() {
         assertTrue(ActionManager.getInstance().getAction("Fantom.NewFantomClass") is CreateNewClassAction)
     }
 
-    // Current behaviour: plugin.xml registers the action but adds it to no group, so it is
-    // not in the File > New menu. This pins that; flip it when the action gets an add-to-group.
-    fun testActionIsNotInNewGroup() {
+    fun testActionIsInNewGroup() {
         val group = ActionManager.getInstance().getAction(IdeActions.GROUP_NEW) as DefaultActionGroup
         val ids = group.getChildActionsOrStubs().map { ActionManager.getInstance().getId(it) }
-        assertFalse(ids.contains("Fantom.NewFantomClass"))
+        assertTrue(ids.toString(), ids.contains("Fantom.NewFantomClass"))
     }
 
     fun testBuildDialogSetsTitleAndKind() {
@@ -66,8 +64,8 @@ class CreateNewClassActionTest : BasePlatformTestCase() {
         assertEquals("Fantom Class", getActionName.invoke(CreateNewClassAction(), null, "Foo", "Fantom Class"))
     }
 
-    // Current behaviour: the platform logs an error for the template, because plugin.xml has no
-    // <internalFileTemplate name="Fantom Class"/>. The error is caught here; the file is still made.
+    // plugin.xml registers <internalFileTemplate name="Fantom Class"/>, so the platform logs
+    // no error for the bundled template. Any logged error is recorded and fails the test.
     fun testTemplateCreatesClassFile() {
         val errors = mutableListOf<String>()
         val processor = object : LoggedErrorProcessor() {
@@ -85,6 +83,6 @@ class CreateNewClassActionTest : BasePlatformTestCase() {
             assertEquals("Foo.fan", file!!.name)
             assertEquals("class Foo {\n\n}", file.text.trimEnd())
         }
-        assertTrue(errors.toString(), errors.any { it.contains("Unknown bundled file template: Fantom Class") })
+        assertEquals(emptyList<String>(), errors)
     }
 }

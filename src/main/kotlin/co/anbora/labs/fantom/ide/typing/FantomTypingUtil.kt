@@ -3,6 +3,8 @@ package co.anbora.labs.fantom.ide.typing
 import co.anbora.labs.fantom.lang.FantomLanguage
 import co.anbora.labs.fantom.lang.core.FANTOM_COMMENTS
 import co.anbora.labs.fantom.lang.core.STRING_LITERALS
+import co.anbora.labs.fantom.lang.core.psi.FantomTypes.LBRACE
+import co.anbora.labs.fantom.lang.core.psi.FantomTypes.RBRACE
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiFile
@@ -63,6 +65,39 @@ internal object FantomTypingUtil {
         var i = offset - 1
         while (i >= lineStart && (chars[i] == ' ' || chars[i] == '\t')) i--
         return if (i >= lineStart) i else -1
+    }
+
+    /**
+     * True when a closure parameter list may start at [offset]: the text before it on the line
+     * is blank, ends with `(` `,` `=` `{` `;` `}`, or ends with the keyword `return`.
+     */
+    fun closureCanStart(document: Document, offset: Int): Boolean {
+        val chars = document.charsSequence
+        val lineStart = document.getLineStartOffset(document.getLineNumber(offset))
+        var i = offset - 1
+        while (i >= lineStart && (chars[i] == ' ' || chars[i] == '\t')) i--
+        if (i < lineStart) return true // statement start
+        when (chars[i]) {
+            '(', ',', '=', '{', ';', '}' -> return true
+        }
+        var start = i
+        while (start >= lineStart && Character.isJavaIdentifierPart(chars[start])) start--
+        return chars.subSequence(start + 1, i + 1).toString() == "return"
+    }
+
+    /** Number of `{` tokens minus `}` tokens in the document. Braces in strings and comments do not count. */
+    fun braceBalance(editor: Editor): Int {
+        if (editor.document.textLength == 0) return 0
+        val iterator = editor.highlighter.createIterator(0)
+        var balance = 0
+        while (!iterator.atEnd()) {
+            when (iterator.tokenType) {
+                LBRACE -> balance++
+                RBRACE -> balance--
+            }
+            iterator.advance()
+        }
+        return balance
     }
 
     /** Offset of the first non-blank character at or after [offset] on the same line, or -1. */

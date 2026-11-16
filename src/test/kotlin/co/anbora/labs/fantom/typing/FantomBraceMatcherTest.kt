@@ -75,12 +75,10 @@ class FantomBraceMatcherTest : BasePlatformTestCase() {
         "class C { Void f() { x := [<caret>] } }", "]",
         "class C { Void f() { x := []<caret> } }")
 
-    // Current behaviour: FantomEnterHandler stops the Enter chain, so the platform does not
-    // add a `}` after an unmatched `{`. Only the indent step is added.
-    fun testEnterAfterUnmatchedBraceAddsNoClose() {
+    fun testEnterAfterUnmatchedBraceAddsClose() {
         myFixture.configureByText("A.fan", "class C {\n  Void f() {<caret>\n}")
         myFixture.type('\n')
-        assertEquals("class C {\n  Void f() {\n    \n}", myFixture.editor.document.text)
+        assertEquals("class C {\n  Void f() {\n    \n  }\n}", myFixture.editor.document.text)
         assertEquals("class C {\n  Void f() {\n    ".length, myFixture.caretOffset)
     }
 }

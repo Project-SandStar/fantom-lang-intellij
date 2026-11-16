@@ -1,5 +1,6 @@
 package co.anbora.labs.fantom.ide.typing
 
+import co.anbora.labs.fantom.ide.typing.FantomTypingUtil.braceBalance
 import co.anbora.labs.fantom.ide.typing.FantomTypingUtil.firstNonBlankAfter
 import co.anbora.labs.fantom.ide.typing.FantomTypingUtil.isFantom
 import co.anbora.labs.fantom.ide.typing.FantomTypingUtil.lastNonBlankBefore
@@ -7,6 +8,7 @@ import co.anbora.labs.fantom.ide.typing.FantomTypingUtil.lineIndent
 import co.anbora.labs.fantom.ide.typing.FantomTypingUtil.tokenAt
 import co.anbora.labs.fantom.lang.core.STRING_LITERALS
 import co.anbora.labs.fantom.lang.core.psi.FantomTypes.FANDOC_LINE_COMMENT
+import co.anbora.labs.fantom.lang.core.psi.FantomTypes.LBRACE
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate.Result
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter
@@ -20,7 +22,9 @@ private const val STEP = "  "
 
 /**
  * Enter in Fantom code. There is no formatter yet, so the new line copies the indent of the
- * current line and adds two spaces after `{`. Enter inside a `**` fandoc comment continues it.
+ * current line and adds two spaces after `{`. Enter after an unmatched `{` at the end of a line
+ * also adds the closing `}` on its own line. A `{` in a string or a comment does not count.
+ * Enter inside a `**` fandoc comment continues it.
  */
 class FantomEnterHandler : EnterHandlerDelegateAdapter() {
 
@@ -46,11 +50,16 @@ class FantomEnterHandler : EnterHandlerDelegateAdapter() {
         if (before != null && STRING_LITERALS.contains(before)) return Result.Continue
 
         val last = lastNonBlankBefore(document, offset)
-        if (last >= 0 && chars[last] == '{') {
+        if (last >= 0 && chars[last] == '{' && tokenAt(editor, last) == LBRACE) {
             val next = firstNonBlankAfter(document, offset)
             if (next >= 0 && chars[next] == '}') {
                 document.deleteString(offset, next)
                 document.insertString(offset, "\n$indent$STEP\n$indent")
+                return moveTo(editor, caretOffset, offset + 1 + indent.length + STEP.length)
+            }
+            if (next < 0 && braceBalance(editor) > 0) {
+                // Unmatched `{` at the end of the line: add the `}` on its own line, like Java.
+                document.insertString(offset, "\n$indent$STEP\n$indent}")
                 return moveTo(editor, caretOffset, offset + 1 + indent.length + STEP.length)
             }
             return insert(editor, caretOffset, offset, "\n$indent$STEP")

@@ -1,5 +1,6 @@
 package co.anbora.labs.fantom.ide.typing
 
+import co.anbora.labs.fantom.ide.typing.FantomTypingUtil.closureCanStart
 import co.anbora.labs.fantom.ide.typing.FantomTypingUtil.isFantom
 import co.anbora.labs.fantom.ide.typing.FantomTypingUtil.isInStringOrComment
 import co.anbora.labs.fantom.ide.typing.FantomTypingUtil.lineIndent
@@ -14,8 +15,9 @@ import com.intellij.psi.PsiFile
 
 /**
  * Typing `|` where a closure can start inserts `||` with the caret in between, typing `|`
- * before a `|` skips it, and typing `}` on a line of its own moves it to the indent of the
- * matching `{`.
+ * before the closing `|` of closure parameters skips it, and typing `}` on a line of its own
+ * moves it to the indent of the matching `{`. Before any other `|` (such as the `||`
+ * operator) typing `|` inserts one pipe.
  */
 class FantomTypedHandler : TypedHandlerDelegate() {
 
@@ -26,11 +28,12 @@ class FantomTypedHandler : TypedHandlerDelegate() {
         val chars = document.charsSequence
         if (isInStringOrComment(editor, offset)) return Result.CONTINUE
 
-        if (offset < chars.length && chars[offset] == '|') {
+        if (offset < chars.length && chars[offset] == '|' && isClosingParamPipe(document, offset)) {
             editor.caretModel.moveToOffset(offset + 1)
             return Result.STOP
         }
         if (offset > 0 && chars[offset - 1] == '|') return Result.CONTINUE
+        if (offset < chars.length && chars[offset] == '|') return Result.CONTINUE
         if (offset < chars.length && Character.isUnicodeIdentifierPart(chars[offset])) return Result.CONTINUE
         if (!closureCanStart(document, offset)) return Result.CONTINUE
 
@@ -55,18 +58,18 @@ class FantomTypedHandler : TypedHandlerDelegate() {
         return Result.STOP
     }
 
-    private fun closureCanStart(document: Document, offset: Int): Boolean {
+    /**
+     * True when the `|` at [pipe] closes a closure parameter list: an earlier `|` on the same
+     * line opens it where a closure can start, and no other `|` sits between the two. This is
+     * the pipe that [beforeCharTyped] inserted as the second half of `||`. A `|` of the `||`
+     * operator (as in `a || b`) has no such opener, so typing `|` before it inserts a pipe.
+     */
+    private fun isClosingParamPipe(document: Document, pipe: Int): Boolean {
         val chars = document.charsSequence
-        val lineStart = document.getLineStartOffset(document.getLineNumber(offset))
-        var i = offset - 1
-        while (i >= lineStart && (chars[i] == ' ' || chars[i] == '\t')) i--
-        if (i < lineStart) return true // statement start
-        when (chars[i]) {
-            '(', ',', '=', '{', ';', '}' -> return true
-        }
-        var start = i
-        while (start >= lineStart && Character.isJavaIdentifierPart(chars[start])) start--
-        return chars.subSequence(start + 1, i + 1).toString() == "return"
+        val lineStart = document.getLineStartOffset(document.getLineNumber(pipe))
+        var i = pipe - 1
+        while (i >= lineStart && chars[i] != '|') i--
+        return i >= lineStart && closureCanStart(document, i)
     }
 
     private fun matchingOpenBrace(editor: Editor, closeOffset: Int): Int? {

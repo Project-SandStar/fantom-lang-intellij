@@ -40,6 +40,7 @@
         <typedHandler implementation="co.anbora.labs.fantom.ide.typing.FantomTypedHandler"/>
         <enterHandlerDelegate implementation="co.anbora.labs.fantom.ide.typing.FantomEnterHandler" order="first"/>
         <backspaceHandlerDelegate implementation="co.anbora.labs.fantom.ide.typing.FantomBackspaceHandler"/>
+        <internalFileTemplate name="Fantom Class"/>
         <lang.foldingBuilder language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.folding.FantomFoldingBuilder"/>
         <lang.formatter language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.formatter.FantomFormattingModelBuilder"/>
         <langCodeStyleSettingsProvider implementation="co.anbora.labs.fantom.ide.formatter.FantomLanguageCodeStyleSettingsProvider"/>
@@ -177,6 +178,7 @@
                 class="co.anbora.labs.fantom.ide.actions.CreateNewClassAction"
                 text="Fantom Class"
                 description="Create new Fantom class">
+            <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
         </action>
     </actions>
     <actions>
