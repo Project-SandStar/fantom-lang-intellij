@@ -28,14 +28,19 @@ class FantomBackspaceHandlerTest : BasePlatformTestCase() {
         "class C { Void f() { g(<caret>) } }",
         "class C { Void f() { g<caret> } }")
 
-    // Current behaviour: the handler only checks that the next char is the same quote, so
-    // backspace on the closing quote of "a" also eats the opening quote of "b".
-    fun testClosingQuoteBeforeNextStringEatsBoth() = doBackspace(
+    fun testClosingQuoteBeforeNextStringRemovesOnlyItself() = doBackspace(
         "class C { Void f() { x := \"a\"<caret>\"b\" } }",
-        "class C { Void f() { x := \"a<caret>b\" } }")
+        "class C { Void f() { x := \"a<caret>\"b\" } }")
 
-    // Current behaviour: same rule for `||`, the logical or operator.
-    fun testOrOperatorIsRemovedWhole() = doBackspace(
+    fun testOrOperatorLosesOnePipe() = doBackspace(
         "class C { Void f() { x := a |<caret>| b } }",
-        "class C { Void f() { x := a <caret> b } }")
+        "class C { Void f() { x := a <caret>| b } }")
+
+    fun testEmptyClosureParamsAfterAssignRemovesBoth() = doBackspace(
+        "class C { Void f() { x := |<caret>| } }",
+        "class C { Void f() { x := <caret> } }")
+
+    fun testClosingBacktickBeforeNextUriRemovesOnlyItself() = doBackspace(
+        "class C { Void f() { x := `a`<caret>`b` } }",
+        "class C { Void f() { x := `a<caret>`b` } }")
 }

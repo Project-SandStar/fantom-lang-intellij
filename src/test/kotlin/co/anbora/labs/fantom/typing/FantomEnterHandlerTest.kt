@@ -36,9 +36,41 @@ class FantomEnterHandlerTest : BasePlatformTestCase() {
         "class C {\n  // note<caret>\n}",
         "class C {\n  // note\n  <caret>\n}")
 
-    // Current behaviour: the `{` check does not look at comments, so a `{` at the end of a
-    // line comment still adds one indent step.
-    fun testBraceAtEndOfLineCommentIndents() = doEnter(
+    fun testBraceAtEndOfLineCommentKeepsIndent() = doEnter(
         "class C {\n  // see {<caret>\n}",
-        "class C {\n  // see {\n    <caret>\n}")
+        "class C {\n  // see {\n  <caret>\n}")
+
+    fun testBraceAtEndOfBlockCommentKeepsIndent() = doEnter(
+        "class C {\n  /* see {<caret> */\n}",
+        "class C {\n  /* see {\n  <caret> */\n}")
+
+    fun testBraceAtEndOfStringKeepsIndent() = doEnter(
+        "class C {\n  Void f() {\n    x := \"a {\"<caret>\n  }\n}",
+        "class C {\n  Void f() {\n    x := \"a {\"\n    <caret>\n  }\n}")
+
+    // Enter inside a string goes to the platform: the `{` before the caret adds no indent
+    // step and no `}`.
+    fun testBraceInsideStringAddsNoIndentOrCloseBrace() {
+        myFixture.configureByText("A.fan", "class C {\n  Void f() {\n    x := \"a {<caret>b\"\n  }\n}")
+        myFixture.type('\n')
+        val text = myFixture.editor.document.text
+        assertEquals(text, 2, text.count { it == '}' })
+        assertFalse(text, text.contains("{\n      "))
+    }
+
+    fun testUnmatchedBraceAddsCloseBrace() = doEnter(
+        "class C {\n  Void f() {<caret>\n}",
+        "class C {\n  Void f() {\n    <caret>\n  }\n}")
+
+    fun testUnmatchedBraceAtTopLevelAddsCloseBrace() = doEnter(
+        "class C {<caret>",
+        "class C {\n  <caret>\n}")
+
+    fun testMatchedBraceAddsNoSecondCloseBrace() = doEnter(
+        "class C {\n  Void f() {<caret>\n  }\n}",
+        "class C {\n  Void f() {\n    <caret>\n  }\n}")
+
+    fun testBraceInStringDoesNotCountAsUnmatched() = doEnter(
+        "class C {\n  Void f() {<caret>\n  }\n  Str s := \"}\"\n}",
+        "class C {\n  Void f() {\n    <caret>\n  }\n  Str s := \"}\"\n}")
 }

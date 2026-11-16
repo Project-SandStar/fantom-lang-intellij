@@ -51,11 +51,20 @@ class FantomTypedHandlerTest : BasePlatformTestCase() {
         "class C { Void f() {} } // g(<caret>", "|",
         "class C { Void f() {} } // g(|<caret>")
 
-    // Current behaviour: `|` before any `|` steps over it, also before the `||` operator.
-    // The user wanted a third pipe but only the caret moves.
-    fun testPipeBeforeOrOperatorStepsOver() = doType(
+    // The handler inserts `||` only where a closure can start, so it steps over a `|` only
+    // when an opening `|` at such a place comes before it. The `||` operator has no such
+    // opener: typing `|` before it inserts one pipe.
+    fun testPipeBeforeOrOperatorInsertsPipe() = doType(
         "class C { Void f() { x := a <caret>|| b } }", "|",
-        "class C { Void f() { x := a |<caret>| b } }")
+        "class C { Void f() { x := a |<caret>|| b } }")
+
+    fun testPipeBeforeClosingParamPipeStepsOver() = doType(
+        "class C { Void f() { list.each(|Int a, Str b<caret>|) } }", "|",
+        "class C { Void f() { list.each(|Int a, Str b|<caret>) } }")
+
+    fun testPipeTwiceMakesEmptyParamList() = doType(
+        "class C { Void f() { list.each(<caret>) } }", "||",
+        "class C { Void f() { list.each(||<caret>) } }")
 
     fun testCloseBraceOnCodeLineIsLeftAlone() = doType(
         "class C {\n  Void f() {\n    x := 1 <caret>\n}", "}",
