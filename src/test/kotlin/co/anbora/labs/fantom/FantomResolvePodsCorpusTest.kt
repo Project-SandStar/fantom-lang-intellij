@@ -96,14 +96,8 @@ class FantomResolvePodsCorpusTest : BasePlatformTestCase() {
 
         /**
          * Known unresolved names, as `pod/File.fan:name` (no line, so edits above do not break it).
-         * TODO: fix resolve for these in main code, then remove them.
+         * Empty: every name in [PODS] resolves. Add an entry only with a TODO to fix it in main code.
          */
-        val ALLOWED = setOf(
-            // Bare `vals` / `fromStr` inside an enum: the compiler-made enum slots are not declared anywhere.
-            "crypto/San.fan:vals",
-            "graphics/Font.fan:fromStr",
-            // `new make(..) { _make(tagName, ns) }` calls `private native Void _make(..)` declared below it.
-            "dom/Elem.fan:_make",
-        )
+        val ALLOWED = emptySet<String>()
     }
 }

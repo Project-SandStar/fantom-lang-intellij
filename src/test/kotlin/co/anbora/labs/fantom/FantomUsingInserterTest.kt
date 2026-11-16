@@ -40,9 +40,9 @@ class FantomUsingInserterTest : BasePlatformTestCase() {
         assertEquals("#! /usr/bin/env fan\nusing util::Json\nclass A {}", insert("#! /usr/bin/env fan\nclass A {}", "util", "Json"))
     }
 
-    /** Current behaviour: with no newline after the shebang, the line is added at the end with no line break before it. */
+    /** With no newline after the shebang, the `using` line still goes on a line of its own. */
     fun testShebangOnlyWithoutNewline() {
-        assertEquals("#! /usr/bin/env fanusing util::Json\n", insert("#! /usr/bin/env fan", "util", "Json"))
+        assertEquals("#! /usr/bin/env fan\nusing util::Json\n", insert("#! /usr/bin/env fan", "util", "Json"))
     }
 
     fun testIfNeededSkipsVisibleType() {
