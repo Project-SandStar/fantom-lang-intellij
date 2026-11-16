@@ -129,8 +129,16 @@ tasks {
         systemProperty("NO_FS_ROOTS_ACCESS_CHECK", "true")
         System.getenv("FANTOM_TEST_USER_HOME")?.let { systemProperty("user.home", it) }
         testLogging {
-            showStandardStreams = true
-            events("passed", "failed", "skipped")
+            // On CI only failures are printed: GitLab drops a job log over 4 MB, and the
+            // JUnit XML reports keep every test's output anyway.
+            val ci = System.getenv("CI") == "true"
+            showStandardStreams = !ci
+            if (ci) {
+                events("failed", "skipped")
+                exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+            } else {
+                events("passed", "failed", "skipped")
+            }
         }
     }
 
