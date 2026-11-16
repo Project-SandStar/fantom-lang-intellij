@@ -12,7 +12,7 @@
 | Inlay type hints | The inferred type after `x := ...` and on untyped closure parameters |
 | Live templates | `main`, `if`, `ife`, `for`, `while`, `each`, `try`, `tryf`, `sw`, `echo`, `doc`, `class`, `fn` |
 | Postfix templates | `.if`, `.not`, `.each`, `.echo`, `.var`, `.return`, `.null`, `.nn` |
-| Typing helpers | Quotes and backticks pair, `\|` pairs for closures, Enter indents inside braces and continues `**` fandoc |
+| Typing helpers | Quotes and backticks pair, `\|` pairs for closures, Enter indents inside braces, adds the `}` after an unmatched `{`, and continues `**` fandoc |
 | Formatter | Cmd+Alt+L fixes indentation and leaves in-line spacing alone |
 
 ## Navigation

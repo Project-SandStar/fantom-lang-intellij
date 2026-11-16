@@ -3,6 +3,7 @@ package co.anbora.labs.fantom.ide.typing
 import co.anbora.labs.fantom.ide.typing.FantomTypingUtil.braceBalance
 import co.anbora.labs.fantom.ide.typing.FantomTypingUtil.firstNonBlankAfter
 import co.anbora.labs.fantom.ide.typing.FantomTypingUtil.isFantom
+import co.anbora.labs.fantom.ide.typing.FantomTypingUtil.isInStringOrComment
 import co.anbora.labs.fantom.ide.typing.FantomTypingUtil.lastNonBlankBefore
 import co.anbora.labs.fantom.ide.typing.FantomTypingUtil.lineIndent
 import co.anbora.labs.fantom.ide.typing.FantomTypingUtil.tokenAt
@@ -47,7 +48,8 @@ class FantomEnterHandler : EnterHandlerDelegateAdapter() {
         if (before == FANDOC_LINE_COMMENT) {
             return insert(editor, caretOffset, offset, "\n$indent** ")
         }
-        if (before != null && STRING_LITERALS.contains(before)) return Result.Continue
+        // Inside a string literal the platform handles Enter. A string that ends at the caret is closed.
+        if (before != null && STRING_LITERALS.contains(before) && isInStringOrComment(editor, offset)) return Result.Continue
 
         val last = lastNonBlankBefore(document, offset)
         if (last >= 0 && chars[last] == '{' && tokenAt(editor, last) == LBRACE) {
