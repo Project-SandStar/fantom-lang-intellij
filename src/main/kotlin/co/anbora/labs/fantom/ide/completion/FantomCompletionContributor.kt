@@ -9,6 +9,7 @@ import co.anbora.labs.fantom.lang.core.psi.FantomClosureParam
 import co.anbora.labs.fantom.lang.core.psi.FantomCtorDef
 import co.anbora.labs.fantom.lang.core.psi.FantomDotCall
 import co.anbora.labs.fantom.lang.core.psi.FantomDynCallStm
+import co.anbora.labs.fantom.lang.core.psi.FantomEnumDef
 import co.anbora.labs.fantom.lang.core.psi.FantomEnumValDef
 import co.anbora.labs.fantom.lang.core.psi.FantomFacetItems
 import co.anbora.labs.fantom.lang.core.psi.FantomFacetVal
@@ -35,6 +36,7 @@ import co.anbora.labs.fantom.lang.core.psi.FantomType
 import co.anbora.labs.fantom.lang.core.psi.FantomTypes
 import co.anbora.labs.fantom.lang.index.FantomDeclarationIndex
 import co.anbora.labs.fantom.lang.index.FantomDeclarationKind
+import co.anbora.labs.fantom.lang.resolve.FantomEnumSlots
 import co.anbora.labs.fantom.lang.resolve.FantomFfi
 import co.anbora.labs.fantom.lang.resolve.FantomScope
 import co.anbora.labs.fantom.lang.resolve.FantomSlotLookup
@@ -276,7 +278,8 @@ class FantomCompletionContributor : CompletionContributor() {
         ) {
             val hereName = FantomScope.enclosingType(at)?.name
             var index = 0
-            for ((slot, tier) in rankedSlots(type, project, scope)) {
+            val ranked = rankedSlots(type, project, scope)
+            for ((slot, tier) in ranked) {
                 val mods = FantomPresentation.modifiers(slot)
                 val isCtor = slot is FantomCtorDef
                 val foreign = hereName == null || FantomScope.enclosingType(slot)?.name != hereName
@@ -294,6 +297,20 @@ class FantomCompletionContributor : CompletionContributor() {
                 }
                 add(withPriority(slotElement(slot), priority - index * STEP))
                 index++
+            }
+            // An enum's compiler-made static slots, `vals` and `fromStr`: after `Type.` and bare inside it.
+            if (type is FantomEnumDef && (kind == Receiver.TYPE || kind == Receiver.BARE)) {
+                val declared = ranked.mapTo(HashSet()) { it.first.name }
+                val enumName = type.name ?: ""
+                for (name in FantomEnumSlots.NAMES) {
+                    if (name in declared) continue
+                    var b = LookupElementBuilder.create(name)
+                        .withIcon(if (name == FantomEnumSlots.VALS) AllIcons.Nodes.Field else AllIcons.Nodes.Method)
+                        .withTypeText(FantomEnumSlots.presentableType(enumName, name), true)
+                    FantomEnumSlots.tailText(name)?.let { b = b.withTailText(it, true).withInsertHandler(ParensInsertHandler) }
+                    add(withPriority(b, OWN_SLOT - index * STEP))
+                    index++
+                }
             }
         }
 

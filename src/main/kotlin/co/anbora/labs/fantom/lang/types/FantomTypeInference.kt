@@ -20,6 +20,7 @@ import co.anbora.labs.fantom.lang.core.psi.FantomTypes.SUPER
 import co.anbora.labs.fantom.lang.core.psi.FantomTypes.THIS
 import co.anbora.labs.fantom.lang.core.psi.FantomTypes.URI_LITERAL
 import co.anbora.labs.fantom.lang.index.FantomDeclarationIndex
+import co.anbora.labs.fantom.lang.resolve.FantomEnumSlots
 import co.anbora.labs.fantom.lang.resolve.FantomReference
 import co.anbora.labs.fantom.lang.resolve.FantomScope
 import com.intellij.openapi.project.Project
@@ -284,7 +285,7 @@ object FantomTypeInference {
     private fun typeOfReference(id: FantomId?): FanType? {
         val ref = id?.reference as? FantomReference ?: return null
         val targets = ref.resolveAll()
-        val types = targets.mapNotNull { typeOfDeclaration(it) }.distinct()
+        val types = targets.mapNotNull { FantomEnumSlots.typeOf(it, ref.name) ?: typeOfDeclaration(it) }.distinct()
         return types.singleOrNull()
     }
 
@@ -337,6 +338,7 @@ object FantomTypeInference {
         val closureArg = closure ?: call?.let { closureArgument(it) }
         val args = call?.args?.exprList ?: nextArgs
         val types = ref.resolveAll().mapNotNull { target ->
+            FantomEnumSlots.typeOf(target, ref.name)?.let { return@mapNotNull it }
             val declared = typeOfDeclaration(target) ?: return@mapNotNull null
             val owner = FantomDeclarationIndex.enclosingTypeName(target)
             val generic = owner in FantomGenerics.GENERIC_OWNERS

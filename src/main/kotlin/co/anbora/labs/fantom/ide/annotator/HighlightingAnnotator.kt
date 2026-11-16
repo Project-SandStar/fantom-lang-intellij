@@ -29,6 +29,7 @@ import co.anbora.labs.fantom.lang.core.psi.FantomStaticCall
 import co.anbora.labs.fantom.lang.core.psi.FantomType
 import co.anbora.labs.fantom.lang.core.psi.FantomTypes
 import co.anbora.labs.fantom.lang.core.tokenSetOf
+import co.anbora.labs.fantom.lang.resolve.FantomEnumSlots
 import co.anbora.labs.fantom.lang.resolve.FantomReference
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
@@ -181,7 +182,7 @@ class HighlightingAnnotator: Annotator {
         val targets = ref.resolveAll()
         if (targets.isEmpty()) return unresolvedColor(id, parent)
         // One colour only when every target agrees; else leave the id alone.
-        return targets.mapTo(HashSet()) { colorOf(it) }.singleOrNull()
+        return targets.mapTo(HashSet()) { syntheticEnumSlotColor(it, ref.name) ?: colorOf(it) }.singleOrNull()
     }
 
     private fun declarationColor(decl: FantomNamedElement): FantomColors? = when (decl) {
@@ -195,6 +196,13 @@ class HighlightingAnnotator: Annotator {
         is FantomLocalDef, is FantomCatchDef -> FantomColors.LOCAL_VARIABLE
         is FantomParam, is FantomClosureParam -> FantomColors.PARAMETER
         else -> null
+    }
+
+    // An enum's compiler-made `vals` (static const field) and `fromStr` (static ctor).
+    private fun syntheticEnumSlotColor(target: FantomNamedElement, name: String): FantomColors? = when {
+        !FantomEnumSlots.isSynthetic(target, name) -> null
+        name == FantomEnumSlots.VALS -> FantomColors.CONSTANT
+        else -> FantomColors.STATIC_METHOD
     }
 
     private fun colorOf(target: FantomNamedElement): FantomColors? = when (target) {

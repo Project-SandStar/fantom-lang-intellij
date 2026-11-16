@@ -180,6 +180,7 @@ class FantomReference(
      * Slots named [name] on [start], then on each declared supertype, breadth first,
      * and last on the implicit roots every Fantom type has: `Enum` for enums, `Facet`
      * for facets, and `Obj` for everything (where `echo`, `toStr`, `equals` live).
+     * An enum's compiler-made `vals` and `fromStr` ([FantomEnumSlots]) resolve to the enum.
      */
     private fun slotsInTypeChain(start: FantomNamedElement, name: String, scope: GlobalSearchScope): List<FantomNamedElement> {
         val project = element.project
@@ -203,6 +204,8 @@ class FantomReference(
             seenNames += typeName
             val hit = FantomScope.ownSlots(type).filter { it.name == name }
             if (hit.isNotEmpty()) return hit
+            // `vals` and `fromStr` of an enum: made by the compiler, so they resolve to the enum.
+            FantomEnumSlots.find(type, name)?.let { return listOf(it) }
             queue += FantomScope.superTypes(type, project, scope)
         }
     }
