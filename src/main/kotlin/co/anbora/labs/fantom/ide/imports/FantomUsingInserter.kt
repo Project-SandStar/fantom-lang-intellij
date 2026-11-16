@@ -34,7 +34,11 @@ object FantomUsingInserter {
         if (lastUsing != null) {
             document.insertString(lastUsing.textRange.endOffset, "\n$statement")
         } else {
-            document.insertString(topInsertOffset(document.text), "$statement\n")
+            val text = document.text
+            val offset = topInsertOffset(text)
+            // A shebang with no line break after it: start a new line first.
+            val prefix = if (offset > 0 && text[offset - 1] != '\n') "\n" else ""
+            document.insertString(offset, "$prefix$statement\n")
         }
     }
 

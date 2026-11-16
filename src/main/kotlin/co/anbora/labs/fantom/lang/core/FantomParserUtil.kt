@@ -64,15 +64,16 @@ object FantomParserUtil: GeneratedParserUtilBase() {
      * Guard for `simpleType`. The compiler (`Parser.simpleType`) accepts a name
      * only when it is an imported type; the plugin has no import table, so it
      * uses the naming rule instead (grammar-work.md section 5): a type name is
-     * an IDENTIFIER whose first char is uppercase or `_`, or any IDENTIFIER
-     * followed by `::` (a pod name in `pod::Name`). Consumes nothing.
+     * an IDENTIFIER whose first char after any leading `_` is uppercase (`Str`,
+     * `_Foo`, but not `_make`, a private slot name), or any IDENTIFIER followed
+     * by `::` (a pod name in `pod::Name`). Consumes nothing.
      */
     @JvmStatic
     fun typeName(b: PsiBuilder, level: Int): Boolean {
         if (b.tokenType != IDENTIFIER) return false
         if (b.lookAhead(1) == COLON_COLON) return true
-        val c = b.tokenText?.firstOrNull() ?: return false
-        return c.isUpperCase() || c == '_'
+        val c = b.tokenText?.firstOrNull { it != '_' } ?: return false
+        return c.isUpperCase()
     }
 
     // ---- newline and whitespace sensitivity ---------------------------------
