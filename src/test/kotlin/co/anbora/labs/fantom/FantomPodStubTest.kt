@@ -83,7 +83,7 @@ class FantomPodStubTest : ParsingTestCase("", "fan", FantomParserDefinition()) {
             assertEquals("fan", fan.name)
             assertEquals("haystack", fan.parentFile.name)
             val etc = File(fan, "Etc.fan")
-            assertFalse(etc.canWrite())
+            assertTrue("generated stub must be read-only", isReadOnly(etc))
             val text = etc.readText()
             assertTrue(text, text.startsWith("** Generated from haystack.pod 3.0.29; read-only."))
             assertTrue(text, text.contains("const class Etc"))
@@ -125,6 +125,23 @@ class FantomPodStubTest : ParsingTestCase("", "fan", FantomParserDefinition()) {
             assertEquals(worst.joinToString("\n") { "${it.first.name}: ${it.second} ${it.third}" }, 0, total)
         } finally {
             base.walkBottomUp().forEach { it.setWritable(true); it.delete() }
+        }
+    }
+
+    /**
+     * True when the file has no write permission. Checks the permission bits, not
+     * File.canWrite: root (the GitLab CI container) can write any file, so canWrite
+     * is true there even for a read-only file.
+     */
+    private fun isReadOnly(file: File): Boolean {
+        val path = file.toPath()
+        return if (path.fileSystem.supportedFileAttributeViews().contains("posix")) {
+            val perms = java.nio.file.Files.getPosixFilePermissions(path)
+            java.nio.file.attribute.PosixFilePermission.OWNER_WRITE !in perms &&
+                java.nio.file.attribute.PosixFilePermission.GROUP_WRITE !in perms &&
+                java.nio.file.attribute.PosixFilePermission.OTHERS_WRITE !in perms
+        } else {
+            !file.canWrite()
         }
     }
 }
