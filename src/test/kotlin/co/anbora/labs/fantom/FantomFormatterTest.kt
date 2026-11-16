@@ -255,10 +255,11 @@ class FantomFormatterTest : BasePlatformTestCase() {
         myFixture.type('\n')
         myFixture.type("echo(1)")
         val typed = myFixture.editor.document.text
-        assertEquals("class Foo\n{\n  Void f()\n  {\n    echo(1)\n}\n", typed)
+        // The `{` is unmatched, so Enter also adds its `}` at the indent of the `{` line.
+        assertEquals("class Foo\n{\n  Void f()\n  {\n    echo(1)\n  }\n}\n", typed)
         PsiDocumentManager.getInstance(project).commitAllDocuments()
         reformat()
-        assertEquals("class Foo\n{\n  Void f()\n  {\n    echo(1)\n  }\n", myFixture.editor.document.text)
+        assertEquals(typed, myFixture.editor.document.text)
     }
 
     fun testSettingsProviderBuildsConfigurable() {
