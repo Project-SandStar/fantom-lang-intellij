@@ -149,6 +149,31 @@ temp folder with its own `fan.props`, so the pod file goes there and never
 into an install. While a fresh compiler result exists, the "Unresolved
 reference" inspection stays quiet for that file.
 
+## Axon
+
+Settings | Languages & Frameworks | Fantom | Axon sets where the
+[Axon project copy](features.md#axon-project-copy) comes from.
+
+| Field | What it is | Where it is stored |
+|---|---|---|
+| Server URL | The base URL of the Axon server, with `http://` or `https://`. Empty by default | An IDE settings file on this machine, for all projects. Not part of settings sync |
+| Token | The bearer token of the server. The field is always shown empty; leave it empty to keep the stored token | The IDE password store. Never in a settings file |
+| proj folder | The `proj` folder of a local Axon server: `proj/<instance>/<project>/func/<name>.axon`. Read only when no server URL is set | The workspace file of the project |
+| Instance/project | The SkySpark project to copy, as `instance/project`. Empty drops the copy | The workspace file of the project |
+
+The workspace file (`.idea/workspace.xml`) is not shared, so instance and
+project names never get into version control.
+
+A project of the `proj` folder is listed when its folder holds
+`.sync-metadata.json`. The doc and the change time of a function are read
+from the `.trio` file beside its `.axon` file.
+
+The copy itself is in the IDE system folder, under `fantom-axon-cache`.
+
+Limits: a reply of at most 64 MB, at most 20,000 functions, a connect
+timeout of 10 seconds and a read timeout of 2 minutes. Redirects are not
+followed, so the token goes to the configured server only.
+
 ## Colours
 
 Settings | Editor | Color Scheme | Fantom lists every colour the plugin paints:
