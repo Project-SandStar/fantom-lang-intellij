@@ -309,7 +309,11 @@ class AxonProjectCacheTest : TestCase() {
         assertNull(AxonFallbackFolder.isoOf(null))
     }
 
-    /** The real `proj` folder of this machine, read in place. Nothing of it is printed or copied. */
+    /**
+     * The real `proj` folder of this machine, read in place. Only counts are printed. The
+     * copy goes to a temp cache folder that tearDown deletes; nothing goes into the repo.
+     * The folder is not an install of the CI image, so a missing folder always skips.
+     */
     fun testRealProjFolderWhenPresent() {
         val proj = File(System.getProperty("user.home"), "Code/axon-mcp-server/proj")
         if (!proj.isDirectory) {
@@ -328,6 +332,8 @@ class AxonProjectCacheTest : TestCase() {
             for (f in got.functions) assertEquals(AxonCopyLimits.sha256(f.src), f.hash)
             functions += got.functions.size
             withMod += got.functions.count { it.mod != null }
+            // every mod that was read is ISO text
+            for (f in got.functions) f.mod?.let { assertTrue(Regex("""\d{4}-\d{2}-\d{2}T\d{2}:\d{2}.*""").matches(it)) }
             withDoc += got.functions.count { it.doc != null }
             // every name becomes one file inside the cache, and the copy reads back whole
             val copy = AxonProjectCache.write(root, got, src.id)
@@ -338,7 +344,6 @@ class AxonProjectCacheTest : TestCase() {
         assertTrue("no function", functions > 0)
         assertTrue("no function has a mod", withMod > 0)
         assertTrue("no function has a doc", withDoc > 0)
-        // every mod that was read is ISO text
         println("AxonProjectCacheTest.testRealProjFolderWhenPresent: ${projects.size} projects, $functions functions, $withMod with mod, $withDoc with doc")
     }
 
