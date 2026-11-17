@@ -25,6 +25,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.options.ConfigurationException
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
@@ -35,6 +36,9 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.xmlb.XmlSerializer
 import java.io.File
 import java.util.concurrent.Callable
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
 
 /**
  * The Axon project copy against a fake server on the loopback address and against a
@@ -82,9 +86,15 @@ class AxonProjectCopyTest : BasePlatformTestCase() {
     private fun temp(name: String): File = FileUtil.createTempDirectory(name, null).also { temps += it }
 
     /** Runs [work] off the UI thread, as the plugin does, while this thread serves UI events. */
-    private fun <T> bg(work: () -> T): T {
+    private fun <T> bg(work: () -> T): T = await(start(work))
+
+    /** Starts [work] off the UI thread and does not wait for it. */
+    private fun <T> start(work: () -> T): Future<Result<T>> =
         // the result is carried out as a value: the pool logs an exception that leaves a task as an error
-        val f = ApplicationManager.getApplication().executeOnPooledThread(Callable { runCatching(work) })
+        ApplicationManager.getApplication().executeOnPooledThread(Callable { runCatching(work) })
+
+    /** Waits for the work of [start], while this thread serves UI events. */
+    private fun <T> await(f: Future<Result<T>>): T {
         val end = System.currentTimeMillis() + 60_000
         while (!f.isDone) {
             PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
@@ -559,6 +569,123 @@ class AxonProjectCopyTest : BasePlatformTestCase() {
         AxonProjectWidgets.run(project, AxonProjectWidgets.Item.DROP)
         assertEquals("Axon: none", AxonProjectWidgets.text(project))
         assertTrue(cacheFiles().isEmpty())
+    }
+
+    // ---- a fetch that ends after a newer choice ------------------------------------------------
+
+    /** A source whose fetch of [slow] waits, once it is [armed], until [release] is counted down. */
+    private class GateSource(val inner: MemSource, val slow: AxonProjectKey) : AxonFunctionSource {
+        @Volatile var armed = false
+        val entered = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        override val id = "server"
+        override fun listProjects(check: () -> Unit) = inner.listProjects(check)
+        override fun fetch(key: AxonProjectKey, sync: Boolean, check: () -> Unit): AxonFunctionList {
+            // the reply is made before the wait: it is the old state of the server
+            val list = inner.fetch(key, sync, check)
+            if (armed && key == slow) {
+                entered.countDown()
+                if (!release.await(30, TimeUnit.SECONDS)) throw AssertionError("the gate was not opened")
+            }
+            return list
+        }
+    }
+
+    private val plant = AxonProjectKey("demo", "plant")
+
+    private fun gate(): GateSource {
+        val mem = MemSource(mutableMapOf(key to listOf(fn("calcDailyAvg", "() => 1")), plant to listOf(fn("plantLoad", "() => 2"))))
+        return GateSource(mem, key).also { copy.testSource = it }
+    }
+
+    /** Starts [work], which must stop in the gate, and returns when it is there. */
+    private fun startLate(gate: GateSource, work: () -> AxonProjectCache.Copy): Future<Result<AxonProjectCache.Copy>> {
+        gate.armed = true
+        val f = start(work)
+        assertTrue("the fetch did not start", gate.entered.await(30, TimeUnit.SECONDS))
+        return f
+    }
+
+    private fun assertWroteNothing(gate: GateSource, late: Future<Result<AxonProjectCache.Copy>>) {
+        gate.release.countDown()
+        try {
+            await(late)
+            fail("a fetch that ends after a newer choice must write nothing")
+        } catch (e: ProcessCanceledException) {
+            // expected: the fetch is dropped without a message
+        }
+    }
+
+    private val plantFiles = listOf(".axon-copy.json", "func/plantLoad.axon", "index.json").map { "demo/plant/$it" }
+
+    fun testAPickThatEndsAfterANewerPickWritesNothing() {
+        val gate = gate()
+        val late = startLate(gate) { copy.selectNow(key) }
+        bg { copy.selectNow(plant) }
+        assertWroteNothing(gate, late)
+        assertEquals(plant, copy.activeKey)
+        assertEquals(plantFiles, cacheFiles())
+        assertEquals(listOf("plantLoad"), copy.functions().map { it.name })
+        assertEquals("Axon: demo/plant", AxonProjectWidgets.text(project))
+    }
+
+    fun testAPickThatEndsAfterADropWritesNothing() {
+        val gate = gate()
+        bg { copy.selectNow(plant) }
+        val late = startLate(gate) { copy.selectNow(key) }
+        copy.dropNow()
+        assertWroteNothing(gate, late)
+        assertNull(copy.activeKey)
+        assertTrue(cacheFiles().toString(), cacheFiles().isEmpty())
+        assertNull(copy.copy)
+        assertEquals("Axon: none", AxonProjectWidgets.text(project))
+    }
+
+    fun testARefreshThatEndsAfterADropWritesNothing() {
+        val gate = gate()
+        bg { copy.selectNow(key) }
+        val late = startLate(gate) { copy.refreshNow() }
+        copy.dropNow()
+        assertWroteNothing(gate, late)
+        assertNull(copy.activeKey)
+        assertTrue(cacheFiles().toString(), cacheFiles().isEmpty())
+        assertNull(copy.copy)
+    }
+
+    fun testARefreshThatEndsAfterAPickOfAnotherProjectWritesNothing() {
+        val gate = gate()
+        bg { copy.selectNow(key) }
+        val late = startLate(gate) { copy.refreshNow() }
+        bg { copy.selectNow(plant) }
+        assertWroteNothing(gate, late)
+        assertEquals(plant, copy.activeKey)
+        assertEquals(plantFiles, cacheFiles())
+        assertEquals(listOf("plantLoad"), copy.functions().map { it.name })
+    }
+
+    fun testARefreshOfAKeyThatIsNoLongerActiveWritesNothing() {
+        val gate = gate()
+        bg { copy.selectNow(key) }
+        gate.inner.data[key] = listOf(fn("calcDailyAvg", "() => 9"), fn("siteReport", "() => 3"))
+        val late = startLate(gate) { copy.refreshNow() }
+        // the key changes with no pick and no drop, as when the workspace file is loaded again
+        settings.activeKey = plant
+        assertWroteNothing(gate, late)
+        assertEquals(plant, copy.activeKey)
+        assertEquals("() => 1", File(cache, "demo/site/func/calcDailyAvg.axon").readText())
+        assertFalse(File(cache, "demo/site/func/siteReport.axon").exists())
+        assertFalse(File(cache, "demo/plant").exists())
+        settings.activeKey = key
+    }
+
+    fun testARefreshThatEndsInTimeStillWrites() {
+        val gate = gate()
+        bg { copy.selectNow(key) }
+        gate.inner.data[key] = listOf(fn("calcDailyAvg", "() => 9"))
+        val late = startLate(gate) { copy.refreshNow() }
+        gate.release.countDown()
+        assertEquals(key, await(late).key)
+        assertEquals("() => 9", String(copy.findFunctionFile("calcDailyAvg")!!.contentsToByteArray()))
     }
 
     // ---- settings ------------------------------------------------------------------------------

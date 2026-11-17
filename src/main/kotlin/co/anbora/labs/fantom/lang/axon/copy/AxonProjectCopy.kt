@@ -28,6 +28,7 @@ import java.util.concurrent.Callable
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * The Axon project copy of one IDE project: a read-only local copy of the Axon functions
@@ -61,6 +62,14 @@ class AxonProjectCopy(private val project: Project) {
 
     /** Counts the changes on disk, so that a late [publish] of an older change is dropped. */
     private var generation = 0L
+
+    /**
+     * Counts the choices of the developer: a pick of a project, or a drop. A fetch takes
+     * the number at its start. When a newer choice was made before the fetch ends, the
+     * fetch writes nothing, so a slow reply never replaces what the developer chose last.
+     * It is not guarded by [lock]: the UI thread takes a number and must not wait for a write.
+     */
+    private val choice = AtomicLong()
 
     // ---- the API for other features --------------------------------------------------------
 
@@ -156,16 +165,23 @@ class AxonProjectCopy(private val project: Project) {
      * the write fails, the key and the copy stay as they were.
      */
     fun selectNow(key: AxonProjectKey, sync: Boolean = false, check: () -> Unit = {}): AxonProjectCache.Copy =
-        fetchAndStore(key, sync, check, onlyIfActive = false)
+        fetchAndStore(key, sync, check, choice.incrementAndGet(), onlyIfActive = false)
 
-    private fun fetchAndStore(key: AxonProjectKey, sync: Boolean, check: () -> Unit, onlyIfActive: Boolean): AxonProjectCache.Copy {
+    /**
+     * [ticket] is the value of [choice] when the developer asked for this fetch. With
+     * [onlyIfActive] (a refresh) the fetch also writes nothing when [key] is no longer the
+     * active key.
+     */
+    private fun fetchAndStore(key: AxonProjectKey, sync: Boolean, check: () -> Unit, ticket: Long, onlyIfActive: Boolean): AxonProjectCache.Copy {
         // the fetch can take minutes: it is outside the lock, so that load() and drop never wait for the network
         val src = source()
         val list = src.fetch(key, sync, check)
         if (list.key != key) throw AxonCopyException(Kind.BAD_REPLY, "The reply is for another project.")
         check()
         val change = synchronized(lock) {
-            // a refresh that ends after the project was dropped or changed writes nothing
+            // a fetch that ends after a newer pick or drop writes nothing
+            if (ticket != choice.get()) throw ProcessCanceledException()
+            // nor does a refresh of a key that is no longer the active one
             if (onlyIfActive && activeKey != key) throw ProcessCanceledException()
             val written = AxonProjectCache.write(cacheDir(), list, src.id, check)
             val settings = AxonProjectSettings.getInstance(project)
@@ -180,12 +196,15 @@ class AxonProjectCopy(private val project: Project) {
 
     /** Fetches the active project again; with [sync] the server reads SkySpark first. */
     fun refreshNow(sync: Boolean = true, check: () -> Unit = {}): AxonProjectCache.Copy {
+        val ticket = choice.get()
         val key = activeKey ?: throw AxonCopyException(Kind.NOT_CONFIGURED, "No Axon project is chosen.")
-        return fetchAndStore(key, sync, check, onlyIfActive = true)
+        return fetchAndStore(key, sync, check, ticket, onlyIfActive = true)
     }
 
     /** Forgets the active project and deletes its copy. */
     fun dropNow() {
+        // a fetch that is under way ends after this choice: it writes nothing
+        choice.incrementAndGet()
         val change = synchronized(lock) {
             val settings = AxonProjectSettings.getInstance(project)
             val key = settings.activeKey
@@ -274,17 +293,21 @@ class AxonProjectCopy(private val project: Project) {
     // ---- background tasks ---------------------------------------------------------------------
 
     /** Fetches [key] in the background and makes it the copy. Errors are notifications. */
-    fun select(key: AxonProjectKey, sync: Boolean = false) =
+    fun select(key: AxonProjectKey, sync: Boolean = false) {
+        // the number is taken now, in the order of the clicks, not when the task starts
+        val ticket = choice.incrementAndGet()
         background("Fetching Axon functions of $key") { indicator ->
-            val c = cancellable(indicator) { check -> selectNow(key, sync, check) }
+            val c = cancellable(indicator) { check -> fetchAndStore(key, sync, check, ticket, onlyIfActive = false) }
             notify("Axon: $key, ${count(c.functions.size)}.", NotificationType.INFORMATION)
         }
+    }
 
     /** Fetches the active project again, with `sync=true`. */
     fun refresh() {
+        val ticket = choice.get()
         val key = activeKey ?: return
         background("Refreshing Axon functions of $key") { indicator ->
-            val c = cancellable(indicator) { check -> fetchAndStore(key, true, check, onlyIfActive = true) }
+            val c = cancellable(indicator) { check -> fetchAndStore(key, true, check, ticket, onlyIfActive = true) }
             notify("Axon: $key refreshed, ${count(c.functions.size)}.", NotificationType.INFORMATION)
         }
     }
