@@ -319,15 +319,27 @@ class AxonProjectCacheTest : TestCase() {
         val src = AxonFallbackFolder(proj)
         val projects = src.listProjects()
         assertTrue("no project in the proj folder", projects.isNotEmpty())
-        val biggest = projects.maxByOrNull { it.functionCount }!!
-        val got = src.fetch(biggest.key, false)
-        assertTrue("no function", got.functions.isNotEmpty())
-        for (f in got.functions) assertEquals(AxonCopyLimits.sha256(f.src), f.hash)
-        assertTrue("no function has a mod", got.functions.any { it.mod != null })
-        assertTrue("no function has a doc", got.functions.any { it.doc != null })
-        // every name becomes a file inside the cache
-        val copy = AxonProjectCache.write(root, got, src.id)
-        assertEquals(got.functions.size, copy.funcDir.list()!!.size)
+        var functions = 0
+        var withMod = 0
+        var withDoc = 0
+        for (p in projects) {
+            val got = src.fetch(p.key, false)
+            assertEquals(p.key, got.key)
+            for (f in got.functions) assertEquals(AxonCopyLimits.sha256(f.src), f.hash)
+            functions += got.functions.size
+            withMod += got.functions.count { it.mod != null }
+            withDoc += got.functions.count { it.doc != null }
+            // every name becomes one file inside the cache, and the copy reads back whole
+            val copy = AxonProjectCache.write(root, got, src.id)
+            assertEquals(got.functions.size, copy.funcDir.list()!!.size)
+            assertEquals(got.functions.map { it.name }.sorted(), AxonProjectCache.read(root, p.key)!!.functions.map { it.name })
+            assertTrue(copy.dir.canonicalFile.toPath().startsWith(root.canonicalFile.toPath()))
+        }
+        assertTrue("no function", functions > 0)
+        assertTrue("no function has a mod", withMod > 0)
+        assertTrue("no function has a doc", withDoc > 0)
+        // every mod that was read is ISO text
+        println("AxonProjectCacheTest.testRealProjFolderWhenPresent: ${projects.size} projects, $functions functions, $withMod with mod, $withDoc with doc")
     }
 
     // ---- JSON and URL --------------------------------------------------------------------------

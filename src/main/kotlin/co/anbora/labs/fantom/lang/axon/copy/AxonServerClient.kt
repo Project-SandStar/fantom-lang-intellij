@@ -133,10 +133,16 @@ class AxonServerClient(
                 .tuner { c -> if (bearer != null) c.setRequestProperty("Authorization", "Bearer $bearer") }
                 .connect { request ->
                     if (body != null) request.write(body)
-                    val status = (request.connection as HttpURLConnection).responseCode
+                    val connection = request.connection as HttpURLConnection
+                    val status = connection.responseCode
                     check()
-                    // 3xx without a body, 204: nothing to read
-                    val text = if (status in 300..399 || status == 204) "" else readCapped(request.inputStream, check)
+                    val text = when {
+                        // 3xx without a body, 204: nothing to read
+                        status in 300..399 || status == 204 -> ""
+                        // the body of an error is on the error stream; the input stream throws
+                        status >= 400 -> connection.errorStream?.use { readCapped(it, check) }.orEmpty()
+                        else -> readCapped(request.inputStream, check)
+                    }
                     Reply(status, text)
                 }
         } catch (e: ProcessCanceledException) {

@@ -56,7 +56,11 @@ class AxonProjectCopy(private val project: Project) {
     @Volatile
     private var registered: Registered? = null
 
+    /** Guards the cache folder, the chosen key and [generation]. No thread waits for another inside it. */
     private val lock = Any()
+
+    /** Counts the changes on disk, so that a late [publish] of an older change is dropped. */
+    private var generation = 0L
 
     // ---- the API for other features --------------------------------------------------------
 
@@ -109,7 +113,7 @@ class AxonProjectCopy(private val project: Project) {
     @TestOnly @Volatile var testCacheRoot: File? = null
 
     /** Forgets the registered copy but leaves the disk and the settings: what an IDE restart does. */
-    @TestOnly fun forgetForTest() { registered = null }
+    @TestOnly fun forgetForTest() = synchronized(lock) { generation++; registered = null }
 
     /** Replaces the server and the folder in tests. */
     @TestOnly @Volatile var testSource: AxonFunctionSource? = null
@@ -160,18 +164,18 @@ class AxonProjectCopy(private val project: Project) {
         val list = src.fetch(key, sync, check)
         if (list.key != key) throw AxonCopyException(Kind.BAD_REPLY, "The reply is for another project.")
         check()
-        return synchronized(lock) {
+        val change = synchronized(lock) {
             // a refresh that ends after the project was dropped or changed writes nothing
             if (onlyIfActive && activeKey != key) throw ProcessCanceledException()
             val written = AxonProjectCache.write(cacheDir(), list, src.id, check)
             val settings = AxonProjectSettings.getInstance(project)
             val old = settings.activeKey
             settings.activeKey = key
-            register(written)
-            if (old != null && old != key) deleteUnlessShared(old)
-            reloadOthers(key)
-            written
+            Change(++generation, written, if (old != null && old != key) deleteUnlessShared(old) else null)
         }
+        publish(change)
+        reloadOthers(key)
+        return change.copy!!
     }
 
     /** Fetches the active project again; with [sync] the server reads SkySpark first. */
@@ -181,57 +185,65 @@ class AxonProjectCopy(private val project: Project) {
     }
 
     /** Forgets the active project and deletes its copy. */
-    fun dropNow(): Unit = synchronized(lock) {
-        val settings = AxonProjectSettings.getInstance(project)
-        val key = settings.activeKey
-        val was = registered
-        settings.activeKey = null
-        registered = null
-        if (key != null) deleteUnlessShared(key)
-        was?.root?.let { VfsUtil.markDirtyAndRefresh(false, true, true, it) }
-        fireChanged(rootsChanged = was != null)
+    fun dropNow() {
+        val change = synchronized(lock) {
+            val settings = AxonProjectSettings.getInstance(project)
+            val key = settings.activeKey
+            settings.activeKey = null
+            Change(++generation, null, key?.let(::deleteUnlessShared))
+        }
+        publish(change)
     }
 
     /**
      * Registers the copy of the active key from disk: at project open, and after another
      * IDE project wrote the same copy. Reads the marker and the index only.
      */
-    fun load(): Unit = synchronized(lock) {
-        val key = activeKey
-        val found = key?.let { AxonProjectCache.read(cacheDir(), it) }
-        if (found == null) {
-            val was = registered
-            registered = null
-            if (was != null) fireChanged(rootsChanged = true)
-            return
+    fun load() {
+        val change = synchronized(lock) {
+            Change(++generation, activeKey?.let { AxonProjectCache.read(cacheDir(), it) }, null)
         }
-        register(found)
+        publish(change)
     }
 
-    private fun register(copy: AxonProjectCache.Copy) {
-        val root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(copy.funcDir)
-        val was = registered
-        if (root == null) {
-            registered = null
-            fireChanged(rootsChanged = was != null)
-            return
-        }
+    /** What one step did on disk: the copy that is there now (or none) and a folder that was deleted. */
+    private class Change(val generation: Long, val copy: AxonProjectCache.Copy?, val deleted: File?)
+
+    /**
+     * Tells the IDE about [change]. The file system refresh waits for the UI thread, so
+     * it is never done inside [lock]: a thread that holds the lock must not wait for
+     * another thread. When a newer change was made in the meantime, this one is dropped.
+     */
+    private fun publish(change: Change) {
+        val fs = LocalFileSystem.getInstance()
+        val root = change.copy?.let { fs.refreshAndFindFileByIoFile(it.funcDir) }
         // the folder was replaced on disk: read its files again
-        VfsUtil.markDirtyAndRefresh(false, true, true, root)
-        registered = Registered(copy, root)
-        fireChanged(rootsChanged = was?.root != root)
+        root?.let { VfsUtil.markDirtyAndRefresh(false, true, true, it) }
+        change.deleted?.let { fs.findFileByIoFile(it) }?.let { VfsUtil.markDirtyAndRefresh(false, true, true, it) }
+        val was: Registered?
+        val now: Registered?
+        synchronized(lock) {
+            if (change.generation != generation) return
+            was = registered
+            now = if (change.copy != null && root != null) Registered(change.copy, root) else null
+            registered = now
+        }
+        if (was != null && was.root != now?.root) VfsUtil.markDirtyAndRefresh(false, true, true, was.root)
+        fireChanged(rootsChanged = was?.root != now?.root)
     }
 
-    /** Deletes the copy of [key], unless another open IDE project has the same key. */
-    private fun deleteUnlessShared(key: AxonProjectKey) {
+    /**
+     * Deletes the copy of [key] on disk, unless another open IDE project has the same key.
+     * Returns the folder that was deleted, or null.
+     */
+    private fun deleteUnlessShared(key: AxonProjectKey): File? {
         val shared = ProjectManager.getInstance().openProjects.any {
             it !== project && !it.isDisposed && !it.isDefault && AxonProjectSettings.getInstance(it).activeKey == key
         }
-        if (shared) return
+        if (shared) return null
         val dir = AxonProjectCache.dirFor(cacheDir(), key)
-        val vf = LocalFileSystem.getInstance().findFileByIoFile(dir)
         AxonProjectCache.delete(cacheDir(), key)
-        vf?.let { VfsUtil.markDirtyAndRefresh(false, true, true, it) }
+        return dir
     }
 
     /** Other open IDE projects with the same key read the new index. */

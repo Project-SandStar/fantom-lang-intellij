@@ -41,6 +41,8 @@ object AxonJson {
     fun write(value: Any?, indent: Boolean = true): String = StringBuilder().also { put(it, value, if (indent) 0 else -1) }.toString()
 
     private fun put(sb: StringBuilder, v: Any?, level: Int) {
+        // level -1 is the compact form: no line breaks at any depth
+        val inner = if (level >= 0) level + 1 else -1
         when (v) {
             null -> sb.append("null")
             is String -> quote(sb, v)
@@ -59,10 +61,10 @@ object AxonJson {
                 for ((k, x) in v) {
                     if (!first) sb.append(',')
                     first = false
-                    newline(sb, level + 1)
+                    newline(sb, inner)
                     quote(sb, k.toString())
                     sb.append(if (level >= 0) ": " else ":")
-                    put(sb, x, if (level >= 0) level + 1 else -1)
+                    put(sb, x, inner)
                 }
                 newline(sb, level)
                 sb.append('}')
@@ -73,8 +75,8 @@ object AxonJson {
                 sb.append('[')
                 items.forEachIndexed { i, x ->
                     if (i > 0) sb.append(',')
-                    newline(sb, level + 1)
-                    put(sb, x, if (level >= 0) level + 1 else -1)
+                    newline(sb, inner)
+                    put(sb, x, inner)
                 }
                 newline(sb, level)
                 sb.append(']')

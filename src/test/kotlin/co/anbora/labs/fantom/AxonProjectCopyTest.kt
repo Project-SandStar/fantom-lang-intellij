@@ -35,7 +35,6 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.xmlb.XmlSerializer
 import java.io.File
 import java.util.concurrent.Callable
-import java.util.concurrent.ExecutionException
 
 /**
  * The Axon project copy against a fake server on the loopback address and against a
@@ -84,7 +83,8 @@ class AxonProjectCopyTest : BasePlatformTestCase() {
 
     /** Runs [work] off the UI thread, as the plugin does, while this thread serves UI events. */
     private fun <T> bg(work: () -> T): T {
-        val f = ApplicationManager.getApplication().executeOnPooledThread(Callable(work))
+        // the result is carried out as a value: the pool logs an exception that leaves a task as an error
+        val f = ApplicationManager.getApplication().executeOnPooledThread(Callable { runCatching(work) })
         val end = System.currentTimeMillis() + 60_000
         while (!f.isDone) {
             PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
@@ -92,11 +92,7 @@ class AxonProjectCopyTest : BasePlatformTestCase() {
             if (System.currentTimeMillis() > end) fail("the background work did not end")
         }
         PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
-        try {
-            return f.get()
-        } catch (e: ExecutionException) {
-            throw e.cause ?: e
-        }
+        return f.get().getOrThrow()
     }
 
     private fun failsWith(kind: AxonCopyException.Kind, work: () -> Unit): AxonCopyException {
