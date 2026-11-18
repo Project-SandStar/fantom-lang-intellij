@@ -72,6 +72,39 @@ class AxonCorpusParsingTest : ParsingTestCase("", "axon", AxonParserDefinition()
         check("Haxall Axon", trio + docs, HAXALL_ALLOWED)
     }
 
+    /**
+     * The Axon strings of the Haxall Fantom tests: the first argument of `eval(...)`,
+     * `verifyEval(...)` and the like must parse clean, and the first argument of
+     * `verifySyntaxErr(...)` and `verifyExprErr(...)` in the Axon tests must have an error.
+     */
+    fun testHaxallTestSuite() {
+        val root = File(user, "haxall/haxall-4.0.7")
+        if (!TestInstalls.requireInstall(root, "Haxall 4.0.7 sources")) return
+        val files = root.walkTopDown()
+            .filter { it.isFile && it.extension == "fan" && "test" in it.relativeTo(root).path.split(File.separatorChar) }
+            .sortedBy { it.path }.toList()
+        val valid = ArrayList<Source>()
+        val invalid = ArrayList<Source>()
+        for (f in files) {
+            val path = f.relativeTo(root).path
+            val text = f.readText()
+            val names = if (path.endsWith("testAxon/fan/ParseTest.fan")) VALID_CALLS + PARSE_TEST_CALLS else VALID_CALLS
+            fantomCallStrings(text, names).mapTo(valid) { (line, src) -> Source("$path:$line", src) }
+            if (path.startsWith("src/test/testAxon/")) {
+                fantomCallStrings(text, INVALID_CALLS).mapTo(invalid) { (line, src) -> Source("$path:$line", src) }
+            }
+        }
+        check("Haxall test suite", valid, HAXALL_TESTS_ALLOWED)
+
+        assertTrue("Haxall test suite: no must-fail source found", invalid.isNotEmpty())
+        val accepted = invalid.filter { it.name !in HAXALL_TESTS_ACCEPTED && firstError(it) == null }
+        println("Haxall test suite: ${invalid.size} must-fail sources, ${accepted.size} parse with no error")
+        if (accepted.isNotEmpty()) {
+            fail("Haxall test suite: these sources must have a parse error:\n" +
+                accepted.take(40).joinToString("\n") { "${it.name}: ${it.text.replace("\n", "\\n").take(80)}" })
+        }
+    }
+
     fun testProjectAxonFiles() {
         val root = File(user, "Code/axon-mcp-server/proj")
         // Not an install: this folder is on one machine only, so its absence never fails the test.
@@ -101,6 +134,33 @@ class AxonCorpusParsingTest : ParsingTestCase("", "axon", AxonParserDefinition()
         val HAXALL_ALLOWED: Set<String> = setOf(
             // `(cells, num) => ...`: the three dots stand for a body the document leaves out. Not Axon.
             "src/xeto/hx.io/skills/know-io.md#2",
+        )
+
+        /** Test methods of the Haxall tests whose first argument is Axon that must parse. */
+        val VALID_CALLS: Set<String> = setOf("eval", "verifyEval", "verifyBlock", "verifyToStr")
+
+        /** The same, for the Axon `ParseTest` only: other tests use these names for filters and XML. */
+        val PARSE_TEST_CALLS: Set<String> = setOf("verifyParse", "verifyExpr")
+
+        /** Test methods of the Haxall Axon tests whose first argument must not parse. */
+        val INVALID_CALLS: Set<String> = setOf("verifySyntaxErr", "verifyExprErr")
+
+        /** Haxall test strings that are known not to parse, as `path:line`. */
+        val HAXALL_TESTS_ALLOWED: Set<String> = setOf(
+            // A plain "..." string that runs over several lines. The Haxall tokenizer rejects it too
+            // ("Unexpected end of str"); the test needs a database, so it does not run by default.
+            "src/conn/hxSql/test/SqlConnTest.fan:67",
+            "src/conn/hxSql/test/SqlConnTest.fan:139",
+        )
+
+        /** Haxall must-fail strings that this parser accepts, as `path:line`. */
+        val HAXALL_TESTS_ACCEPTED: Set<String> = setOf(
+            // `125fb380-0072e373`, the old Ref form: Haxall rejects the unit name. The lexer here
+            // takes any letters after a number as a unit and does not know the unit database.
+            "src/test/testAxon/fan/EvalTest.fan:58",
+            // `return` with its value on the next line. A `return` with no value is accepted
+            // on purpose (see Axon.bnf), so the value is read as the next expression.
+            "src/test/testAxon/fan/EvalTest.fan:812",
         )
 
         /** The text of each code block of a Markdown text that opens with three backticks and `axon`. */
@@ -157,6 +217,57 @@ class AxonCorpusParsingTest : ParsingTestCase("", "axon", AxonParserDefinition()
                 out.add(block.joinToString("\n") { if (it.length >= indent) it.substring(indent) else "" }.trimEnd())
             }
             return out
+        }
+
+        /**
+         * The string literal that is the first argument of each call of one of [names] in the
+         * Fantom text [fan], with the line of the call. Reads `"..."`, `"""..."""` and
+         * `Str<|...|>`. A literal with `$` interpolation is left out: its text is not known.
+         */
+        fun fantomCallStrings(fan: String, names: Set<String>): List<Pair<Int, String>> {
+            val out = ArrayList<Pair<Int, String>>()
+            val call = Regex("""\b(\w+)\(\s*""")
+            for (m in call.findAll(fan)) {
+                if (m.groupValues[1] !in names) continue
+                val text = fantomString(fan, m.range.last + 1) ?: continue
+                out.add(fan.substring(0, m.range.first).count { it == '\n' } + 1 to text)
+            }
+            return out
+        }
+
+        /** The value of the Fantom string literal that starts at [at], null when there is none or it has `$`. */
+        private fun fantomString(fan: String, at: Int): String? {
+            if (fan.startsWith("Str<|", at)) {
+                val end = fan.indexOf("|>", at + 5)
+                return if (end < 0) null else fan.substring(at + 5, end)
+            }
+            val triple = fan.startsWith("\"\"\"", at)
+            if (!triple && !fan.startsWith("\"", at)) return null
+            val quote = if (triple) "\"\"\"" else "\""
+            val sb = StringBuilder()
+            var i = at + quote.length
+            while (i < fan.length) {
+                val c = fan[i]
+                if (fan.startsWith(quote, i)) return sb.toString()
+                if (c == '$' || (c == '\n' && !triple)) return null
+                if (c != '\\') { sb.append(c); i++; continue }
+                val e = fan.getOrNull(i + 1) ?: return null
+                i += 2
+                when (e) {
+                    'n' -> sb.append('\n')
+                    'r' -> sb.append('\r')
+                    't' -> sb.append('\t')
+                    'f' -> sb.append('\u000c')
+                    'b' -> sb.append('\b')
+                    'u' -> {
+                        val code = fan.substring(i, minOf(i + 4, fan.length)).toIntOrNull(16) ?: return null
+                        sb.append(code.toChar())
+                        i += 4
+                    }
+                    else -> sb.append(e)
+                }
+            }
+            return null
         }
 
         /**
