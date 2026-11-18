@@ -1,0 +1,9 @@
+() => 1
+x => x + 1
+(a, b) => a + b
+(a, b: 2, c: "x") => do
+  a + b
+end
+(a) => (b) => a * b
+list.map(v => v * 2)
+list.sort((a, b) => a <=> b)

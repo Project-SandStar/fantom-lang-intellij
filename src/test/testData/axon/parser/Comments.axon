@@ -1,0 +1,7 @@
+// line comment
+a: 1 // trailing
+/* block
+   comment */
+b: /* inline */ 2
+/* nested /* inner */ outer */
+c: 3

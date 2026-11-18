@@ -1,0 +1,13 @@
+readAll(site)
+add(1, 2, 3)
+now()
+readAll(site).sort("dis").first
+data.size
+core::now()
+list.each() v => echo(v)
+list.each v => echo(v)
+readAll(point).each() (pt, i) => do
+  echo(pt)
+end
+fold(_, sum)
+obj.method(a)(b)

@@ -1,0 +1,11 @@
+x: 1
+-a
+y: f
+(b)
+z: g
+[1]
+w: h
+.name
+  .other(1)
+if (c) 1
+else 2

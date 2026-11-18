@@ -3,6 +3,7 @@ package co.anbora.labs.fantom
 import co.anbora.labs.fantom.LexerTestSupport.checkInvariants
 import co.anbora.labs.fantom.LexerTestSupport.visible
 import co.anbora.labs.fantom.lang.axon.AxonLexer
+import co.anbora.labs.fantom.lang.axon.AxonTokenTypes
 import junit.framework.TestCase
 
 class AxonLexerTest : TestCase() {
@@ -39,25 +40,26 @@ class AxonLexerTest : TestCase() {
         checkInvariants(::AxonLexer, haxallSample)
     }
 
+    /**
+     * A token class prints its name (`NUMBER '1hr'`). A keyword or a sign has one token
+     * type each, named after its text, so it prints as `do 'do'`.
+     */
+    private fun fixed(vararg texts: String): List<String> = texts.map { "$it '$it'" }
+
     fun testHaxallSampleTokens() {
         val toks = visible(AxonLexer(), haxallSample)
-        assertTrue(toks.contains("Axon:FN_ARROW '=>'"))
-        assertTrue(toks.contains("Axon:KEYWORD 'do'"))
-        assertTrue(toks.contains("Axon:KEYWORD 'and'"))
-        assertTrue(toks.contains("Axon:KEYWORD 'end'"))
-        assertTrue(toks.contains("Axon:LINE_COMMENT '// find periods in cooling mode for this AHU'"))
-        assertTrue(toks.contains("Axon:NUMBER '1hr'"))
-        assertTrue(toks.contains("Axon:NUMBER '2010-07'"))
-        assertTrue(toks.contains("Axon:NUMBER '2023-03-14'"))
-        assertTrue(toks.contains("Axon:NUMBER '0:00'"))
-        assertTrue(toks.contains("Axon:STRING '\"New_York\"'"))
-        assertTrue(toks.contains("Axon:OPERATOR '->'"))
-        assertTrue(toks.contains("Axon:OPERATOR '=='"))
+        assertTrue(toks.containsAll(fixed("=>", "do", "and", "end", "->", "==")))
+        assertTrue(toks.contains("LINE_COMMENT '// find periods in cooling mode for this AHU'"))
+        assertTrue(toks.contains("NUMBER '1hr'"))
+        assertTrue(toks.contains("NUMBER '2010-07'"))
+        assertTrue(toks.contains("NUMBER '2023-03-14'"))
+        assertTrue(toks.contains("NUMBER '0:00'"))
+        assertTrue(toks.contains("STRING '\"New_York\"'"))
     }
 
     fun testDateRange() {
         assertEquals(
-            listOf("Axon:NUMBER '2023-01-01'", "Axon:OPERATOR '..'", "Axon:NUMBER '2023-02-28'"),
+            listOf("NUMBER '2023-01-01'", ".. '..'", "NUMBER '2023-02-28'"),
             visible(AxonLexer(), "2023-01-01..2023-02-28")
         )
     }
@@ -65,52 +67,51 @@ class AxonLexerTest : TestCase() {
     fun testLiterals() {
         assertEquals(
             listOf(
-                "Axon:REF '@p:demo:r:2f797ee0-541a6010'",
-                "Axon:SYMBOL '^lib:ph'",
-                "Axon:URI '`io/points.csv`'",
-                "Axon:NUMBER '5kW'",
-                "Axon:NUMBER '10min'",
-                "Axon:NUMBER '75°F'",
-                "Axon:NUMBER '2.5'",
-                "Axon:NUMBER '0x1F'",
-                "Axon:NUMBER '12:30:00'",
-                "Axon:STRING 'r\"\\raw\"'",
-                "Axon:TYPENAME 'Number'",
-                "Axon:KEYWORD 'null'",
-                "Axon:KEYWORD 'true'",
-                "Axon:KEYWORD 'false'",
-            ),
+                "REF '@p:demo:r:2f797ee0-541a6010'",
+                "SYMBOL '^lib:ph'",
+                "URI '`io/points.csv`'",
+                "NUMBER '5kW'",
+                "NUMBER '10min'",
+                "NUMBER '75°F'",
+                "NUMBER '2.5'",
+                "NUMBER '0x1F'",
+                "NUMBER '12:30:00'",
+                "STRING 'r\"\\raw\"'",
+                "TYPENAME 'Number'",
+            ) + fixed("null", "true", "false"),
             visible(AxonLexer(), "@p:demo:r:2f797ee0-541a6010 ^lib:ph `io/points.csv` 5kW 10min 75°F 2.5 0x1F 12:30:00 r\"\\raw\" Number null true false")
         )
     }
 
     fun testKeywords() {
         val words = "do end if else return throw try catch defcomp deflinks and or not true false null"
-        val toks = visible(AxonLexer(), words)
-        assertEquals(16, toks.size)
-        assertTrue(toks.all { it.startsWith("Axon:KEYWORD") })
-        assertEquals(listOf("Axon:IDENTIFIER 'done'", "Axon:IDENTIFIER 'endTime'"), visible(AxonLexer(), "done endTime"))
+        assertEquals(fixed(*words.split(' ').toTypedArray()), visible(AxonLexer(), words))
+        // Every keyword has its own token type, and all of them are in the KEYWORDS set.
+        val types = LexerTestSupport.tokens(AxonLexer(), words).map { it.type }.filter { it != "WHITE_SPACE" }.toSet()
+        assertEquals(16, types.size)
+        assertEquals(AxonTokenTypes.KEYWORDS.types.map { it.toString() }.toSet(), types)
+        assertEquals(listOf("IDENTIFIER 'done'", "IDENTIFIER 'endTime'"), visible(AxonLexer(), "done endTime"))
     }
 
     fun testStringsAndComments() {
         assertEquals(
-            listOf("Axon:STRING '\"a \\\"b\\\" \\${'$'}c\"'", "Axon:BLOCK_COMMENT '/* x /* nested */ y */'", "Axon:IDENTIFIER 'z'"),
+            listOf("STRING '\"a \\\"b\\\" \\${'$'}c\"'", "BLOCK_COMMENT '/* x /* nested */ y */'", "IDENTIFIER 'z'"),
             visible(AxonLexer(), "\"a \\\"b\\\" \\${'$'}c\" /* x /* nested */ y */ z")
         )
         val triple = "\"\"\"line 1\n   \"quoted\" line 2\"\"\""
-        assertEquals(listOf("Axon:STRING '$triple'"), visible(AxonLexer(), triple))
+        assertEquals(listOf("STRING '$triple'"), visible(AxonLexer(), triple))
     }
 
     fun testOperators() {
+        // `?`, `&` and `|` are signs the tokenizer knows but the grammar does not use.
         assertEquals(
-            listOf("<=>", "<=", ">=", "!=", "::", "+", "-", "*", "/", "?", "&", "|").map { "Axon:OPERATOR '$it'" },
-            visible(AxonLexer(), "<=> <= >= != :: + - * / ? & |")
+            fixed("<=>", "<=", ">=", "<", ">", "==", "!=", "=", "::", "->", "..", "+", "-", "*", "/") +
+                listOf("OPERATOR '?'", "OPERATOR '&'", "OPERATOR '|'"),
+            visible(AxonLexer(), "<=> <= >= < > == != = :: -> .. + - * / ? & |")
         )
-        assertEquals(
-            listOf("Axon:LPAREN '('", "Axon:RPAREN ')'", "Axon:LBRACKET '['", "Axon:RBRACKET ']'",
-                "Axon:LBRACE '{'", "Axon:RBRACE '}'", "Axon:COMMA ','", "Axon:SEMICOLON ';'", "Axon:COLON ':'", "Axon:DOT '.'"),
-            visible(AxonLexer(), "()[]{},;:.")
-        )
+        assertEquals(fixed("(", ")", "[", "]", "{", "}", ",", ";", ":", "."), visible(AxonLexer(), "()[]{},;:."))
+        // `_` is the partial-application placeholder only when it stands alone.
+        assertEquals(fixed("_") + "IDENTIFIER 'a_b'", visible(AxonLexer(), "_ a_b"))
     }
 
     fun testUnclosedConstructsStayOneToken() {

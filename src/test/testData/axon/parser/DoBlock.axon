@@ -1,0 +1,7 @@
+do
+  a: 1
+  b: 2; c: 3
+  a + b + c
+end
+do end
+do x end

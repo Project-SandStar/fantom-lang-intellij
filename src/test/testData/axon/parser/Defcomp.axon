@@ -1,0 +1,8 @@
+defcomp
+  in: {is: ^number}
+  gain: {is: ^number, defVal: 2}
+  out: {is: ^number, ro}
+  do
+    out = in * gain
+  end
+end

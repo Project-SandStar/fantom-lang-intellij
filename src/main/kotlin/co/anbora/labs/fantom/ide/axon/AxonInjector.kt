@@ -16,7 +16,7 @@ import com.intellij.psi.util.PsiTreeUtil
  * - into a Fantom string that is the only text of the first argument of a call
  *   named `eval`, `evalAll`, `evalToFunc`, `parseAxon` or `Axon`;
  * - into a Fantom string whose line above is `// language=axon`;
- * - into the `src:` value of a `.trio` record.
+ * - into the `src:` value of a `.trio` record that is not a view record.
  *
  * The call is found from tokens (`name ( "..." ,|)`), not from the PSI shape,
  * so `eval("x")`, `cx.eval("x")` and `Axon("x")` all match.
@@ -34,7 +34,7 @@ class AxonInjector : MultiHostInjector {
                 inject(registrar, context, range)
             }
             is TrioSrcValue -> {
-                if (context.textLength == 0) return
+                if (context.textLength == 0 || !context.isAxonSource()) return
                 inject(registrar, context, TextRange(0, context.textLength))
             }
         }

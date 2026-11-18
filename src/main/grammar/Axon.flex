@@ -8,6 +8,7 @@ import static co.anbora.labs.fantom.lang.axon.AxonTokenTypes.*;
 
 // Axon lexer. The token rules follow haxall axon::Tokenizer (src/core/axon/fan/parser/Tokenizer.fan).
 // Every construct is one token, so the lexer can restart at any token start in YYINITIAL.
+// Each keyword and operator has its own token type; the parser (Axon.bnf) needs them.
 
 %%
 
@@ -64,22 +65,22 @@ SYMBOL = "^" {ID_CHAR}+
   "//" [^\r\n]*        { return LINE_COMMENT; }
   "/*"                 { commentDepth = 1; commentStart = zzStartRead; yybegin(IN_BLOCK_COMMENT); }
 
-  "and"                { return KEYWORD; }
-  "catch"              { return KEYWORD; }
-  "defcomp"            { return KEYWORD; }
-  "deflinks"           { return KEYWORD; }
-  "do"                 { return KEYWORD; }
-  "else"               { return KEYWORD; }
-  "end"                { return KEYWORD; }
-  "if"                 { return KEYWORD; }
-  "not"                { return KEYWORD; }
-  "or"                 { return KEYWORD; }
-  "return"             { return KEYWORD; }
-  "throw"              { return KEYWORD; }
-  "try"                { return KEYWORD; }
-  "true"               { return KEYWORD; }
-  "false"              { return KEYWORD; }
-  "null"               { return KEYWORD; }
+  "and"                { return AND; }
+  "catch"              { return CATCH; }
+  "defcomp"            { return DEFCOMP; }
+  "deflinks"           { return DEFLINKS; }
+  "do"                 { return DO; }
+  "else"               { return ELSE; }
+  "end"                { return END; }
+  "if"                 { return IF; }
+  "not"                { return NOT; }
+  "or"                 { return OR; }
+  "return"             { return RETURN; }
+  "throw"              { return THROW; }
+  "try"                { return TRY; }
+  "true"               { return TRUE; }
+  "false"              { return FALSE; }
+  "null"               { return NULL; }
 
   {RAW_STRING}         { return STRING; }
   {TRIPLE_STRING}      { return STRING; }
@@ -103,16 +104,24 @@ SYMBOL = "^" {ID_CHAR}+
   ","                  { return COMMA; }
   ";"                  { return SEMICOLON; }
   "."                  { return DOT; }
-  "::"                 { return OPERATOR; }
+  "::"                 { return COLON2; }
   ":"                  { return COLON; }
-  "->"                 { return OPERATOR; }
-  ".."                 { return OPERATOR; }
-  "<=>"                { return OPERATOR; }
-  "=="                 { return OPERATOR; }
-  "!="                 { return OPERATOR; }
-  "<="                 { return OPERATOR; }
-  ">="                 { return OPERATOR; }
-  [+\-*/!\^?&=<>|_]    { return OPERATOR; }
+  "->"                 { return ARROW; }
+  ".."                 { return DOTDOT; }
+  "<=>"                { return CMP; }
+  "=="                 { return EQ; }
+  "!="                 { return NE; }
+  "<="                 { return LE; }
+  ">="                 { return GE; }
+  "<"                  { return LT; }
+  ">"                  { return GT; }
+  "="                  { return ASSIGN; }
+  "+"                  { return PLUS; }
+  "-"                  { return MINUS; }
+  "*"                  { return STAR; }
+  "/"                  { return SLASH; }
+  "_"                  { return UNDERSCORE; }
+  [!\^?&|]             { return OPERATOR; }
 
   [^]                  { return BAD_CHARACTER; }
 }

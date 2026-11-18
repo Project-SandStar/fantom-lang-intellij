@@ -107,6 +107,15 @@ abstract class TrioTagMixin(node: ASTNode) : ASTWrapperPsiElement(node), PsiName
 abstract class TrioSrcValue(node: ASTNode) : ASTWrapperPsiElement(node), PsiLanguageInjectionHost {
     override fun isValidHost(): Boolean = true
 
+    /**
+     * False when the record has a `view` tag: the `src` of a view record is a list of
+     * view settings (`view: {inherit:"table"}`), not Axon.
+     */
+    fun isAxonSource(): Boolean {
+        val record = PsiTreeUtil.getParentOfType(this, TrioRecord::class.java) as? TrioRecordMixin ?: return true
+        return record.findTag("view") == null
+    }
+
     override fun updateText(text: String): PsiLanguageInjectionHost {
         (node.firstChildNode as? LeafElement)?.replaceWithText(text)
         return this

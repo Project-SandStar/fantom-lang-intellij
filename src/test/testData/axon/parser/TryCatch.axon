@@ -1,0 +1,8 @@
+try a() catch b()
+try a() catch (err) err->dis
+try do
+  a()
+end catch (ex) do
+  log(ex)
+end
+try do a() end catch null
