@@ -17,6 +17,9 @@
         <!-- Resolves `[java]` FFI names; implemented in fantom-java-ffi.xml only. -->
         <extensionPoint qualifiedName="co.anbora.labs.fantom.ffiResolver"
                         interface="co.anbora.labs.fantom.lang.resolve.FantomFfiResolver" dynamic="true"/>
+        <!-- Supplies Axon functions that are not in the file at hand (project and pod functions). -->
+        <extensionPoint qualifiedName="co.anbora.labs.fantom.axonFunctionSource"
+                        interface="co.anbora.labs.fantom.lang.axon.psi.AxonFunctionSource" dynamic="true"/>
     </extensionPoints>
     <extensions defaultExtensionNs="com.intellij">
         <fileType name="Fantom" implementationClass="co.anbora.labs.fantom.lang.FantomFileType"

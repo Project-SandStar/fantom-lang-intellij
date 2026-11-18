@@ -100,7 +100,7 @@ object AxonTokenTypes {
     @JvmField val MINUS = AxonTokenType("'-'")
     @JvmField val STAR = AxonTokenType("'*'")
     @JvmField val SLASH = AxonTokenType("'/'")
-    @JvmField val UNDERSCORE = AxonTokenType("_")
+    @JvmField val UNDERSCORE = AxonTokenType("'_'")
 
     /** A sign the tokenizer knows but the grammar does not use: `!`, `^`, `?`, `&`, `|`. */
     @JvmField val OPERATOR = AxonTokenType("OPERATOR")

@@ -137,7 +137,7 @@ Axon File
     AxonArgListImpl(ARG_LIST)
       PsiElement('(')('(')
       AxonPartialArgImpl(PARTIAL_ARG)
-        PsiElement(_)('_')
+        PsiElement('_')('_')
       PsiElement(',')(',')
       AxonRefExprImpl(REF_EXPR)
         PsiElement(IDENTIFIER)('sum')

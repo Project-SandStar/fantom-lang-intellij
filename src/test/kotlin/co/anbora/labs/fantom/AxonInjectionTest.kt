@@ -77,7 +77,7 @@ class AxonInjectionTest : BasePlatformTestCase() {
         val leaves = PsiTreeUtil.collectElements(injected.containingFile) { it.firstChild == null }
             .map { it.node.elementType.toString() }
         assertEquals(
-            listOf("Axon:IDENTIFIER", "Axon:LPAREN", "Axon:IDENTIFIER", "Axon:OPERATOR", "Axon:STRING", "Axon:RPAREN"),
+            listOf("IDENTIFIER", "'('", "IDENTIFIER", "'=='", "STRING", "')'"),
             leaves
         )
     }
