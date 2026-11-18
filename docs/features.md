@@ -204,6 +204,6 @@ What does not work:
 |---|---|
 | `.axon` files | Axon colours (keywords, strings, numbers with units, dates, times, `@refs`, `^symbols`, URIs, comments, operators), brace matching for `( ) [ ] { }`, and Cmd+/ comments. Colours: Settings, Editor, Color Scheme, Axon |
 | Axon in Fantom strings | The first string argument of `eval`, `evalAll`, `evalToFunc`, `parseAxon` or `Axon` is coloured as Axon. Put `// language=axon` on the line above any other string to do the same |
-| `.trio` files | Haystack records: `---` separators, tag names, values, `//` comments. The `src:` value is coloured as Axon |
+| `.trio` files | A full parser for Haystack records. Colours for `---` separators, tag names, `//` comments and each kind of value: strings, numbers with units, `true`/`false`, `@refs` with their names, `^symbols`, dates, times, URIs, `C(lat,lng)`, `Type("text")`, `NA`, lists `[ ]` and dicts `{ }`. Indented text, `Zinc:` and `Trio:` blocks are one value. Syntax errors are marked, and an error in one record does not spoil the next. Fold a record or a multi-line value. The Structure view shows one node per record, named by its `name`, `dis` or `id` tag. Cmd+/ comments a line, and `[ ]`, `{ }`, `( )` are matched. The `src:` value is coloured as Axon |
 | `.fandoc` files | Headings and their underlines, list markers, `pre>` blocks, backtick links and `'code'` |
 | `fan.props`, and `.props` files under an `etc/` folder | `key=value` colours and `//` comments |

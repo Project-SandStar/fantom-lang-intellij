@@ -48,11 +48,12 @@ abstract class TrioRecordMixin(node: ASTNode) : ASTWrapperPsiElement(node) {
     companion object {
         val NAME_TAGS = listOf("name", "dis", "id")
 
-        /** The value as a person reads it: no quotes, and for a ref its id. */
+        /** The value as a person reads it: no quotes, and for a ref its display name, else its id. */
         fun valueText(tag: TrioTag): String? = when (val value = (tag as? TrioTagMixin)?.tagValue()) {
             is TrioStrVal -> unquote(value.text)
             is TrioRawVal -> value.text
-            is TrioRefVal -> value.firstChild?.text
+            is TrioRefVal -> value.node.findChildByType(TrioTypes.STRING)?.let { unquote(it.text) }?.takeIf { it.isNotEmpty() }
+                ?: value.firstChild?.text
             null -> null
             else -> value.text.lineSequence().firstOrNull()
         }
