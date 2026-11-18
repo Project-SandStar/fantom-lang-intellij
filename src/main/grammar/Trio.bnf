@@ -1,0 +1,117 @@
+// Trio (Haystack records). The lexer (Trio.flex) does the line work: it knows where a tag
+// starts, where a value ends and which lines are an indented block. This grammar only
+// groups the tokens into records, tags and values.
+{
+    parserClass="co.anbora.labs.fantom.lang.trio.parser.TrioParser"
+    psiClassPrefix="Trio"
+    psiImplClassSuffix="Impl"
+
+    implements="com.intellij.psi.PsiElement"
+    extends="com.intellij.extapi.psi.ASTWrapperPsiElement"
+
+    psiPackage="co.anbora.labs.fantom.lang.trio.psi"
+    psiImplPackage="co.anbora.labs.fantom.lang.trio.psi.impl"
+
+    elementTypeHolderClass="co.anbora.labs.fantom.lang.trio.psi.TrioTypes"
+    elementTypeClass="co.anbora.labs.fantom.lang.trio.TrioElementType"
+    tokenTypeClass="co.anbora.labs.fantom.lang.trio.TrioTokenType"
+
+    // Every value kind is a `value`, so a tag has one typed child: tag.getValue().
+    extends(".*Val|.*Block|src")=value
+
+    mixin("record")="co.anbora.labs.fantom.lang.trio.TrioRecordMixin"
+    mixin("tag")="co.anbora.labs.fantom.lang.trio.TrioTagMixin"
+    implements("tag")="com.intellij.psi.PsiNameIdentifierOwner"
+    // The Axon injection host. AxonInjector looks for this class.
+    mixin("src")="co.anbora.labs.fantom.lang.trio.TrioSrcValue"
+    implements("src")="com.intellij.psi.PsiLanguageInjectionHost"
+
+    tokens = [
+        COMMENT     = 'comment'
+        SEPARATOR   = 'separator'
+        TAG_NAME    = 'tag name'
+        COLON       = ':'
+        COMMA       = ','
+        LBRACKET    = '['
+        RBRACKET    = ']'
+        LBRACE      = '{'
+        RBRACE      = '}'
+        LPAREN      = '('
+        RPAREN      = ')'
+        ZINC_KW     = 'Zinc:'
+        TRIO_KW     = 'Trio:'
+        COORD_KW    = 'C'
+        BLOCK_TEXT  = 'indented text'
+        SRC_VALUE   = 'Axon source'
+        UNQUOTED    = 'text'
+        STRING      = 'string'
+        URI         = 'uri'
+        REF         = 'ref'
+        SYMBOL      = 'symbol'
+        NUMBER      = 'number'
+        DATE        = 'date'
+        TIME        = 'time'
+        DATE_TIME   = 'date time'
+        BOOL        = 'bool'
+        NA          = 'NA'
+        NULL        = 'N'
+        MARKER      = 'M'
+        REMOVE      = 'R'
+        TYPE_NAME   = 'type name'
+        ID          = 'name'
+    ]
+}
+
+trioFile ::= item_*
+
+// One record or one separator line. Text that is not a tag is skipped up to the next tag.
+private item_ ::= !<<eof>> (SEPARATOR | record) {pin=1 recoverWhile=tag_recover_}
+
+record ::= tag+
+
+// `name` (a marker) or `name: value`. A bad value does not break the tags after it.
+tag ::= TAG_NAME [COLON value?] {pin=1 recoverWhile=tag_recover_}
+private tag_recover_ ::= !(TAG_NAME | SEPARATOR)
+
+value ::= src | textBlock | zincBlock | trioBlock | rawVal | zinc_
+
+// The value of a `src` tag: Axon, on the tag line or on the indented lines after it.
+src ::= SRC_VALUE
+// `name:` and then indented lines: a string of more than one line.
+textBlock ::= BLOCK_TEXT
+// `name: Zinc:` and then an indented Zinc grid.
+zincBlock ::= ZINC_KW BLOCK_TEXT? {pin=1}
+// `name: Trio:` and then indented Trio records.
+trioBlock ::= TRIO_KW BLOCK_TEXT? {pin=1}
+// A string with no quotes: all text to the end of the line.
+rawVal ::= UNQUOTED
+
+private zinc_ ::= strVal | uriVal | refVal | symbolVal
+                | dateTimeVal | dateVal | timeVal | numberVal
+                | boolVal | naVal | nullVal | markerVal | removeVal
+                | coordVal | xstrVal | listVal | dictVal
+
+strVal      ::= STRING
+uriVal      ::= URI
+// `@id` or `@id "display name"`
+refVal      ::= REF STRING?
+symbolVal   ::= SYMBOL
+numberVal   ::= NUMBER
+dateVal     ::= DATE
+timeVal     ::= TIME
+dateTimeVal ::= DATE_TIME
+boolVal     ::= BOOL
+naVal       ::= NA
+nullVal     ::= NULL
+markerVal   ::= MARKER
+removeVal   ::= REMOVE
+// `C(lat,lng)`
+coordVal    ::= COORD_KW LPAREN NUMBER COMMA NUMBER RPAREN {pin=1}
+// `Type("text")`, for example Bin("text/plain")
+xstrVal     ::= TYPE_NAME LPAREN STRING RPAREN {pin=1}
+// `[a, b]`; the items can be on the indented lines after a lone `[`.
+listVal     ::= LBRACKET list_item_* RBRACKET {pin=1}
+private list_item_ ::= zinc_ COMMA?
+// `{a, b:1}` or `{a b:1}`
+dictVal     ::= LBRACE dictItem* RBRACE {pin=1}
+dictItem    ::= ID [COLON zinc_] COMMA? {pin=1}

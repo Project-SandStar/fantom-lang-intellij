@@ -141,6 +141,10 @@
                   fieldName="INSTANCE" language="trio_lang" extensions="trio"/>
         <lang.parserDefinition language="trio_lang" implementationClass="co.anbora.labs.fantom.lang.trio.TrioParserDefinition"/>
         <lang.syntaxHighlighterFactory language="trio_lang" implementationClass="co.anbora.labs.fantom.lang.trio.TrioSyntaxHighlighterFactory"/>
+        <lang.foldingBuilder language="trio_lang" implementationClass="co.anbora.labs.fantom.lang.trio.TrioFoldingBuilder"/>
+        <lang.psiStructureViewFactory language="trio_lang" implementationClass="co.anbora.labs.fantom.lang.trio.TrioStructureViewFactory"/>
+        <lang.commenter language="trio_lang" implementationClass="co.anbora.labs.fantom.lang.trio.TrioCommenter"/>
+        <lang.braceMatcher language="trio_lang" implementationClass="co.anbora.labs.fantom.lang.trio.TrioBraceMatcher"/>
         <!-- Fandoc (.fandoc) -->
         <fileType name="Fandoc" implementationClass="co.anbora.labs.fantom.lang.fandoc.FandocFileType"
                   fieldName="INSTANCE" language="fandoc_lang" extensions="fandoc"/>
