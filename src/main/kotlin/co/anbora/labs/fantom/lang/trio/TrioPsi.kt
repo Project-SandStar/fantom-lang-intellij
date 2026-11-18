@@ -19,6 +19,7 @@ import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.impl.source.tree.LeafElement
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.IncorrectOperationException
 import javax.swing.Icon
 
 /** A record: the tags between two `---` lines. */
@@ -52,7 +53,7 @@ abstract class TrioRecordMixin(node: ASTNode) : ASTWrapperPsiElement(node) {
         fun valueText(tag: TrioTag): String? = when (val value = (tag as? TrioTagMixin)?.tagValue()) {
             is TrioStrVal -> unquote(value.text)
             is TrioRawVal -> value.text
-            is TrioRefVal -> value.node.findChildByType(TrioTypes.STRING)?.let { unquote(it.text) }?.takeIf { it.isNotEmpty() }
+            is TrioRefVal -> (value.node.findChildByType(TrioTypes.STRING) ?: value.node.findChildByType(TrioTypes.OPEN_STRING))?.let { unquote(it.text) }?.takeIf { it.isNotEmpty() }
                 ?: value.firstChild?.text
             null -> null
             else -> value.text.lineSequence().firstOrNull()
@@ -73,6 +74,8 @@ abstract class TrioTagMixin(node: ASTNode) : ASTWrapperPsiElement(node), PsiName
     override fun getName(): String? = nameIdentifier?.text
 
     override fun setName(name: String): PsiElement {
+        // A name that is not a tag name does not lex as one, so say why the rename stops.
+        if (!TAG_NAME.matches(name)) throw IncorrectOperationException("'$name' is not a tag name")
         val file = PsiFileFactory.getInstance(project).createFileFromText("a.trio", TrioFileType, name)
         val newName = PsiTreeUtil.findChildOfType(file, TrioTag::class.java)?.nameIdentifier
         val old = nameIdentifier
@@ -89,6 +92,11 @@ abstract class TrioTagMixin(node: ASTNode) : ASTWrapperPsiElement(node), PsiName
         override fun getPresentableText(): String? = name
         override fun getLocationString(): String? = null
         override fun getIcon(unused: Boolean): Icon? = null
+    }
+
+    private companion object {
+        /** The names that the lexer reads as TAG_NAME (`NAME` in Trio.flex). */
+        val TAG_NAME = Regex("[a-zA-Z_][a-zA-Z0-9_]*")
     }
 }
 

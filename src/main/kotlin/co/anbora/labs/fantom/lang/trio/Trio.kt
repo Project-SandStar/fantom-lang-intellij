@@ -40,8 +40,36 @@ class TrioElementType(debugName: String) : IElementType(debugName, TrioLanguage)
 /** A token of the Trio lexer. Its name is the text that a syntax error shows ("string expected"). */
 class TrioTokenType(debugName: String) : IElementType(debugName, TrioLanguage)
 
-/** The Trio lexer, generated from `src/main/grammar/Trio.flex`. */
-class TrioLexer : FlexAdapter(_TrioLexer())
+/**
+ * The Trio lexer, generated from `src/main/grammar/Trio.flex`.
+ *
+ * After a string with no closing quote, a quote typed on a later line of the record closes
+ * that string. So from such a string to the end of its record, the state of each token has
+ * one more bit, and the editor does not restart the lexer at one of those tokens.
+ */
+class TrioLexer : FlexAdapter(_TrioLexer()) {
+    private var afterOpenString = false
+
+    override fun start(buffer: CharSequence, startOffset: Int, endOffset: Int, initialState: Int) {
+        afterOpenString = initialState and AFTER_OPEN_STRING != 0
+        super.start(buffer, startOffset, endOffset, initialState and AFTER_OPEN_STRING.inv())
+    }
+
+    override fun getState(): Int = super.getState() or (if (afterOpenString) AFTER_OPEN_STRING else 0)
+
+    override fun advance() {
+        when (tokenType) {
+            TrioTypes.OPEN_STRING -> afterOpenString = true
+            TrioTypes.SEPARATOR -> if (_TrioLexer.isRecordEnd(bufferSequence, tokenStart, tokenEnd)) afterOpenString = false
+        }
+        super.advance()
+    }
+
+    private companion object {
+        /** Above all JFlex state numbers. */
+        const val AFTER_OPEN_STRING = 1 shl 16
+    }
+}
 
 class TrioFile(viewProvider: FileViewProvider) : PsiFileBase(viewProvider, TrioLanguage) {
     override fun getFileType(): FileType = TrioFileType
@@ -67,7 +95,7 @@ class TrioParserDefinition : ParserDefinition {
     companion object {
         @JvmField val FILE = IFileElementType(TrioLanguage)
         @JvmField val COMMENTS = TokenSet.create(TrioTypes.COMMENT)
-        @JvmField val STRINGS = TokenSet.create(TrioTypes.STRING)
+        @JvmField val STRINGS = TokenSet.create(TrioTypes.STRING, TrioTypes.OPEN_STRING)
     }
 }
 
@@ -81,7 +109,7 @@ class TrioSyntaxHighlighter : SyntaxHighlighterBase() {
             TrioTypes.TAG_NAME, TrioTypes.ID -> TAG_NAME
             TrioTypes.COLON -> COLON
             TrioTypes.COMMA -> COMMA
-            TrioTypes.UNQUOTED, TrioTypes.BLOCK_TEXT, TrioTypes.STRING -> VALUE
+            TrioTypes.UNQUOTED, TrioTypes.BLOCK_TEXT, TrioTypes.STRING, TrioTypes.OPEN_STRING -> VALUE
             TrioTypes.URI -> URI
             TrioTypes.REF, TrioTypes.SYMBOL -> REF
             TrioTypes.NUMBER, TrioTypes.DATE, TrioTypes.TIME, TrioTypes.DATE_TIME -> NUMBER

@@ -268,7 +268,7 @@ class TrioParserTest : BasePlatformTestCase() {
                 LIST_VAL
                   NUMBER_VAL 1
                   NUMBER_VAL 2
-                  ERROR ',', C, M, N, NA, R, '[', ']', bool, date, date time, number, ref, string, symbol, time, type name, uri or '{' expected, got 'd'
+                  ERROR ',', <string>, C, M, N, NA, R, '[', ']', bool, date, date time, number, ref, symbol, time, type name, uri or '{' expected, got 'd'
               tag d
                 NUMBER_VAL 3
             separator
@@ -283,7 +283,7 @@ class TrioParserTest : BasePlatformTestCase() {
               tag g
                 DICT_VAL
                   item a
-                ERROR C, M, N, NA, R, '[', bool, date, date time, number, ref, string, symbol, time, type name, uri or '{' expected, got '}'
+                ERROR <string>, C, M, N, NA, R, '[', bool, date, date time, number, ref, symbol, time, type name, uri or '{' expected, got '}'
               tag h
         """
     )
@@ -309,9 +309,52 @@ class TrioParserTest : BasePlatformTestCase() {
               tag a
                 STR_VAL "two\nlines"
               tag b
-                STR_VAL "open
+                STR_VAL
+                  ERROR closing quote expected, got 'c'
               tag c
                 NUMBER_VAL 1
+        """
+    )
+
+    /** A string with no closing quote does not take the `---` line and the next record. */
+    fun testOpenStringStaysInItsRecord() = check(
+        "a: 1\nb: \"open\nc: 1\n---\nd: \"x\"\ne: 2",
+        """
+            record
+              tag a
+                NUMBER_VAL 1
+              tag b
+                STR_VAL
+                  ERROR closing quote expected, got 'c'
+              tag c
+                NUMBER_VAL 1
+            separator
+            record
+              tag d
+                STR_VAL "x"
+              tag e
+                NUMBER_VAL 2
+        """
+    )
+
+    /**
+     * The same for the display name of a ref, and at the end of the file. The two open
+     * strings are in two records: in one record the second quote closes the first string.
+     */
+    fun testOpenStringInARefAndAtTheEnd() = check(
+        "a: @r \"open\nb: 1\n---\nc: \"open",
+        """
+            record
+              tag a
+                REF_VAL
+                  ERROR closing quote expected, got 'b'
+              tag b
+                NUMBER_VAL 1
+            separator
+            record
+              tag c
+                STR_VAL
+                  ERROR closing quote expected
         """
     )
 }

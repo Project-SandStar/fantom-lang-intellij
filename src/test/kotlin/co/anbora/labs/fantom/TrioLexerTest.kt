@@ -1,6 +1,7 @@
 package co.anbora.labs.fantom
 
 import co.anbora.labs.fantom.LexerTestSupport.checkInvariants
+import co.anbora.labs.fantom.LexerTestSupport.tokens
 import co.anbora.labs.fantom.LexerTestSupport.visible
 import co.anbora.labs.fantom.lang.trio.TrioLexer
 import junit.framework.TestCase
@@ -42,7 +43,7 @@ class TrioLexerTest : TestCase() {
     }
 
     private val record = """
-        name: "compareTemp"
+        name: "calcDailyAvg"
         hidden
         src:
           (day) => do
@@ -107,5 +108,23 @@ class TrioLexerTest : TestCase() {
         assertTrue(toks.toString(), toks.contains("number '2'"))
         assertTrue(toks.toString(), toks.contains("indented text 'text'"))
         assertEquals("tag name 'e'", toks.last())
+    }
+
+    /** A string with no closing quote ends at its line, and never goes over a `---` line. */
+    fun testOpenStrings() {
+        val text = "a: \"open\nb: 1\n---\nc: \"closed\"\nd: \"two\nlines\"\ne: \"not - a\n- record end\"\n"
+        checkInvariants(::TrioLexer, text)
+        val toks = visible(TrioLexer(), text)
+        assertTrue(toks.toString(), toks.contains("open string '\"open'"))
+        assertTrue(toks.toString(), toks.contains("string '\"closed\"'"))
+        assertTrue(toks.toString(), toks.contains("string '\"two\nlines\"'"))
+        assertTrue(toks.toString(), toks.contains("string '\"not - a\n- record end\"'"))
+        // All tokens after the open string, up to the record end, have a state that is not a restart point.
+        val all = tokens(TrioLexer(), text)
+        val open = all.indexOfFirst { it.type == "open string" }
+        val end = all.indexOfFirst { it.type == "separator" }
+        assertTrue(all.subList(open + 1, end + 1).all { it.state != 0 })
+        assertEquals(0, all[end + 1].state and (1 shl 16))
+        assertTrue(all.drop(end + 1).any { it.state == 0 })
     }
 }

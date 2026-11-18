@@ -16,8 +16,12 @@ import static co.anbora.labs.fantom.lang.trio.psi.TrioTypes.*;
 // a quote, backtick, `@`, `^`, `{`, `[` or `Type(...)` is Zinc, a digit is a number, date
 // or time when the whole value fits, and all other text is an unquoted string.
 //
-// The lexer is in YYINITIAL at the start of every line that is not inside a value,
-// so the editor can restart it there.
+// The editor restarts the lexer at a token that starts in YYINITIAL. So a token is in
+// YYINITIAL only when the text after it cannot change it or the tokens before it:
+//   - the blank lines after a block are in AFTER_BLOCK, because an indent typed on the next
+//     line makes that line a part of the block;
+//   - a string with no closing quote is OPEN_STRING, and TrioLexer (Trio.kt) marks the state
+//     of all tokens after it in the record, because a quote typed there closes the string.
 
 %%
 
@@ -66,6 +70,26 @@ import static co.anbora.labs.fantom.lang.trio.psi.TrioTypes.*;
     return -1;
   }
 
+  /** True for a line of three or more dashes and nothing else: the end of a record. */
+  public static boolean isRecordEnd(CharSequence text, int start, int end) {
+    int p = start;
+    while (p < end && text.charAt(p) == '-') p++;
+    if (p - start < 3) return false;
+    while (p < end && (text.charAt(p) == ' ' || text.charAt(p) == '\t' || text.charAt(p) == '\f')) p++;
+    return p == end;
+  }
+
+  /** True when the token has a record end line in it. A string does not go from one record to the next. */
+  private boolean crossesRecordEnd() {
+    for (int p = zzStartRead; p < zzMarkedPos; p++) {
+      if (!isNewline(p)) continue;
+      int line = skipNewline(p);
+      if (line < zzMarkedPos && isRecordEnd(zzBuffer, line, lineEnd(line))) return true;
+      p = line - 1;
+    }
+    return false;
+  }
+
   /** End of the block that has a line at `from`: the end of its last line that is not blank. */
   private int blockEnd(int from) {
     int end = lineEnd(from);
@@ -90,7 +114,8 @@ import static co.anbora.labs.fantom.lang.trio.psi.TrioTypes.*;
 // KW_BLOCK: after `Zinc:` or `Trio:`.  BLOCK / SRC_BLOCK: before the text of an indented block.
 // ZINC: a Zinc value on one line.  ZBLOCK: a Zinc list or dict over indented lines.
 // JUNK: the rest of a line that is not a tag.
-%xstate AFTER_NAME, AFTER_SRC, VALUE, SRC_VAL, KW_BLOCK, BLOCK, SRC_BLOCK, ZINC, ZBLOCK, JUNK
+// AFTER_BLOCK: the blank lines after a block, or after `name:` with no block.
+%xstate AFTER_NAME, AFTER_SRC, VALUE, SRC_VAL, KW_BLOCK, BLOCK, SRC_BLOCK, ZINC, ZBLOCK, JUNK, AFTER_BLOCK
 
 NL = \r\n|\r|\n
 WS = [ \t\f]+
@@ -113,9 +138,10 @@ HEX = 0x[0-9a-fA-F_]+
 NUMBER = -?({HEX}|{DECIMAL}{UNIT}?)
 NUMBER_WORD = NaN|INF|-INF
 
-// A closed string may go over more than one line (SkySpark project exports write such strings).
-// A string with no closing quote ends at the end of its line.
-STRING = \"([^\"\\]|\\[^])*\" | \"([^\"\\\r\n]|\\[^\r\n])*\\?
+// A closed string may go over more than one line (SkySpark project exports write such strings),
+// but not over a record end line. A string with no closing quote ends at the end of its line.
+STRING = \"([^\"\\]|\\[^])*\"
+OPEN_STRING = \"([^\"\\\r\n]|\\[^\r\n])*\\?
 URI = `[^`\r\n]*`?
 REF = @{ID_CHAR}+
 SYMBOL = \^{ID_CHAR}+
@@ -153,22 +179,28 @@ TYPE_CALL = [A-Z][a-zA-Z0-9_]*\([^\r\n]*\)
 <VALUE, SRC_VAL, KW_BLOCK> {WS} { return WHITE_SPACE; }
 
 // `name:` and nothing more on the line: the value is the indented block, when there is one.
-<VALUE, KW_BLOCK> {NL} { yybegin(nextBlockLine(zzStartRead) >= 0 ? BLOCK : YYINITIAL); return WHITE_SPACE; }
-<SRC_VAL> {NL}         { yybegin(nextBlockLine(zzStartRead) >= 0 ? SRC_BLOCK : YYINITIAL); return WHITE_SPACE; }
+<VALUE, KW_BLOCK> {NL} { yybegin(nextBlockLine(zzStartRead) >= 0 ? BLOCK : AFTER_BLOCK); return WHITE_SPACE; }
+<SRC_VAL> {NL}         { yybegin(nextBlockLine(zzStartRead) >= 0 ? SRC_BLOCK : AFTER_BLOCK); return WHITE_SPACE; }
+
+<AFTER_BLOCK> {
+  {WS}                 { return WHITE_SPACE; }
+  {NL}                 { return WHITE_SPACE; }
+  [^]                  { yypushback(yylength()); yybegin(YYINITIAL); }
+}
 
 <BLOCK, SRC_BLOCK> {
   {WS}                 { return WHITE_SPACE; }
   {NL}                 { return WHITE_SPACE; }
 }
-<BLOCK> {NOT_WS}       { zzMarkedPos = blockEnd(zzStartRead); yybegin(YYINITIAL); return BLOCK_TEXT; }
-<SRC_BLOCK> {NOT_WS}   { zzMarkedPos = blockEnd(zzStartRead); yybegin(YYINITIAL); return SRC_VALUE; }
+<BLOCK> {NOT_WS}       { zzMarkedPos = blockEnd(zzStartRead); yybegin(AFTER_BLOCK); return BLOCK_TEXT; }
+<SRC_BLOCK> {NOT_WS}   { zzMarkedPos = blockEnd(zzStartRead); yybegin(AFTER_BLOCK); return SRC_VALUE; }
 
 <KW_BLOCK> [^]         { yypushback(yylength()); yybegin(JUNK); }
 
 // Axon source on the `src:` line. It goes on over indented lines, as the block form does.
 <SRC_VAL> {
   \"                   { yypushback(1); yybegin(ZINC); }
-  [^ \t\f\r\n\"]       { zzMarkedPos = blockEnd(zzStartRead); yybegin(YYINITIAL); return SRC_VALUE; }
+  [^ \t\f\r\n\"]       { zzMarkedPos = blockEnd(zzStartRead); yybegin(AFTER_BLOCK); return SRC_VALUE; }
 }
 
 <VALUE> {
@@ -192,7 +224,7 @@ TYPE_CALL = [A-Z][a-zA-Z0-9_]*\([^\r\n]*\)
 
 <ZINC> {NL}            { yybegin(YYINITIAL); return WHITE_SPACE; }
 <ZBLOCK> {
-  {NL}                 { if (nextBlockLine(zzStartRead) < 0) yybegin(YYINITIAL); return WHITE_SPACE; }
+  {NL}                 { if (nextBlockLine(zzStartRead) < 0) yybegin(AFTER_BLOCK); return WHITE_SPACE; }
   "//" [^\r\n]*        { return COMMENT; }
 }
 
@@ -207,7 +239,9 @@ TYPE_CALL = [A-Z][a-zA-Z0-9_]*\([^\r\n]*\)
   ","                  { return COMMA; }
   ":"                  { return COLON; }
 
-  {STRING}             { return STRING; }
+  {STRING}             { if (!crossesRecordEnd()) return STRING;
+                         zzMarkedPos = lineEnd(zzStartRead); return OPEN_STRING; }
+  {OPEN_STRING}        { return OPEN_STRING; }
   {URI}                { return URI; }
   {REF}                { return REF; }
   {SYMBOL}             { return SYMBOL; }

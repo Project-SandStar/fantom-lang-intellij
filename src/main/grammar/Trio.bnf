@@ -45,6 +45,9 @@
         SRC_VALUE   = 'Axon source'
         UNQUOTED    = 'text'
         STRING      = 'string'
+        OPEN_STRING = 'open string'
+        // The lexer never gives this token: it is the error text for a string with no closing quote.
+        CLOSING_QUOTE = 'closing quote'
         URI         = 'uri'
         REF         = 'ref'
         SYMBOL      = 'symbol'
@@ -91,10 +94,12 @@ private zinc_ ::= strVal | uriVal | refVal | symbolVal
                 | boolVal | naVal | nullVal | markerVal | removeVal
                 | coordVal | xstrVal | listVal | dictVal
 
-strVal      ::= STRING
+strVal      ::= STRING | open_str_ {name="string"}
+// A string with no closing quote: an error at its end.
+private open_str_ ::= OPEN_STRING CLOSING_QUOTE {pin=1}
 uriVal      ::= URI
 // `@id` or `@id "display name"`
-refVal      ::= REF STRING?
+refVal      ::= REF (STRING | open_str_)?
 symbolVal   ::= SYMBOL
 numberVal   ::= NUMBER
 dateVal     ::= DATE

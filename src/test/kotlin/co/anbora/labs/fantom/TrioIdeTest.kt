@@ -3,6 +3,7 @@ package co.anbora.labs.fantom
 import co.anbora.labs.fantom.lang.axon.AxonLanguage
 import co.anbora.labs.fantom.lang.trio.TrioFile
 import co.anbora.labs.fantom.lang.trio.TrioFoldingBuilder
+import co.anbora.labs.fantom.lang.trio.TrioLexer
 import co.anbora.labs.fantom.lang.trio.TrioSrcValue
 import co.anbora.labs.fantom.lang.trio.TrioStructureViewElement
 import co.anbora.labs.fantom.lang.trio.TrioSyntaxHighlighter
@@ -13,8 +14,10 @@ import com.intellij.codeInsight.highlighting.BraceMatchingUtil
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.util.IncorrectOperationException
 
 /** Editor features of `.trio` files: injection, errors, folding, structure view, commenter, braces, colours. */
 class TrioIdeTest : BasePlatformTestCase() {
@@ -143,5 +146,62 @@ class TrioIdeTest : BasePlatformTestCase() {
         assertEquals("co.anbora.labs.trio.NUMBER", name(TrioTypes.NUMBER))
         assertEquals("co.anbora.labs.trio.REF", name(TrioTypes.REF))
         assertNull(name(TrioTypes.SRC_VALUE))
+    }
+
+    /** The token types that the editor shows after `typed`, against a new lexer run over the new text. */
+    private fun staleChars(text: String, typed: String): List<Int> {
+        myFixture.configureByText("typed.trio", text)
+        myFixture.doHighlighting()
+        myFixture.type(typed)
+        val now = myFixture.editor.document.text
+        val shown = arrayOfNulls<String>(now.length)
+        val iterator = (myFixture.editor as EditorEx).highlighter.createIterator(0)
+        while (!iterator.atEnd()) {
+            for (i in iterator.start until iterator.end) shown[i] = iterator.tokenType.toString()
+            iterator.advance()
+        }
+        val fresh = arrayOfNulls<String>(now.length)
+        val lexer = TrioLexer()
+        lexer.start(now)
+        while (lexer.tokenType != null) {
+            for (i in lexer.tokenStart until lexer.tokenEnd) fresh[i] = lexer.tokenType.toString()
+            lexer.advance()
+        }
+        return now.indices.filter { shown[it] != fresh[it] }
+    }
+
+    /**
+     * The editor restarts the lexer near the edit. Text typed after a block or after an open
+     * string can change tokens before it, so the colours must still be the colours of a full run.
+     */
+    fun testColoursAreRightAfterTyping() {
+        // an indent makes the next line a part of the block
+        assertEquals(emptyList<Int>(), staleChars("doc:\n  a\n<caret>next: 1\n", "  "))
+        assertEquals(emptyList<Int>(), staleChars("doc:\n  a\n\n\n<caret>next: 1\n", "  "))
+        assertEquals(emptyList<Int>(), staleChars("src:\n  (a) => a\n\n\n<caret>next: 1\n", "  "))
+        // a quote closes the string that is open two lines before
+        assertEquals(emptyList<Int>(), staleChars("a: \"open\nb: 1\nc: 2<caret>\nd: 3\n", "\""))
+        assertEquals(emptyList<Int>(), staleChars("a: @r \"open\nb: 1\nc: 2<caret>\nd: 3\n", "\""))
+        assertEquals(emptyList<Int>(), staleChars("a: [\n  1,\n  2\n<caret>\nb: 3\n", "]"))
+    }
+
+    fun testRenameOfATagName() {
+        myFixture.configureByText("r.trio", "na<caret>me: calcDailyAvg\nsite\n")
+        myFixture.renameElementAtCaret("dis")
+        assertEquals("dis: calcDailyAvg\nsite\n", myFixture.file.text)
+    }
+
+    /** A new name that is not a tag name stops the rename with an error; the file does not change. */
+    fun testRenameToABadNameIsAnError() {
+        myFixture.configureByText("r.trio", "na<caret>me: calcDailyAvg\nsite\n")
+        var error: Throwable? = null
+        try {
+            myFixture.renameElementAtCaret("9 x")
+        } catch (e: Throwable) {
+            error = e
+        }
+        assertNotNull("the rename must fail", error)
+        assertTrue(error.toString(), generateSequence(error) { it.cause }.any { it is IncorrectOperationException })
+        assertEquals("name: calcDailyAvg\nsite\n", myFixture.file.text)
     }
 }
