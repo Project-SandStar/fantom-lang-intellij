@@ -66,6 +66,15 @@ object AxonResolver {
         return null
     }
 
+    /**
+     * The declaration of [use] in its own file, or null. It reads only the PSI of that file:
+     * no [AxonFunctionSource], no index. The colour annotator uses it on every name.
+     */
+    fun resolveInFile(use: AxonNameUse): AxonNamedElement? {
+        val name = use.referenceName ?: return null
+        return lexical(use, name)
+    }
+
     /** Every declaration visible at [use]; the nearest one comes first for each name. */
     fun visible(use: PsiElement): List<AxonNamedElement> {
         val out = LinkedHashMap<String, AxonNamedElement>()

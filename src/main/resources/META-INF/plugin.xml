@@ -138,6 +138,8 @@
         <lang.braceMatcher language="axon_lang" implementationClass="co.anbora.labs.fantom.ide.axon.AxonBraceMatcher"/>
         <lang.commenter language="axon_lang" implementationClass="co.anbora.labs.fantom.ide.axon.AxonCommenter"/>
         <colorSettings implementation="co.anbora.labs.fantom.ide.axon.AxonColorSettingsPage" displayName="Axon"/>
+        <!-- Colours by meaning: function, parameter, local, call, tag name. Runs on injected Axon too. -->
+        <annotator language="axon_lang" implementationClass="co.anbora.labs.fantom.ide.axon.AxonHighlightingAnnotator"/>
         <multiHostInjector implementation="co.anbora.labs.fantom.ide.axon.AxonInjector"/>
         <lang.foldingBuilder language="axon_lang" implementationClass="co.anbora.labs.fantom.ide.axon.AxonFoldingBuilder"/>
         <lang.psiStructureViewFactory language="axon_lang" implementationClass="co.anbora.labs.fantom.ide.axon.AxonStructureViewFactory"/>

@@ -26,7 +26,12 @@ import javax.swing.Icon
 /**
  * Axon colour keys. Each falls back to the matching Fantom key, so Axon code
  * (in `.axon` files and injected in strings) takes the colours of the Fantom scheme.
- * The external key name is `co.anbora.labs.axon.<NAME>`; never rename an entry.
+ * The external key name is `co.anbora.labs.axon.<NAME>`; never rename an entry, and add new ones at the end.
+ *
+ * The keys up to [BAD_CHAR] come from the lexer ([AxonSyntaxHighlighter]). [CONSTANT] comes from the lexer too.
+ * The other keys after [BAD_CHAR] come from the PSI ([AxonHighlightingAnnotator]).
+ *
+ * A key with a colour of its own (not the Fantom one) is in `resources/colorSchemes/`.
  */
 enum class AxonColors(humanName: String, fallback: TextAttributesKey) {
     KEYWORD("Keyword", FantomColors.KEY_WORD.textAttributesKey),
@@ -45,7 +50,24 @@ enum class AxonColors(humanName: String, fallback: TextAttributesKey) {
     COMMA("Comma", FantomColors.COMMA.textAttributesKey),
     SEMICOLON("Semicolon", FantomColors.SEMICOLON.textAttributesKey),
     DOT("Dot", FantomColors.DOT.textAttributesKey),
-    BAD_CHAR("Bad character", HighlighterColors.BAD_CHARACTER);
+    BAD_CHAR("Bad character", HighlighterColors.BAD_CHARACTER),
+
+    /** `name` in `name: (a) => ...` and in `name: defcomp ... end`. */
+    FUNCTION_DECLARATION("Function declaration", FantomColors.METHOD_DECLARATION.textAttributesKey),
+    /** A lambda parameter, where it is declared and where it is used. */
+    PARAMETER("Parameter", FantomColors.PARAMETER.textAttributesKey),
+    /** `name` in `name: expr`, the variable of `catch (err)`, and their uses. */
+    LOCAL_VARIABLE("Local variable", FantomColors.LOCAL_VARIABLE.textAttributesKey),
+    /** `f` in `f(a)`, in `a.f(b)` and in `a.f x => x`; also a use of a function of the same file. */
+    FUNCTION_CALL("Function call", FantomColors.FUNCTION_CALL.textAttributesKey),
+    /** `name` in `a.name` with no arguments. Axon calls the function `name`, so it looks like a call until the user sets it. */
+    DOT_NAME("Name after a dot, no arguments", FUNCTION_CALL.textAttributesKey),
+    /** A dict key (`{dis: "x", site}`) and the name after `->`. */
+    TAG_NAME("Tag name", FantomColors.INSTANCE_FIELD.textAttributesKey),
+    /** A cell of a `defcomp`, where it is declared and where it is used. */
+    DEFCOMP_CELL("Defcomp cell", FantomColors.INSTANCE_FIELD.textAttributesKey),
+    /** `null`, `true`, `false`. */
+    CONSTANT("null, true, false", FantomColors.CONSTANT.textAttributesKey);
 
     val textAttributesKey: TextAttributesKey = TextAttributesKey.createTextAttributesKey("co.anbora.labs.axon.$name", fallback)
     val attributesDescriptor = AttributesDescriptor(humanName, textAttributesKey)
@@ -60,6 +82,7 @@ class AxonSyntaxHighlighter : SyntaxHighlighterBase() {
     companion object {
         fun colorOf(tokenType: IElementType?): AxonColors? = when (tokenType) {
             null -> null
+            AxonTokenTypes.TRUE, AxonTokenTypes.FALSE, AxonTokenTypes.NULL -> AxonColors.CONSTANT
             in AxonTokenTypes.KEYWORDS -> AxonColors.KEYWORD
             AxonTokenTypes.TYPENAME -> AxonColors.TYPENAME
             AxonTokenTypes.STRING -> AxonColors.STRING
@@ -87,7 +110,12 @@ class AxonSyntaxHighlighterFactory : SyntaxHighlighterFactory() {
         AxonSyntaxHighlighter()
 }
 
-/** Settings | Editor | Color Scheme | Axon. */
+/**
+ * Settings | Editor | Color Scheme | Axon.
+ *
+ * The preview has no PSI, so the demo text marks each name with a tag (`<fn>`, `<param>`, ...)
+ * for the colour that [AxonHighlightingAnnotator] gives it in the editor.
+ */
 class AxonColorSettingsPage : ColorSettingsPage {
     override fun getAttributeDescriptors(): Array<AttributesDescriptor> =
         AxonColors.entries.map { it.attributesDescriptor }.toTypedArray()
@@ -96,24 +124,46 @@ class AxonColorSettingsPage : ColorSettingsPage {
     override fun getDisplayName(): String = "Axon"
     override fun getIcon(): Icon = FantomIcons.FILE
     override fun getHighlighter(): SyntaxHighlighter = AxonSyntaxHighlighter()
-    override fun getAdditionalHighlightingTagToDescriptorMap(): Map<String, TextAttributesKey>? = null
+    override fun getAdditionalHighlightingTagToDescriptorMap(): Map<String, TextAttributesKey> = TAGS
 
     override fun getDemoText(): String = DEMO
 
     companion object {
-        const val DEMO = """// Find periods when an AHU heats and cools at once
-(ahu, dates) => do
-  /* cooling mode periods */
-  coolPeriods: read(cool and equipRef==ahu->id)
-       .hisRead(dates).hisFindPeriods(v => v)
-  site: readById(@p:demo:r:2f797ee0-541a6010)
-  if (site.has("area") and not site->area.isEmpty) return null
-  limit: 75°F + 2.5kW * 10min
-  start: 2024-01-01; at: 10:30
-  spec: ^lib:ph
-  file: `io/points.csv`
-  try parseRef(r"\raw") catch (e) throw {err: e, n: Number}
-  [coolPeriods, site]
+        /** Demo tag to colour key: every key that the annotator gives. */
+        val TAGS: Map<String, TextAttributesKey> = mapOf(
+            "fn" to AxonColors.FUNCTION_DECLARATION,
+            "param" to AxonColors.PARAMETER,
+            "local" to AxonColors.LOCAL_VARIABLE,
+            "call" to AxonColors.FUNCTION_CALL,
+            "dot" to AxonColors.DOT_NAME,
+            "tag" to AxonColors.TAG_NAME,
+            "cell" to AxonColors.DEFCOMP_CELL,
+        ).mapValues { it.value.textAttributesKey }
+
+        const val DEMO = """// Daily average for a point
+<fn>calcDailyAvg</fn>: (<param>point</param>, <param>dates</param>) => do
+  /* no history: no result */
+  <local>his</local>: <param>point</param>.<call>hisRead</call>(<param>dates</param>)
+  if (<local>his</local>.<dot>isEmpty</dot> or not <param>point</param>-><tag>enabled</tag>) return null
+  <local>total</local>: <local>his</local>.<call>foldCol</call>("v0", sum)
+  {<tag>dis</tag>: "Average", <tag>sensor</tag>, <tag>val</tag>: <local>total</local> / <local>his</local>.<dot>size</dot>}
+end
+
+<fn>scaleAll</fn>: (<param>list</param>, <param>factor</param>: 2) => <param>list</param>.<call>map</call>(<param>x</param> => <param>x</param> * <param>factor</param>)
+
+<fn>safeRead</fn>: (<param>id</param>) => do
+  <local>limit</local>: 75°F + 2.5kW * 10min
+  <local>start</local>: 2024-01-01; <local>at</local>: 10:30
+  <local>fallback</local>: [@p:demo:r:2f797ee0-541a6010, ^lib:ph, `io/points.csv`, Number]
+  try <call>readById</call>(<param>id</param>) catch (<local>err</local>) <call>logErr</call>(<local>err</local>, <local>fallback</local>, true)
+end
+
+<fn>addOne</fn>: defcomp
+  <cell>in</cell>: {<tag>is</tag>: ^number}
+  <cell>out</cell>: {<tag>is</tag>: ^number}
+  do
+    <cell>out</cell> = <cell>in</cell> + 1
+  end
 end
 """
     }
