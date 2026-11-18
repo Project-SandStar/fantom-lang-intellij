@@ -136,6 +136,11 @@
         <lang.commenter language="axon_lang" implementationClass="co.anbora.labs.fantom.ide.axon.AxonCommenter"/>
         <colorSettings implementation="co.anbora.labs.fantom.ide.axon.AxonColorSettingsPage" displayName="Axon"/>
         <multiHostInjector implementation="co.anbora.labs.fantom.ide.axon.AxonInjector"/>
+        <lang.foldingBuilder language="axon_lang" implementationClass="co.anbora.labs.fantom.ide.axon.AxonFoldingBuilder"/>
+        <lang.psiStructureViewFactory language="axon_lang" implementationClass="co.anbora.labs.fantom.ide.axon.AxonStructureViewFactory"/>
+        <lang.formatter language="axon_lang" implementationClass="co.anbora.labs.fantom.ide.axon.AxonFormattingModelBuilder"/>
+        <langCodeStyleSettingsProvider implementation="co.anbora.labs.fantom.ide.axon.AxonLanguageCodeStyleSettingsProvider"/>
+        <highlightErrorFilter implementation="co.anbora.labs.fantom.ide.axon.AxonInjectedErrorFilter"/>
         <!-- Trio (.trio) -->
         <fileType name="Trio" implementationClass="co.anbora.labs.fantom.lang.trio.TrioFileType"
                   fieldName="INSTANCE" language="trio_lang" extensions="trio"/>

@@ -2,6 +2,7 @@ package co.anbora.labs.fantom.lang.axon.psi
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement
 import com.intellij.lang.ASTNode
+import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNameIdentifierOwner
 
@@ -14,7 +15,7 @@ abstract class AxonElementImpl(node: ASTNode) : ASTWrapperPsiElement(node), Axon
  * A declaration with a name: a definition `name: expr` (a local or a top-level function),
  * a lambda parameter, a `defcomp` cell, the variable of `catch (err)`.
  */
-interface AxonNamedElement : AxonElement, PsiNameIdentifierOwner
+interface AxonNamedElement : AxonElement, PsiNameIdentifierOwner, NavigatablePsiElement
 
 /**
  * A use of a name: `x`, the `f` of `f(a)`, the `f` of `a.f(b)`.
