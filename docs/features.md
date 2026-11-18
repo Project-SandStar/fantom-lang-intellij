@@ -207,3 +207,26 @@ What does not work:
 | `.trio` files | A full parser for Haystack records. Colours for `---` separators, tag names, `//` comments and each kind of value: strings, numbers with units, `true`/`false`, `@refs` with their names, `^symbols`, dates, times, URIs, `C(lat,lng)`, `Type("text")`, `NA`, lists `[ ]` and dicts `{ }`. Indented text, `Zinc:` and `Trio:` blocks are one value. Syntax errors are marked, and an error in one record does not spoil the next. Fold a record or a multi-line value. The Structure view shows one node per record, named by its `name`, `dis` or `id` tag. Cmd+/ comments a line, and `[ ]`, `{ }`, `( )` are matched. The `src:` value is coloured as Axon The `src:` value is parsed as Axon, with the same errors and navigation as an `.axon` file. The `src:` of a `view` record holds view settings and is left as plain text |
 | `.fandoc` files | Headings and their underlines, list markers, `pre>` blocks, backtick links and `'code'` |
 | `fan.props`, and `.props` files under an `etc/` folder | `key=value` colours and `//` comments |
+
+## Axon project copy
+
+When you work on one SkySpark project, the IDE can hold a read-only copy of
+that project's Axon functions.
+
+- The status bar shows "Axon: none" or "Axon: instance/project". Click it to
+  pick a project, to refresh the copy, or to drop it.
+- The functions come from an Axon server when its URL is set. With no URL
+  they come from a local `proj` folder. See [Settings](settings.md).
+- The copy shows under External Libraries as "Axon: instance/project", one
+  `.axon` file per function. The files open with the Axon colours.
+- The files are read-only. They are outside your project, so version control
+  never sees them.
+- There is one copy per IDE project. Picking another project, or none,
+  deletes the old copy. The copy stays after an IDE restart; no network is
+  used at start.
+- Refresh asks the server to read SkySpark again, then fetches the functions.
+- A fetch that fails changes nothing: the old copy stays as it was. The error
+  shows as a notification.
+
+Not there yet: editing a function and pushing it back from the IDE, and
+resolve or completion from the copy.

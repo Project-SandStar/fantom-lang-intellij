@@ -144,6 +144,14 @@
         <lang.formatter language="axon_lang" implementationClass="co.anbora.labs.fantom.ide.axon.AxonFormattingModelBuilder"/>
         <langCodeStyleSettingsProvider implementation="co.anbora.labs.fantom.ide.axon.AxonLanguageCodeStyleSettingsProvider"/>
         <highlightErrorFilter implementation="co.anbora.labs.fantom.ide.axon.AxonInjectedErrorFilter"/>
+        <!-- Axon project copy: read-only functions of one SkySpark project, as the library "Axon: instance/project" -->
+        <additionalLibraryRootsProvider implementation="co.anbora.labs.fantom.lang.axon.copy.AxonProjectLibraryRootsProvider"/>
+        <writingAccessProvider implementation="co.anbora.labs.fantom.lang.axon.copy.AxonProjectCopyWritingAccessProvider"/>
+        <postStartupActivity implementation="co.anbora.labs.fantom.lang.axon.copy.AxonProjectCopyStartupActivity"/>
+        <statusBarWidgetFactory id="co.anbora.labs.fantom.axonProject"
+                                implementation="co.anbora.labs.fantom.ide.axon.AxonProjectWidgetFactory"/>
+        <projectConfigurable parentId="co.anbora.labs.fantom.settings" instance="co.anbora.labs.fantom.ide.axon.AxonConfigurable"
+                             id="co.anbora.labs.fantom.settings.axon" displayName="Axon" nonDefaultProject="true"/>
         <!-- Trio (.trio) -->
         <fileType name="Trio" implementationClass="co.anbora.labs.fantom.lang.trio.TrioFileType"
                   fieldName="INSTANCE" language="trio_lang" extensions="trio"/>
