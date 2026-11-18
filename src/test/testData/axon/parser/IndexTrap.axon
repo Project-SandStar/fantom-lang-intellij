@@ -1,0 +1,7 @@
+a[0]
+a[-1]
+a[1..2]
+grid[0]["dis"]
+rec->dis
+rec->siteRef->dis
+f(x)->val[0].toStr

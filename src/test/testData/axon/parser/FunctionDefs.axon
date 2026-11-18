@@ -1,0 +1,8 @@
+calcDailyAvg: (point, dates: lastWeek()) => do
+  his: point.hisRead(dates)
+  his.hisRollup(avg, 1day)
+end
+
+toName: rec => rec->dis
+
+noArgs: () => now()

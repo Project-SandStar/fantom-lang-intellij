@@ -1,0 +1,16 @@
+-a * b
+a = b
+a = b or c and d
+a or b and c
+not a and b
+a == b
+a != b
+a <=> b
+a < b
+a <= b
+a > b
+a >= b
+a + b * c - d / e
+(a + b) * c
+a + b == c..d
+not f(x)

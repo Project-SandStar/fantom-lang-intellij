@@ -1,0 +1,6 @@
+f: () => do
+  if (a) return
+  if (b) return 1 + 2
+  throw {dis: "bad"}
+end
+g: x => throw "no"

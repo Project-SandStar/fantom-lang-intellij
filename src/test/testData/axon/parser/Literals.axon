@@ -1,0 +1,30 @@
+123
+-4.5
+75°F
+2.5kW
+10min
+1e6
+0xFF
+2024-01-31
+10:30
+10:30:15
+2024-01-31T10:30:00-05:00
+2024-01-31T10:30:00Z
+dateTime(2024-01-31, 10:30, "New_York")
+2024-01
+@p:demo:r:2f797ee0-541a6010
+@site.equip-1
+^site
+^lib:ph
+`io/points.csv`
+"plain"
+"esc \n \t \" \\ \$ °"
+"""triple "quoted"
+   line 2"""
+null
+true
+false
+marker()
+na()
+removeMarker()
+Str
