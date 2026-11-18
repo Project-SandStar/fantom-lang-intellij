@@ -1,7 +1,12 @@
 package co.anbora.labs.fantom.ide.axon
 
+import co.anbora.labs.fantom.lang.axon.psi.AxonNamedElement
+import co.anbora.labs.fantom.lang.axon.psi.AxonRefExpr
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
 /**
@@ -241,6 +246,22 @@ class AxonSemanticHighlightingTest : BasePlatformTestCase() {
         assertColor(AxonColors.TAG_NAME, "is", 0, 1)
         assertColor(AxonColors.LOCAL_VARIABLE, "step", 0, 1)
         assertNoProblem()
+    }
+
+    /**
+     * The annotator is DumbAware, so it runs while the index is not ready. The colour of each name
+     * comes from the PSI only: in dumb mode it is the same, and nothing throws.
+     */
+    fun testColoursInDumbMode() {
+        axon(sample)
+        fun colours(): List<Pair<String, AxonColors?>> =
+            PsiTreeUtil.findChildrenOfType(myFixture.file, AxonRefExpr::class.java).map { it.text to AxonHighlightingAnnotator.useColor(it) } +
+                PsiTreeUtil.findChildrenOfType(myFixture.file, AxonNamedElement::class.java)
+                    .map { (it.name ?: "") to AxonHighlightingAnnotator.declarationColor(it) }
+        val smart = colours()
+        assertTrue(smart.toString(), smart.contains("point" to AxonColors.PARAMETER) && smart.contains("his" to AxonColors.LOCAL_VARIABLE))
+        val dumb = DumbModeTestUtils.computeInDumbModeSynchronously(project, ThrowableComputable<List<Pair<String, AxonColors?>>, Throwable> { colours() })
+        assertEquals(smart, dumb)
     }
 
     /** Broken code keeps the colours of the names that the parser found. */

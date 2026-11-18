@@ -62,4 +62,28 @@
       <option name="FONT_TYPE" value="1"/>
     </value>
   </option>
+  <!-- Axon: a parameter has its own colour. With the Fantom colour it differs from a local only by italic. -->
+  <option name="co.anbora.labs.axon.PARAMETER">
+    <value>
+      <option name="FOREGROUND" value="b5d86b"/>
+      <option name="FONT_TYPE" value="2"/>
+    </value>
+  </option>
+  <!-- Axon: the platform colour for a field and a constant (9876aa) has a contrast of only 3.7 here. -->
+  <option name="co.anbora.labs.axon.TAG_NAME">
+    <value>
+      <option name="FOREGROUND" value="b392d1"/>
+    </value>
+  </option>
+  <option name="co.anbora.labs.axon.DEFCOMP_CELL">
+    <value>
+      <option name="FOREGROUND" value="b392d1"/>
+    </value>
+  </option>
+  <option name="co.anbora.labs.axon.CONSTANT">
+    <value>
+      <option name="FOREGROUND" value="b392d1"/>
+      <option name="FONT_TYPE" value="2"/>
+    </value>
+  </option>
 </list>

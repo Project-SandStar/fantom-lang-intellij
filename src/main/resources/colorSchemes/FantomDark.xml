@@ -62,4 +62,11 @@
       <option name="FONT_TYPE" value="1"/>
     </value>
   </option>
+  <!-- Axon: a parameter has its own colour. With the Fantom colour it differs from a local only by italic. -->
+  <option name="co.anbora.labs.axon.PARAMETER">
+    <value>
+      <option name="FOREGROUND" value="b5d86b"/>
+      <option name="FONT_TYPE" value="2"/>
+    </value>
+  </option>
 </list>
