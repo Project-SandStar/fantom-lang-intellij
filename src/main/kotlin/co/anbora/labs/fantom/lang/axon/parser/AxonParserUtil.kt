@@ -69,6 +69,46 @@ object AxonParserUtil : GeneratedParserUtilBase() {
         return true
     }
 
+    /**
+     * After a `STRING` or `URI` token: reports a literal with no closing quote. The lexer
+     * gives such a literal the same token type, so that colours and injection keep working.
+     * Takes no token and always matches.
+     */
+    @JvmStatic
+    fun quoteClosed(b: PsiBuilder, level: Int): Boolean {
+        var i = -1
+        while (true) {
+            val t = b.rawLookup(i) ?: return true
+            if (!isSkipped(t)) break
+            i--
+        }
+        val text = b.originalText.subSequence(b.rawTokenTypeStart(i), b.rawTokenTypeStart(i + 1))
+        if (!isClosedLiteral(text)) b.error(if (text.startsWith("`")) "Unterminated URI" else "Unterminated string")
+        return true
+    }
+
+    /** Before a list item: reports `name: value`, which is valid in a dict only. Takes no token and always matches. */
+    @JvmStatic
+    fun pairInList(b: PsiBuilder, level: Int): Boolean {
+        if (b.tokenType == IDENTIFIER && b.lookAhead(1) == AxonTokenTypes.COLON) {
+            b.error("A list cannot hold 'name: value' pairs (use a dict {name: value})")
+        }
+        return true
+    }
+
+    /** True when the string or URI literal [text] (`"a"`, `"""a"""`, `r"a"` or a URI in backticks) has its closing quote. */
+    fun isClosedLiteral(text: CharSequence): Boolean {
+        if (text.startsWith("r\"")) return text.length >= 3 && text.endsWith("\"")
+        val quote = if (text.startsWith("\"\"\"")) "\"\"\"" else text.take(1).toString()
+        var i = quote.length
+        while (i < text.length) {
+            if (text[i] == '\\') i += 2
+            else if (text.startsWith(quote, i)) return i + quote.length == text.length
+            else i++
+        }
+        return false
+    }
+
     /** `Parser.eos`: a newline, the end of the text, or the keyword that closes the block. */
     @JvmStatic
     fun atStmtEnd(b: PsiBuilder, level: Int): Boolean {

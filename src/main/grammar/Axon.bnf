@@ -55,6 +55,7 @@
 
 // A file is a list of expressions, one per line or with `;` between them.
 // A trio `src:` value and an .axon file are most often one lambda: `(a, b) => do ... end`.
+// A block comment with no end runs to the end of the text and is no error (Tokenizer.skipCommentML).
 root ::= topItem*
 private topItem ::= (stmt | <<skipBad>>) <<syncStmt>>
 
@@ -157,17 +158,21 @@ private paramDefault ::= ':' expr {pin=1}
 
 parenExpr ::= '(' expr ')' {pin=1}
 
-// Parser.list: a trailing comma is allowed.
-listExpr ::= '[' [expr listTail*] ']' {pin=1}
-private listTail ::= ',' (&']' | expr) {pin=1}
+// Parser.list: a trailing comma is allowed. `pairInList` reports `[a: 1]`: a list holds no pairs.
+listExpr ::= '[' [listItem listTail*] ']' {pin=1}
+private listTail ::= ',' (&']' | listItem) {pin=1}
+private listItem ::= <<pairInList>> expr
 
 // Parser.dict: `{a, b: 1, "c d": 2, -old}`. A tag with no value is a marker; `-tag` removes the tag.
 dictExpr ::= '{' [dictEntry dictTail*] '}' {pin=1}
 private dictTail ::= ',' (&'}' | dictEntry) {pin=1}
 dictEntry ::= '-' dictKey | dictKey dictValue?
 private dictValue ::= ':' expr {pin=1}
-private dictKey ::= STRING | anyName
+private dictKey ::= stringLit | anyName
 
-literalExpr ::= NUMBER | STRING | URI | REF | SYMBOL | 'true' | 'false' | 'null'
+// `quoteClosed` reports a string or URI that has no closing quote; the token type is the same.
+literalExpr ::= NUMBER | stringLit | uriLit | REF | SYMBOL | 'true' | 'false' | 'null'
+private stringLit ::= STRING <<quoteClosed>>
+private uriLit ::= URI <<quoteClosed>>
 refExpr ::= IDENTIFIER
 typeRefExpr ::= TYPENAME
