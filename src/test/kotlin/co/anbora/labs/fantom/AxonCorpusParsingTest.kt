@@ -40,7 +40,8 @@ class AxonCorpusParsingTest : ParsingTestCase("", "axon", AxonParserDefinition()
 
     /**
      * Fails when more than [maxRatio] of [sources] have a parse error. With [private] the
-     * message gives the error texts and their counts only, never a file name or a line.
+     * message gives the error texts and their counts only, never a file name, a line or
+     * a token of the source.
      */
     private fun check(
         what: String,
@@ -54,7 +55,8 @@ class AxonCorpusParsingTest : ParsingTestCase("", "axon", AxonParserDefinition()
         println("$what: ${sources.size} sources, ${failed.size} with parse errors")
         if (failed.size > sources.size * maxRatio) {
             val lines = if (!private) failed.take(40) else
-                failed.groupingBy { it.substringAfter(": line ").substringAfter(": ") }.eachCount()
+                // `, got 'text'` holds text of the private file: cut it.
+                failed.groupingBy { it.substringAfter(": line ").substringAfter(": ").substringBefore(", got '") }.eachCount()
                     .entries.sortedByDescending { it.value }.map { "${it.value} x ${it.key}" }
             fail("$what: ${failed.size} of ${sources.size} sources have parse errors:\n" + lines.joinToString("\n"))
         }
@@ -114,7 +116,10 @@ class AxonCorpusParsingTest : ParsingTestCase("", "axon", AxonParserDefinition()
         }
         val sources = root.walkTopDown().filter { it.isFile && it.extension == "axon" }.sortedBy { it.path }
             .map { Source(it.relativeTo(root).path, it.readText()) }.toList()
-        if (sources.isEmpty()) return
+        if (sources.isEmpty()) {
+            println("AxonCorpusParsingTest.testProjectAxonFiles skipped: no .axon file under ${root.path}")
+            return
+        }
         check("Project axon files", sources, maxRatio = PROJECT_MAX_ERROR_RATIO, private = true)
     }
 
