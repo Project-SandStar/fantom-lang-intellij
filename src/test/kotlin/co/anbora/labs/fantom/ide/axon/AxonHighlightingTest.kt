@@ -19,8 +19,7 @@ class AxonHighlightingTest : BasePlatformTestCase() {
     private fun keysOf(type: IElementType): List<TextAttributesKey> = AxonSyntaxHighlighter().getTokenHighlights(type).toList()
 
     fun testTokenColours() {
-        val expected = mapOf(
-            AxonTokenTypes.KEYWORD to AxonColors.KEYWORD,
+        val expected = mapOf<IElementType, AxonColors>(
             AxonTokenTypes.TYPENAME to AxonColors.TYPENAME,
             AxonTokenTypes.STRING to AxonColors.STRING,
             AxonTokenTypes.URI to AxonColors.URI,
@@ -29,7 +28,6 @@ class AxonHighlightingTest : BasePlatformTestCase() {
             AxonTokenTypes.SYMBOL to AxonColors.SYMBOL,
             AxonTokenTypes.LINE_COMMENT to AxonColors.LINE_COMMENT,
             AxonTokenTypes.BLOCK_COMMENT to AxonColors.LINE_COMMENT,
-            AxonTokenTypes.OPERATOR to AxonColors.OPERATOR,
             AxonTokenTypes.COLON to AxonColors.OPERATOR,
             AxonTokenTypes.FN_ARROW to AxonColors.FN_ARROW,
             AxonTokenTypes.LPAREN to AxonColors.PARENTHESES,
@@ -42,7 +40,9 @@ class AxonHighlightingTest : BasePlatformTestCase() {
             AxonTokenTypes.SEMICOLON to AxonColors.SEMICOLON,
             AxonTokenTypes.DOT to AxonColors.DOT,
             TokenType.BAD_CHARACTER to AxonColors.BAD_CHAR,
-        )
+        ) + AxonTokenTypes.KEYWORDS.types.associateWith { AxonColors.KEYWORD } +
+            AxonTokenTypes.OPERATORS.types.associateWith { AxonColors.OPERATOR }
+        assertTrue(AxonTokenTypes.KEYWORDS.types.isNotEmpty() && AxonTokenTypes.OPERATORS.types.isNotEmpty())
         for ((type, color) in expected) {
             assertEquals(type.toString(), color, AxonSyntaxHighlighter.colorOf(type))
             assertEquals(type.toString(), listOf(color.textAttributesKey), keysOf(type))

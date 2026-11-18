@@ -59,7 +59,8 @@ class AxonSyntaxHighlighter : SyntaxHighlighterBase() {
 
     companion object {
         fun colorOf(tokenType: IElementType?): AxonColors? = when (tokenType) {
-            AxonTokenTypes.KEYWORD -> AxonColors.KEYWORD
+            null -> null
+            in AxonTokenTypes.KEYWORDS -> AxonColors.KEYWORD
             AxonTokenTypes.TYPENAME -> AxonColors.TYPENAME
             AxonTokenTypes.STRING -> AxonColors.STRING
             AxonTokenTypes.URI -> AxonColors.URI
@@ -67,7 +68,7 @@ class AxonSyntaxHighlighter : SyntaxHighlighterBase() {
             AxonTokenTypes.REF -> AxonColors.REF
             AxonTokenTypes.SYMBOL -> AxonColors.SYMBOL
             AxonTokenTypes.LINE_COMMENT, AxonTokenTypes.BLOCK_COMMENT -> AxonColors.LINE_COMMENT
-            AxonTokenTypes.OPERATOR, AxonTokenTypes.COLON -> AxonColors.OPERATOR
+            in AxonTokenTypes.OPERATORS, AxonTokenTypes.COLON -> AxonColors.OPERATOR
             AxonTokenTypes.FN_ARROW -> AxonColors.FN_ARROW
             AxonTokenTypes.LPAREN, AxonTokenTypes.RPAREN -> AxonColors.PARENTHESES
             AxonTokenTypes.LBRACKET, AxonTokenTypes.RBRACKET -> AxonColors.BRACKETS

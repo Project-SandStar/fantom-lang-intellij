@@ -175,6 +175,21 @@ object TrioParser : PsiParser {
 class TrioSrcValue(node: ASTNode) : ASTWrapperPsiElement(node), PsiLanguageInjectionHost {
     override fun isValidHost(): Boolean = true
 
+    /**
+     * False when the record has a `view` tag: the `src` of a view record is a list of
+     * view settings (`view: {inherit:"table"}`), not Axon.
+     */
+    fun isAxonSource(): Boolean {
+        for (forward in booleanArrayOf(false, true)) {
+            var n = if (forward) node.treeNext else node.treePrev
+            while (n != null && n.elementType != TrioTypes.SEPARATOR) {
+                if (n.elementType == TrioTypes.TAG_NAME && n.chars.contentEquals("view")) return false
+                n = if (forward) n.treeNext else n.treePrev
+            }
+        }
+        return true
+    }
+
     override fun updateText(text: String): PsiLanguageInjectionHost {
         (node.firstChildNode as? LeafElement)?.replaceWithText(text)
         return this

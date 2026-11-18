@@ -172,8 +172,17 @@ tasks {
         purgeOldFiles.set(true)
     }
 
+    // Axon parser and PSI. The purge is scoped to the Axon parser file and the Axon PSI folder.
+    register<org.jetbrains.intellij.platform.gradle.tasks.GenerateParserTask>("generateAxonParser") {
+        sourceFile.set(file("src/main/grammar/Axon.bnf"))
+        targetRootOutputDir.set(file("src/main/gen"))
+        pathToParser.set("co/anbora/labs/fantom/lang/axon/parser/AxonParser.java")
+        pathToPsiRoot.set("co/anbora/labs/fantom/lang/axon/psi")
+        purgeOldFiles.set(true)
+    }
+
     withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-        dependsOn("generateLexer", "generateParser", "generateAxonLexer")
+        dependsOn("generateLexer", "generateParser", "generateAxonLexer", "generateAxonParser")
     }
 }
 

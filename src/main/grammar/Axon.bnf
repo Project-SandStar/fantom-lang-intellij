@@ -1,0 +1,172 @@
+// Axon grammar. It follows the Haxall parser (src/core/axon/fan/parser/Parser.fan):
+// the rule names in the comments are the method names there.
+// The tokens come from Axon.flex and are declared in AxonTokenTypes (generateTokens=false).
+{
+    parserClass="co.anbora.labs.fantom.lang.axon.parser.AxonParser"
+    parserUtilClass="co.anbora.labs.fantom.lang.axon.parser.AxonParserUtil"
+    parserImports=["static co.anbora.labs.fantom.lang.axon.AxonTokenTypes.*"]
+
+    psiClassPrefix="Axon"
+    psiImplClassSuffix="Impl"
+    psiPackage="co.anbora.labs.fantom.lang.axon.psi"
+    psiImplPackage="co.anbora.labs.fantom.lang.axon.psi.impl"
+
+    implements="co.anbora.labs.fantom.lang.axon.psi.AxonElement"
+    extends="co.anbora.labs.fantom.lang.axon.psi.AxonElementImpl"
+
+    elementTypeHolderClass="co.anbora.labs.fantom.lang.axon.psi.AxonTypes"
+    elementTypeClass="co.anbora.labs.fantom.lang.axon.AxonElementType"
+    tokenTypeClass="co.anbora.labs.fantom.lang.axon.AxonTokenType"
+    generateTokens=false
+
+    extends(".*Expr")=expr
+    name(".*Expr")="expression"
+
+    // Named elements: a definition `name: expr`, a lambda parameter, a defcomp cell, a catch variable.
+    // The pattern must list both interfaces because it replaces the global `implements`.
+    mixin("defExpr|param|cellDef|catchVar")="co.anbora.labs.fantom.lang.axon.psi.impl.AxonNamedElementImpl"
+    implements("defExpr")=[
+        "co.anbora.labs.fantom.lang.axon.psi.AxonExpr"
+        "co.anbora.labs.fantom.lang.axon.psi.AxonNamedElement"
+    ]
+    implements("param|cellDef|catchVar")=[
+        "co.anbora.labs.fantom.lang.axon.psi.AxonElement"
+        "co.anbora.labs.fantom.lang.axon.psi.AxonNamedElement"
+    ]
+
+    // Name uses: `x`, `x(...)`, `Type`, `a.x(...)`.
+    mixin("refExpr|typeRefExpr|dotCallExpr")="co.anbora.labs.fantom.lang.axon.psi.impl.AxonNameUseImpl"
+    implements("refExpr|typeRefExpr|dotCallExpr")=[
+        "co.anbora.labs.fantom.lang.axon.psi.AxonExpr"
+        "co.anbora.labs.fantom.lang.axon.psi.AxonNameUse"
+    ]
+
+    tokens = [
+        LINE_COMMENT BLOCK_COMMENT IDENTIFIER TYPENAME NUMBER STRING URI REF SYMBOL OPERATOR
+        AND='and' CATCH='catch' DEFCOMP='defcomp' DEFLINKS='deflinks' DO='do' ELSE='else' END='end'
+        IF='if' NOT='not' OR='or' RETURN='return' THROW='throw' TRY='try'
+        TRUE='true' FALSE='false' NULL='null'
+        FN_ARROW='=>' LPAREN='(' RPAREN=')' LBRACKET='[' RBRACKET=']' LBRACE='{' RBRACE='}'
+        COMMA=',' SEMICOLON=';' DOT='.' COLON=':' COLON2='::' ARROW='->' DOTDOT='..'
+        CMP='<=>' EQ='==' NE='!=' LE='<=' GE='>=' LT='<' GT='>' ASSIGN='='
+        PLUS='+' MINUS='-' STAR='*' SLASH='/' UNDERSCORE='_'
+    ]
+}
+
+// A file is a list of expressions, one per line or with `;` between them.
+// A trio `src:` value and an .axon file are most often one lambda: `(a, b) => do ... end`.
+root ::= topItem*
+private topItem ::= (stmt | <<skipBad>>) <<syncStmt>>
+
+// Parser.eos: an expression in a block ends at `;` or at a newline.
+// Recovery: `skipBad` takes one token that starts no expression and reports it; `syncStmt`
+// then skips, with no second message, to the next line that can start an expression.
+private stmt ::= expr stmtEnd {pin=1}
+private stmtEnd ::= ';' | <<atStmtEnd>>
+
+// Parser.expr
+expr ::= defExpr | doExpr | ifExpr | returnExpr | throwExpr | tryExpr | defcompExpr | assignGroup
+
+// Parser.def: `name: expr`. Haxall 4 reads a name with a capital first letter as a type name;
+// SkySpark 3.0 has no type names and takes `Max: 5` as a definition, so it is accepted here.
+defExpr ::= (IDENTIFIER | TYPENAME) ':' expr {pin=2}
+
+// Parser.doBlock: `end` can be left out before `else` and `catch`.
+doExpr ::= 'do' blockItem* doEnd {pin=1}
+private blockItem ::= !blockEnd (stmt | <<skipBad>>) <<syncStmt>>
+private blockEnd ::= 'end' | 'else' | 'catch' | <<eof>>
+private doEnd ::= 'end' | &('else' | 'catch')
+
+ifExpr ::= 'if' '(' expr ')' expr elseBranch? {pin=1}
+private elseBranch ::= 'else' expr {pin=1}
+
+// Parser.returnExpr, Parser.throwExpr: the expression must start on the same line.
+// A `return` with no value is accepted, as the tree-sitter-axon grammar does; Haxall 4.0 rejects it.
+returnExpr ::= 'return' [<<sameLine>> expr] {pin=1}
+throwExpr ::= 'throw' <<valueOnSameLine>> expr {pin=1}
+
+tryExpr ::= 'try' expr 'catch' catchVar? expr {pin=1}
+catchVar ::= '(' IDENTIFIER ')'
+
+defcompExpr ::= 'defcomp' cellDef* doExpr? 'end' {pin=1}
+cellDef ::= IDENTIFIER ':' dictExpr {pin=2}
+
+// ---- operators, lowest precedence first --------------------------------
+
+private assignGroup ::= orGroup assignExpr?
+left assignExpr ::= '=' expr {pin=1}
+
+private orGroup ::= andGroup orExpr?
+left orExpr ::= 'or' orGroup {pin=1}
+
+private andGroup ::= compareGroup andExpr?
+left andExpr ::= 'and' andGroup {pin=1}
+
+private compareGroup ::= rangeGroup compareExpr?
+left compareExpr ::= compareOp rangeGroup {pin=1}
+private compareOp ::= '==' | '!=' | '<=>' | '<=' | '>=' | '<' | '>'
+
+private rangeGroup ::= addGroup rangeExpr?
+left rangeExpr ::= '..' addGroup {pin=1}
+
+private addGroup ::= mulGroup addExpr*
+left addExpr ::= ('+' | '-') mulGroup {pin=1}
+
+private mulGroup ::= unaryGroup mulExpr*
+left mulExpr ::= ('*' | '/') unaryGroup {pin=1}
+
+private unaryGroup ::= unaryExpr | termGroup
+unaryExpr ::= ('-' | 'not') unaryGroup {pin=1}
+
+// ---- terms: Parser.termExpr ---------------------------------------------
+
+private termGroup ::= termBase termTail*
+private termTail ::= callExpr | indexExpr | dotCallExpr | trapExpr | qnameExpr
+
+// `f(a, b)`, and `f(a) x => x`: a lambda on the same line after `)` is the last argument.
+left callExpr ::= <<sameLine>> argList trailingLambda?
+argList ::= '(' [arg (',' arg)*] ')' {pin=1}
+private arg ::= partialArg | expr
+partialArg ::= '_'
+private trailingLambda ::= <<sameLine>> lambdaExpr
+
+// `a[0]`, `a[1..2]`
+left indexExpr ::= <<sameLine>> '[' expr ']' {pin=2}
+
+// `a.name`, `a.name(args)`, `a.name x => x`. A keyword is a valid name after the dot.
+// Parser.call: after `.name` a `(` on the next line is an error, not a new expression.
+left dotCallExpr ::= '.' anyName (&lambdaHead lambdaExpr | <<sameLine>> argList trailingLambda? | <<parenOnNewLine>>)? {pin=1}
+
+// `a->tag`
+left trapExpr ::= '->' anyName {pin=1}
+
+// `lib::name`, `a.b::Type`
+left qnameExpr ::= '::' (TYPENAME | anyName) {pin=1}
+
+private anyName ::= IDENTIFIER | 'and' | 'catch' | 'defcomp' | 'deflinks' | 'do' | 'else' | 'end' | 'if'
+    | 'not' | 'or' | 'return' | 'throw' | 'try' | 'true' | 'false' | 'null'
+
+// Parser.termBase
+private termBase ::= lambdaExpr | parenExpr | listExpr | dictExpr | literalExpr | refExpr | typeRefExpr
+
+// Parser.lambda1 and the lambda forms of Parser.parenExpr: `x => e`, `() => e`, `(a, b: 2) => e`
+lambdaExpr ::= lambdaHead expr {pin=1}
+private lambdaHead ::= (bareParam | '(' [param (',' param)*] ')') '=>'
+bareParam ::= IDENTIFIER {elementType=param}
+param ::= IDENTIFIER [':' expr]
+
+parenExpr ::= '(' expr ')' {pin=1}
+
+// Parser.list: a trailing comma is allowed.
+listExpr ::= '[' [expr listTail*] ']' {pin=1}
+private listTail ::= ',' (&']' | expr) {pin=1}
+
+// Parser.dict: `{a, b: 1, "c d": 2, -old}`. A tag with no value is a marker; `-tag` removes the tag.
+dictExpr ::= '{' [dictEntry dictTail*] '}' {pin=1}
+private dictTail ::= ',' (&'}' | dictEntry) {pin=1}
+dictEntry ::= '-' dictKey | dictKey [':' expr]
+private dictKey ::= STRING | anyName
+
+literalExpr ::= NUMBER | STRING | URI | REF | SYMBOL | 'true' | 'false' | 'null'
+refExpr ::= IDENTIFIER
+typeRefExpr ::= TYPENAME
