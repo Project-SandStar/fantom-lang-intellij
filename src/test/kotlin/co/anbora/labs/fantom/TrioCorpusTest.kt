@@ -22,13 +22,18 @@ import java.io.File
  * The Trio parser against real files, read in place:
  *  - every `.trio` file of the Haxall 4.0.7 sources must parse with no error;
  *  - every snippet of the tree-sitter-trio test corpus must give the tree that tree-sitter gives.
- * Both skip when the files are not on this machine.
+ *  - every `.trio` file of a local SkySpark project export must parse with no error.
+ * For the Haxall files and the export, the tag names of each record must also be the names
+ * that the line rules of `haystack::TrioReader` give, so a block that ends at the wrong line fails.
+ * All three skip when the files are not on this machine. The messages of the export test
+ * give counts only, and no file name or text of a file.
  */
 class TrioCorpusTest : BasePlatformTestCase() {
 
     private val home = File(System.getProperty("user.home"))
     private val haxall = File(home, "haxall/haxall-4.0.7")
     private val treeSitterCorpus = File(home, "Code/mcpfantom/tree-sitter-trio/test/corpus")
+    private val projectExport = File(home, "Code/axon-mcp-server/proj")
 
     /** Files that do not parse clean yet, by path under the Haxall home, with the construct that fails. */
     private val knownBad: Map<String, String> = mapOf()
@@ -57,6 +62,95 @@ class TrioCorpusTest : BasePlatformTestCase() {
         assertTrue("files with syntax errors:\n" + bad.joinToString("\n"), bad.isEmpty())
         assertTrue("files in knownBad that parse clean now, remove them:\n" + nowClean.joinToString("\n"), nowClean.isEmpty())
         assertTrue("the corpus must have records", records > 0 && tags > records)
+    }
+
+    /** The blocks of the Haxall files end where `TrioReader` ends them. */
+    fun testHaxallTagNamesMatchTheLineRules() {
+        if (!TestInstalls.requireInstall(haxall, "the Haxall 4.0.7 sources")) return
+        val files = haxall.walkTopDown().filter { it.isFile && it.extension == "trio" }.sortedBy { it.path }.toList()
+        val bad = files.filter { !sameTagNames(it.readText().replace("\r\n", "\n")) }.map { it.relativeTo(haxall).path }
+        println("TrioCorpusTest: ${files.size} Haxall files against the line rules, ${bad.size} differ")
+        assertTrue("files with other tag names than TrioReader reads:\n" + bad.joinToString("\n"), bad.isEmpty())
+    }
+
+    /**
+     * A SkySpark project export: function records with long `src` blocks, strings over
+     * more than one line and dicts over indented lines. The files stay where they are.
+     */
+    fun testProjectExportParsesClean() {
+        if (!TestInstalls.requireInstall(projectExport, "a SkySpark project export")) return
+        val files = projectExport.walkTopDown()
+            .onEnter { it.name != "node_modules" && it.name != ".git" }
+            .filter { it.isFile && it.extension == "trio" }.toList()
+        if (!TestInstalls.requireInstall(files.isNotEmpty(), "the .trio files of a SkySpark project export")) return
+
+        var records = 0
+        var withErrors = 0
+        var otherNames = 0
+        val kinds = HashMap<String, Int>()
+        for (file in files) {
+            val text = file.readText().replace("\r\n", "\n")
+            val psi = TrioTestSupport.parse(project, text)
+            records += PsiTreeUtil.findChildrenOfType(psi, TrioRecord::class.java).size
+            val problems = TrioTestSupport.problems(psi)
+            if (problems.isNotEmpty()) {
+                withErrors++
+                // The kind of the first problem, with the text of the file taken out.
+                val kind = problems[0].substringAfter(": ").replace(Regex("'[^']*' unexpected"), "text unexpected").replace(Regex("got '.*"), "got text")
+                kinds.merge(kind, 1, Int::plus)
+            } else if (tagNames(psi) != lineRuleTagNames(text)) {
+                otherNames++
+            }
+        }
+        println("TrioCorpusTest: ${files.size} export files, $records records, $withErrors with errors, $otherNames with other tag names")
+        val summary = kinds.entries.sortedByDescending { it.value }.joinToString("\n") { "${it.value} x ${it.key}" }
+        assertEquals("export files with syntax errors, by kind:\n$summary", 0, withErrors)
+        assertEquals("export files with other tag names than the line rules give", 0, otherNames)
+        assertTrue("the export must have records", records > 0)
+    }
+
+    private fun sameTagNames(text: String): Boolean = tagNames(TrioTestSupport.parse(project, text)) == lineRuleTagNames(text)
+
+    private fun tagNames(file: PsiFile): List<List<String?>> =
+        PsiTreeUtil.getChildrenOfTypeAsList(file, TrioRecord::class.java).map { r -> r.tagList.map { it.name } }
+
+    /**
+     * The tag names of each record by the line rules of `haystack::TrioReader` (`readTag` and
+     * `readIndentedText`), with no grammar. Two forms that project exports write and
+     * `TrioReader` does not read are added: a quoted string that closes on a later line,
+     * and a lone `{` (read as a lone `[`).
+     */
+    private fun lineRuleTagNames(text: String): List<List<String?>> {
+        val lines = text.split("\n")
+        val records = ArrayList<List<String?>>()
+        var tags = ArrayList<String?>()
+        var i = 0
+        fun closes(s: String): Boolean = s.replace(Regex("\\\\."), "").contains('"')
+        while (i < lines.size) {
+            val line = lines[i++]
+            if (line.startsWith("-")) {
+                if (tags.isNotEmpty()) records += tags
+                tags = ArrayList()
+                continue
+            }
+            if (line.isBlank() || line.startsWith("//")) continue
+            val colon = line.indexOf(':')
+            if (colon < 0) {
+                tags += line.trim()
+                continue
+            }
+            tags += line.substring(0, colon).trim()
+            val value = line.substring(colon + 1).trim()
+            when {
+                value.isEmpty() || value == "[" || value == "{" || value == "Zinc:" || value == "Trio:" ->
+                    // readIndentedText: all lines up to the first line of two or more characters that starts at column 0
+                    while (i < lines.size && !(lines[i].length > 1 && !lines[i][0].isWhitespace())) i++
+                value.startsWith("\"") && !closes(value.substring(1)) ->
+                    while (i < lines.size && !closes(lines[i++])) Unit
+            }
+        }
+        if (tags.isNotEmpty()) records += tags
+        return records
     }
 
     fun testTreeSitterCorpusGivesTheSameTree() {
