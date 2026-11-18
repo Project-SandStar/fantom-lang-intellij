@@ -89,13 +89,9 @@ class AxonBlock(
         return Spacing.createSpacing(0, 0, 0, true, context.keepBlankLines)
     }
 
-    override fun getChildAttributes(newChildIndex: Int): ChildAttributes {
-        if (node.elementType !in BODIES) return ChildAttributes(Indent.getNoneIndent(), null)
-        val blocks = subBlocks
-        val closing = newChildIndex < blocks.size && (blocks[newChildIndex] as AxonBlock).node.elementType in CLOSERS
-        val afterOpen = newChildIndex > 0 && (blocks[newChildIndex - 1] as AxonBlock).node.elementType in OPENERS
-        return ChildAttributes(if (closing && !afterOpen) Indent.getNoneIndent() else Indent.getNormalIndent(), null)
-    }
+    /** Enter in a body, also on the line before its closing token, starts a line one level in. */
+    override fun getChildAttributes(newChildIndex: Int): ChildAttributes =
+        ChildAttributes(if (node.elementType in BODIES) Indent.getNormalIndent() else Indent.getNoneIndent(), null)
 
     /** A body with no closing token yet: Enter at its end stays in the body. */
     override fun isIncomplete(): Boolean =

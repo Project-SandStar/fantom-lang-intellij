@@ -326,4 +326,31 @@ class AxonEditorTest : BasePlatformTestCase() {
         }
         assertEquals(text, myFixture.editor.document.text)
     }
+
+    /** Reformat of a Fantom file does not move the lines of an Axon string in it. */
+    fun testFormatLeavesFantomStringAlone() {
+        val q = "\"\"\""
+        val text = "class A\n{\n  Void run(Obj cx)\n  {\n    cx.eval(${q}do\n      a: 1\n          a\n    end$q)\n  }\n}\n"
+        myFixture.configureByText("A.fan", text)
+        WriteCommandAction.runWriteCommandAction(project) {
+            CodeStyleManager.getInstance(project).reformat(myFixture.file)
+        }
+        assertEquals(text, myFixture.editor.document.text)
+    }
+
+    /** Types Enter at `<caret>` in [before] and returns the text with `|` at the caret. */
+    private fun enter(name: String, before: String): String {
+        myFixture.configureByText(name, before)
+        myFixture.type('\n')
+        val text = myFixture.editor.document.text
+        val at = myFixture.caretOffset
+        return text.substring(0, at) + "|" + text.substring(at)
+    }
+
+    /** Enter in a `do` block or a dict puts the caret one level in. */
+    fun testEnterIndents() {
+        assertEquals("main: () => do\n  |\nend", enter("a.axon", "main: () => do<caret>\nend"))
+        assertEquals("main: () => do\n  x: 1\n  |\nend", enter("b.axon", "main: () => do\n  x: 1<caret>\nend"))
+        assertEquals("tags: {\n  |\n}", enter("c.axon", "tags: {<caret>\n}"))
+    }
 }
