@@ -6,6 +6,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReferenceBase
 import com.intellij.psi.impl.source.tree.LeafElement
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.IncorrectOperationException
 
@@ -66,21 +69,34 @@ object AxonResolver {
         return null
     }
 
+    /**
+     * The declaration of [use] in its own file, or null. It reads only the PSI of that file:
+     * no [AxonFunctionSource], no index. The colour annotator uses it on every name.
+     */
+    fun resolveInFile(use: AxonNameUse): AxonNamedElement? {
+        val name = use.referenceName ?: return null
+        return lexical(use, name)
+    }
+
     /** Every declaration visible at [use]; the nearest one comes first for each name. */
     fun visible(use: PsiElement): List<AxonNamedElement> {
         val out = LinkedHashMap<String, AxonNamedElement>()
-        walk(use) { decl -> decl.name?.let { out.putIfAbsent(it, decl) }; false }
+        walk(use, null) { decl -> decl.name?.let { out.putIfAbsent(it, decl) }; false }
         return out.values.toList()
     }
 
     private fun lexical(use: PsiElement, name: String): AxonNamedElement? {
         var found: AxonNamedElement? = null
-        walk(use) { decl -> if (decl.name == name) { found = decl; true } else false }
+        walk(use, name) { decl -> if (decl.name == name) { found = decl; true } else false }
         return found
     }
 
-    /** Offers the declarations visible at [use], nearest first, until [stop] returns true. */
-    private fun walk(use: PsiElement, stop: (AxonNamedElement) -> Boolean) {
+    /**
+     * Offers the declarations visible at [use], nearest first, until [stop] returns true.
+     * With a [name], it offers only the definitions of that name: the lookup of one name
+     * does not read the other definitions of the function.
+     */
+    private fun walk(use: PsiElement, name: String?, stop: (AxonNamedElement) -> Boolean) {
         val offset = use.textRange.startOffset
         var child: PsiElement = use
         while (true) {
@@ -91,17 +107,17 @@ object AxonResolver {
                     if (v != null && v.textRange.endOffset <= child.textRange.startOffset && stop(v)) return
                 }
                 is AxonLambdaExpr -> {
-                    if (locals(parent, use, offset).any(stop)) return
+                    if (locals(parent, use, offset, name).any(stop)) return
                     if (parent.paramList.asReversed().any { it !== child && stop(it) }) return
                 }
                 is AxonDefcompExpr -> {
-                    if (locals(parent, use, offset).any(stop)) return
+                    if (locals(parent, use, offset, name).any(stop)) return
                     if (parent.cellDefList.any(stop)) return
                 }
                 is PsiFile -> {
-                    if (locals(parent, use, offset).any(stop)) return
+                    if (locals(parent, use, offset, name).any(stop)) return
                     // A top-level definition after the use: functions of one file see each other.
-                    parent.children.any { it is AxonDefExpr && it.textRange.startOffset >= offset && stop(it) }
+                    defsOf(parent).of(name).any { it.parent === parent && it.textRange.startOffset >= offset && stop(it) }
                     return
                 }
             }
@@ -109,15 +125,41 @@ object AxonResolver {
         }
     }
 
-    /** The definitions of [function] made before [offset], the last one first. */
-    private fun locals(function: PsiElement, use: PsiElement, offset: Int): List<AxonDefExpr> {
+    /** The definitions of [function] made before [offset], the last one first. With a [name], only the ones of that name. */
+    private fun locals(function: PsiElement, use: PsiElement, offset: Int, name: String?): Sequence<AxonDefExpr> {
+        val defs = defsOf(function).of(name)
+        // The definitions are in text order: a binary search finds the last one before the use.
+        var low = 0
+        var high = defs.size
+        while (low < high) {
+            val mid = (low + high) ushr 1
+            if (defs[mid].textOffset < offset) low = mid + 1 else high = mid
+        }
+        return (low - 1 downTo 0).asSequence().map { defs[it] }.filter { def ->
+            // `x: x + 1` reads the outer x; `f: (n) => f(n - 1)` calls itself.
+            def.expr is AxonLambdaExpr || !PsiTreeUtil.isAncestor(def, use, true)
+        }
+    }
+
+    /** The definitions of one function, in text order, and the same ones by name. */
+    private class Defs(val all: List<AxonDefExpr>) {
+        private val byName = HashMap<String, MutableList<AxonDefExpr>>()
+
+        init {
+            for (def in all) def.name?.let { byName.getOrPut(it) { ArrayList() }.add(def) }
+        }
+
+        fun of(name: String?): List<AxonDefExpr> = if (name == null) all else byName[name] ?: emptyList()
+    }
+
+    /**
+     * The definitions of [function], kept until the PSI changes. The colour annotator resolves every
+     * name of a file: without this, each name reads the whole function again.
+     */
+    private fun defsOf(function: PsiElement): Defs = CachedValuesManager.getCachedValue(function) {
         val out = ArrayList<AxonDefExpr>()
         collectDefs(function, out)
-        return out.filter { def ->
-            def.textOffset < offset &&
-                // `x: x + 1` reads the outer x; `f: (n) => f(n - 1)` calls itself.
-                (def.expr is AxonLambdaExpr || !PsiTreeUtil.isAncestor(def, use, true))
-        }.asReversed()
+        CachedValueProvider.Result.create(Defs(out), PsiModificationTracker.MODIFICATION_COUNT)
     }
 
     /** The definitions that belong to [function]: the ones in nested lambdas and defcomps do not. */

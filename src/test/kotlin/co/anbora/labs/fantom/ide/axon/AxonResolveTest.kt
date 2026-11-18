@@ -7,8 +7,11 @@ import co.anbora.labs.fantom.lang.axon.psi.AxonFunctionSource
 import co.anbora.labs.fantom.lang.axon.psi.AxonNameUse
 import co.anbora.labs.fantom.lang.axon.psi.AxonNamedElement
 import co.anbora.labs.fantom.lang.axon.psi.AxonParam
+import co.anbora.labs.fantom.lang.axon.psi.AxonRefExpr
 import co.anbora.labs.fantom.lang.axon.psi.AxonResolver
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.util.PsiTreeUtil
@@ -264,6 +267,58 @@ class AxonResolveTest : BasePlatformTestCase() {
         assertEquals("a.axon", own.containingFile.name)
 
         assertNull(resolveAtCaret("x: () => <caret>notAnywhere()"))
+    }
+
+    /**
+     * The colour annotator resolves every name of a file, so the lookup of one name must not read
+     * the whole function again. With no cache, 2000 lines take about half a minute.
+     */
+    fun testLookupOfEveryNameInALongFunctionIsFast() {
+        val lines = 2000
+        val text = StringBuilder("big: (p0, p1) => do\n  v0: 0\n")
+        for (i in 1..lines) text.append("  v$i: v${i - 1}.foo(p0) + readX($i, p1, other)\n")
+        text.append("end\n")
+        val file = myFixture.configureByText("big.axon", text.toString())
+        val refs = PsiTreeUtil.findChildrenOfType(file, AxonRefExpr::class.java)
+        assertEquals(lines * 5, refs.size)
+
+        val start = System.nanoTime()
+        val found = refs.associateWith { AxonResolver.resolveInFile(it) }
+        val ms = (System.nanoTime() - start) / 1_000_000
+        assertTrue("the lookup of ${refs.size} names took $ms ms", ms < 10_000)
+
+        // Each `v` resolves to the line before it, each `p` to its parameter; the other names to nothing.
+        val document = myFixture.editor.document
+        for ((ref, decl) in found) {
+            val name = ref.text
+            when {
+                name.startsWith("v") -> {
+                    assertTrue(name, decl is AxonDefExpr)
+                    assertEquals(name, decl!!.name)
+                    assertEquals(name, document.getLineNumber(ref.textOffset) - 1, document.getLineNumber(decl.textOffset))
+                }
+                name.startsWith("p") -> assertTrue(name, decl is AxonParam && decl.name == name)
+                else -> assertNull(name, decl)
+            }
+        }
+    }
+
+    /** The kept definitions of a function go away when the text changes. */
+    fun testLookupSeesAnEdit() {
+        myFixture.configureByText("a.axon", "(a) => do\n  <caret>\n  total\nend")
+        fun use() = PsiTreeUtil.findChildrenOfType(myFixture.file, AxonRefExpr::class.java).last { it.text == "total" }
+        assertNull(AxonResolver.resolveInFile(use()))
+
+        val document = myFixture.editor.document
+        WriteCommandAction.runWriteCommandAction(project) { document.insertString(myFixture.caretOffset, "total: a") }
+        PsiDocumentManager.getInstance(project).commitDocument(document)
+        val added = AxonResolver.resolveInFile(use())
+        assertTrue(added is AxonDefExpr)
+        assertEquals(1, document.getLineNumber(added!!.textOffset))
+
+        WriteCommandAction.runWriteCommandAction(project) { document.deleteString(added.textRange.startOffset, added.textRange.endOffset) }
+        PsiDocumentManager.getInstance(project).commitDocument(document)
+        assertNull(AxonResolver.resolveInFile(use()))
     }
 
     /** Rename goes through the reference and the declaration. */
