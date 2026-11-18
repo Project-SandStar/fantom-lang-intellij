@@ -42,9 +42,9 @@ class AxonLexerTest : TestCase() {
 
     /**
      * A token class prints its name (`NUMBER '1hr'`). A keyword or a sign has one token
-     * type each, named after its text, so it prints as `'do' 'do'`.
+     * type each, named after its text, so it prints as `do 'do'`.
      */
-    private fun fixed(vararg texts: String): List<String> = texts.map { "'$it' '$it'" }
+    private fun fixed(vararg texts: String): List<String> = texts.map { "$it '$it'" }
 
     fun testHaxallSampleTokens() {
         val toks = visible(AxonLexer(), haxallSample)
@@ -59,7 +59,7 @@ class AxonLexerTest : TestCase() {
 
     fun testDateRange() {
         assertEquals(
-            listOf("NUMBER '2023-01-01'", "'..' '..'", "NUMBER '2023-02-28'"),
+            listOf("NUMBER '2023-01-01'", ".. '..'", "NUMBER '2023-02-28'"),
             visible(AxonLexer(), "2023-01-01..2023-02-28")
         )
     }

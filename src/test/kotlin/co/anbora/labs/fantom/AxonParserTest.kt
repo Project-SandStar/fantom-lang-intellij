@@ -35,6 +35,13 @@ class AxonParserTest : ParsingTestCase("axon/parser", "axon", AxonParserDefiniti
     fun testComments() = clean()
 
     /**
+     * What a line break ends and what it does not, as in the Haxall parser: `(` and `[`
+     * on a new line start a new expression; a binary `-`, a `.name` and an `else` on a new
+     * line go on with the expression above.
+     */
+    fun testLineBreaks() = clean()
+
+    /**
      * One error must not break the rest of the file: the statements after
      * each bad line still parse to their own definitions.
      */

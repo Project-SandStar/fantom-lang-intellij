@@ -20,7 +20,7 @@
     generateTokens=false
 
     extends(".*Expr")=expr
-    name(".*Expr")="expression"
+    name(".*Expr|expr")="expression"
 
     // Named elements: a definition `name: expr`, a lambda parameter, a defcomp cell, a catch variable.
     // The pattern must list both interfaces because it replaces the global `implements`.
@@ -67,9 +67,8 @@ private stmtEnd ::= ';' | <<atStmtEnd>>
 // Parser.expr
 expr ::= defExpr | doExpr | ifExpr | returnExpr | throwExpr | tryExpr | defcompExpr | assignGroup
 
-// Parser.def: `name: expr`. Haxall 4 reads a name with a capital first letter as a type name;
-// SkySpark 3.0 has no type names and takes `Max: 5` as a definition, so it is accepted here.
-defExpr ::= (IDENTIFIER | TYPENAME) ':' expr {pin=2}
+// Parser.def: `name: expr`
+defExpr ::= IDENTIFIER ':' expr {pin=2}
 
 // Parser.doBlock: `end` can be left out before `else` and `catch`.
 doExpr ::= 'do' blockItem* doEnd {pin=1}
@@ -138,7 +137,7 @@ left indexExpr ::= <<sameLine>> '[' expr ']' {pin=2}
 left dotCallExpr ::= '.' anyName (&lambdaHead lambdaExpr | <<sameLine>> argList trailingLambda? | <<parenOnNewLine>>)? {pin=1}
 
 // `a->tag`
-left trapExpr ::= '->' anyName {pin=1}
+left trapExpr ::= '->' IDENTIFIER {pin=1}
 
 // `lib::name`, `a.b::Type`
 left qnameExpr ::= '::' (TYPENAME | anyName) {pin=1}
@@ -153,7 +152,8 @@ private termBase ::= lambdaExpr | parenExpr | listExpr | dictExpr | literalExpr 
 lambdaExpr ::= lambdaHead expr {pin=1}
 private lambdaHead ::= (bareParam | '(' [param (',' param)*] ')') '=>'
 bareParam ::= IDENTIFIER {elementType=param}
-param ::= IDENTIFIER [':' expr]
+param ::= IDENTIFIER paramDefault?
+private paramDefault ::= ':' expr {pin=1}
 
 parenExpr ::= '(' expr ')' {pin=1}
 
@@ -164,7 +164,8 @@ private listTail ::= ',' (&']' | expr) {pin=1}
 // Parser.dict: `{a, b: 1, "c d": 2, -old}`. A tag with no value is a marker; `-tag` removes the tag.
 dictExpr ::= '{' [dictEntry dictTail*] '}' {pin=1}
 private dictTail ::= ',' (&'}' | dictEntry) {pin=1}
-dictEntry ::= '-' dictKey | dictKey [':' expr]
+dictEntry ::= '-' dictKey | dictKey dictValue?
+private dictValue ::= ':' expr {pin=1}
 private dictKey ::= STRING | anyName
 
 literalExpr ::= NUMBER | STRING | URI | REF | SYMBOL | 'true' | 'false' | 'null'

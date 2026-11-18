@@ -180,9 +180,12 @@ tasks {
         pathToPsiRoot.set("co/anbora/labs/fantom/lang/axon/psi")
         purgeOldFiles.set(true)
     }
+    withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+        dependsOn("generateAxonParser")
+    }
 
     withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-        dependsOn("generateLexer", "generateParser", "generateAxonLexer", "generateAxonParser")
+        dependsOn("generateLexer", "generateParser", "generateAxonLexer")
     }
 }
 

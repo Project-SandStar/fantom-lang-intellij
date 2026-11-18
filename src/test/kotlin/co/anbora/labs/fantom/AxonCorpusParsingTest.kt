@@ -38,12 +38,25 @@ class AxonCorpusParsingTest : ParsingTestCase("", "axon", AxonParserDefinition()
         return "${source.name}: line $line: ${error.errorDescription}"
     }
 
-    private fun check(what: String, sources: List<Source>, allowed: Set<String> = emptySet(), maxRatio: Double = 0.0) {
+    /**
+     * Fails when more than [maxRatio] of [sources] have a parse error. With [private] the
+     * message gives the error texts and their counts only, never a file name or a line.
+     */
+    private fun check(
+        what: String,
+        sources: List<Source>,
+        allowed: Set<String> = emptySet(),
+        maxRatio: Double = 0.0,
+        private: Boolean = false,
+    ) {
         assertTrue("$what: no Axon source found", sources.isNotEmpty())
         val failed = sources.mapNotNull { s -> firstError(s)?.takeIf { s.name !in allowed } }
         println("$what: ${sources.size} sources, ${failed.size} with parse errors")
         if (failed.size > sources.size * maxRatio) {
-            fail("$what: ${failed.size} of ${sources.size} sources have parse errors:\n" + failed.take(40).joinToString("\n"))
+            val lines = if (!private) failed.take(40) else
+                failed.groupingBy { it.substringAfter(": line ").substringAfter(": ") }.eachCount()
+                    .entries.sortedByDescending { it.value }.map { "${it.value} x ${it.key}" }
+            fail("$what: ${failed.size} of ${sources.size} sources have parse errors:\n" + lines.joinToString("\n"))
         }
     }
 
@@ -69,7 +82,7 @@ class AxonCorpusParsingTest : ParsingTestCase("", "axon", AxonParserDefinition()
         val sources = root.walkTopDown().filter { it.isFile && it.extension == "axon" }.sortedBy { it.path }
             .map { Source(it.relativeTo(root).path, it.readText()) }.toList()
         if (sources.isEmpty()) return
-        check("Project axon files", sources, maxRatio = PROJECT_MAX_ERROR_RATIO)
+        check("Project axon files", sources, maxRatio = PROJECT_MAX_ERROR_RATIO, private = true)
     }
 
     fun testTreeSitterCorpus() {
@@ -107,12 +120,14 @@ class AxonCorpusParsingTest : ParsingTestCase("", "axon", AxonParserDefinition()
 
         /**
          * The share of project files that may have a parse error. The files are private, so
-         * there is no list of names here. On 3239 files the parser reports 10, all real errors:
-         * `do ... while (x)`, a block with no closing `end` (2), the `?.` and `?:` operators (2),
-         * a `{{name}}` template placeholder, a parameter named `end`, a tag named `return`
-         * in a filter (2), and a `(` that starts the line after `a.name`.
+         * there is no list of names here. On 3239 files the parser reports 14, and the Axon
+         * parser of SkySpark 3.1 rejects the same 14: `do ... while (x)`, a block with no
+         * closing `end` (2), the `?.` and `?:` operators (2), a `{{name}}` template placeholder,
+         * a parameter named `end`, a tag named `return` in a filter (2), a `(` that starts the
+         * line after `a.name`, and a definition whose name starts with a capital letter (4).
+         * The limit leaves room for two more such files.
          */
-        const val PROJECT_MAX_ERROR_RATIO = 0.01
+        const val PROJECT_MAX_ERROR_RATIO = 0.005
 
         /**
          * The Axon `src:` values of a trio text: `src: expr` on one line, or `src:` and an

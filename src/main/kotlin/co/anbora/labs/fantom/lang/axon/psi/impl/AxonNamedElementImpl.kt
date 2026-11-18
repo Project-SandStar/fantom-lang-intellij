@@ -26,9 +26,8 @@ import javax.swing.Icon
 /** Grammar-Kit mixin for the named rules of Axon.bnf: `defExpr`, `param`, `cellDef`, `catchVar`. */
 abstract class AxonNamedElementImpl(node: ASTNode) : AxonElementImpl(node), AxonNamedElement {
 
-    /** The name is the first token of the rule: an IDENTIFIER, or a TYPENAME for `Max: 5`. */
-    override fun getNameIdentifier(): PsiElement? =
-        (node.findChildByType(AxonTokenTypes.IDENTIFIER) ?: node.findChildByType(AxonTokenTypes.TYPENAME))?.psi
+    /** The name is the first IDENTIFIER of the rule. */
+    override fun getNameIdentifier(): PsiElement? = node.findChildByType(AxonTokenTypes.IDENTIFIER)?.psi
 
     override fun getName(): String? = nameIdentifier?.text
 
