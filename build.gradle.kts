@@ -172,8 +172,25 @@ tasks {
         purgeOldFiles.set(true)
     }
 
+    // Trio (Haystack records): its own lexer and parser, in lang/trio. The purge paths keep
+    // these two tasks away from the Fantom and Axon files in the shared root.
+    register<org.jetbrains.intellij.platform.gradle.tasks.GenerateLexerTask>("generateTrioLexer") {
+        sourceFile.set(file("src/main/grammar/Trio.flex"))
+        targetRootOutputDir.set(file("src/main/gen"))
+        pathToClass.set("co/anbora/labs/fantom/lang/trio/_TrioLexer.java")
+        purgeOldFiles.set(true)
+    }
+    register<org.jetbrains.intellij.platform.gradle.tasks.GenerateParserTask>("generateTrioParser") {
+        sourceFile.set(file("src/main/grammar/Trio.bnf"))
+        targetRootOutputDir.set(file("src/main/gen"))
+        pathToParser.set("co/anbora/labs/fantom/lang/trio/parser/TrioParser.java")
+        pathToPsiRoot.set("co/anbora/labs/fantom/lang/trio/psi")
+        purgeOldFiles.set(true)
+    }
+
     withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
         dependsOn("generateLexer", "generateParser", "generateAxonLexer")
+        dependsOn("generateTrioLexer", "generateTrioParser")
     }
 }
 
