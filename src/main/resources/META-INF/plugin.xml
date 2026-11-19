@@ -26,7 +26,7 @@
         <!-- Says which Axon project a file belongs to: a proj folder first (4.38), the active copy last. -->
         <extensionPoint qualifiedName="co.anbora.labs.fantom.axonProjectFunctions"
                         interface="co.anbora.labs.fantom.lang.axon.project.AxonProjectFunctions" dynamic="true"/>
-        <!-- Proj-folder mode (task 4.38): a sync that writes into a folder of the proj folder. No implementation yet. -->
+        <!-- Proj-folder mode (task 4.38): a sync that writes into a folder of the proj folder. -->
         <extensionPoint qualifiedName="co.anbora.labs.fantom.axonSyncTarget"
                         interface="co.anbora.labs.fantom.lang.axon.copy.AxonSyncTarget" dynamic="true"/>
     </extensionPoints>
@@ -34,6 +34,7 @@
         <axonFunctionSource implementation="co.anbora.labs.fantom.lang.axon.project.AxonProjectFunctionSource"/>
         <axonProjectFunctions id="axonProjFolder" implementation="co.anbora.labs.fantom.lang.axon.proj.AxonProjFolderFunctions" order="first"/>
         <axonProjectFunctions implementation="co.anbora.labs.fantom.lang.axon.project.AxonCopyProjectFunctions" order="last"/>
+        <axonSyncTarget implementation="co.anbora.labs.fantom.lang.axon.proj.AxonProjFolderSync"/>
     </extensions>
     <extensions defaultExtensionNs="com.intellij">
         <fileType name="Fantom" implementationClass="co.anbora.labs.fantom.lang.FantomFileType"

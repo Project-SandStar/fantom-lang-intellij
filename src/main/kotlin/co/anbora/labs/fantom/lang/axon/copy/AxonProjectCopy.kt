@@ -231,11 +231,12 @@ class AxonProjectCopy(private val project: Project) {
      */
     fun syncNow(match: AxonSyncTarget.Match, check: () -> Unit = {}): AxonSyncResult {
         requireServer()
-        val key = match.target.key
+        val target = match.hook.prepare(project, match.target, check)
+        val key = target.key
         val list = source().fetch(key, true, check)
         if (list.key != key) throw AxonCopyException(Kind.BAD_REPLY, "The reply is for another project.")
         check()
-        return match.hook.write(project, match.target, list, check)
+        return match.hook.write(project, target, list, check)
     }
 
     /** Forgets the active project and deletes its copy. */

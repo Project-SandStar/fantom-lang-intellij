@@ -9,6 +9,10 @@ import java.io.File
  * What one "Sync Axon Functions" did: the functions added, changed (another hash) and
  * removed, by name, and how many there are now. [conflicts] are local files that were
  * kept instead of the SkySpark version (proj-folder mode only; the read-only copy has none).
+ *
+ * [unchanged] is null for the read-only copy. A proj-folder sync sets it, and then the
+ * message counts the unchanged functions, says "moved to .versions" for [removed] and
+ * names the `.skyspark` files of the conflicts.
  */
 data class AxonSyncResult(
     val key: AxonProjectKey,
@@ -17,9 +21,25 @@ data class AxonSyncResult(
     val removed: List<String>,
     val total: Int,
     val conflicts: List<String> = emptyList(),
+    val unchanged: List<String>? = null,
 ) {
     /** "Axon: demo/site synced, 1 added, 2 changed, 0 removed (12 functions)." and the names. */
-    fun message(): String {
+    fun message(): String = if (unchanged != null) folderMessage(unchanged) else copyMessage()
+
+    /** "Axon: demo/site synced into its folder, 1 added, 2 changed, 9 unchanged, 1 moved to .versions, 1 conflict (12 functions)." */
+    private fun folderMessage(same: List<String>): String {
+        val sb = StringBuilder("Axon: $key synced into its folder, ${added.size} added, ${changed.size} changed, ${same.size} unchanged")
+        sb.append(", ${removed.size} moved to .versions")
+        sb.append(", ").append(if (conflicts.size == 1) "1 conflict" else "${conflicts.size} conflicts")
+        sb.append(" (").append(if (total == 1) "1 function" else "$total functions").append(").")
+        names("Added", added, sb)
+        names("Changed", changed, sb)
+        names("Moved to .versions", removed, sb)
+        names("Conflicts, local file kept and the SkySpark version written as <name>.axon.skyspark", conflicts, sb)
+        return sb.toString()
+    }
+
+    private fun copyMessage(): String {
         val sb = StringBuilder("Axon: $key synced, ${added.size} added, ${changed.size} changed, ${removed.size} removed")
         if (conflicts.isNotEmpty()) sb.append(", ${conflicts.size} kept local")
         sb.append(" (").append(if (total == 1) "1 function" else "$total functions").append(").")
@@ -62,10 +82,9 @@ data class AxonSyncResult(
 
 /**
  * The hook for proj-folder mode (task 4.38): a sync that writes into a folder of the
- * Axon server's `proj` folder instead of the read-only copy. The plugin has no
- * implementation yet; see docs/engineering/axon-proj-folder.md, point 6, for the rules
- * an implementation must keep (never overwrite a local change, keep old files in
- * `.versions/`, write through the VFS).
+ * Axon server's `proj` folder instead of the read-only copy. The plugin's implementation
+ * is `AxonProjFolderSync`; an implementation must never overwrite a local change, must
+ * keep old files in `.versions/` and must write through the VFS.
  *
  * "Sync Axon Functions" asks every implementation for the file that was clicked. The
  * first that returns a [Target] gets the functions the server fetched with `sync=true`;
@@ -79,6 +98,13 @@ interface AxonSyncTarget {
      * walk and no network.
      */
     fun targetFor(project: Project, file: VirtualFile): Target?
+
+    /**
+     * [target] made exact before the fetch, for example with the key that a metadata file
+     * on disk names. Called on a background thread, outside any read action: it may read
+     * the disk. The default keeps [target].
+     */
+    fun prepare(project: Project, target: Target, check: () -> Unit): Target = target
 
     /**
      * Writes [list] (the functions of [Target.key], fetched with `sync=true`) into

@@ -3,7 +3,9 @@ package co.anbora.labs.fantom.lang.axon.copy
 import co.anbora.labs.fantom.lang.axon.copy.AxonCopyException.Kind
 import co.anbora.labs.fantom.lang.axon.proj.AxonProjFolders
 import java.io.File
+import java.time.Instant
 import java.time.LocalDateTime
+import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -156,6 +158,23 @@ class AxonFallbackFolder(private val root: File) : AxonFunctionSource {
             return runCatching {
                 DateTimeFormatter.ISO_INSTANT.format(LocalDateTime.parse(t.removeSuffix(" UTC").uppercase(Locale.ENGLISH), LOCAL).toInstant(ZoneOffset.UTC))
             }.getOrNull()
+        }
+
+        /**
+         * The time [text] (ISO, or already in the folder's form) in the form the server writes
+         * into a proj folder: `2023-11-10T19:07:07Z` becomes `11/10/2023, 7:07:07 PM UTC`.
+         * Null for anything else.
+         */
+        fun folderTimeOf(text: String?): String? {
+            val instant = instantOf(text) ?: return null
+            return LOCAL.format(LocalDateTime.ofInstant(instant, ZoneOffset.UTC)) + " UTC"
+        }
+
+        /** [text] (ISO, or the folder's form) as an instant, or null. */
+        fun instantOf(text: String?): Instant? {
+            val iso = isoOf(text) ?: return null
+            return runCatching { OffsetDateTime.parse(iso).toInstant() }.getOrNull()
+                ?: runCatching { Instant.parse(iso) }.getOrNull()
         }
     }
 }

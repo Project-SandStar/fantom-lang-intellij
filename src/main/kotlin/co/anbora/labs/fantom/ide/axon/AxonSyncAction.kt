@@ -23,7 +23,9 @@ import com.intellij.openapi.vfs.VirtualFile
  *
  * In the Tools menu it is always there. In the Project view it shows on the project root,
  * on the `Axon: <instance>/<project>` library node (and its folder), and on a file that an
- * [AxonSyncTarget] claims. It is disabled with no server URL, no access key or no active
+ * [AxonSyncTarget] claims: any file or folder of a project folder in the global proj folder
+ * (or under a `.sync-metadata.json`), and the global proj folder itself, which syncs the
+ * active project into `<global>/<connection>/<project>`. It is disabled with no server URL, no access key or no active
  * project; the description says why.
  */
 class AxonSyncAction : DumbAwareAction() {
