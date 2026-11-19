@@ -429,7 +429,7 @@ class AxonProjFolderSync : AxonSyncTarget {
 
         /** The plugin's key in a function's entry: the short hash of the trio the folder got from SkySpark. */
         const val TRIO_HASH = "trioHash"
-        private const val BATCH = 200
+        private const val BATCH = 50
         private val NAME = Regex("[A-Za-z_][A-Za-z0-9_]{0,199}")
         /** An instant as JavaScript's `toISOString` writes it, as the server does: always with milliseconds. */
         private val JS_ISO = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.ROOT).withZone(ZoneOffset.UTC)
