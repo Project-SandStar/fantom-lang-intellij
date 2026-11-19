@@ -230,6 +230,13 @@ that project's Axon functions.
   deletes the old copy. The copy stays after an IDE restart; no network is
   used at start.
 - Refresh asks the server to read SkySpark again, then fetches the functions.
+- "Sync Axon Functions" does the same from a menu: Tools, or a right-click on
+  the project root or on the "Axon: instance/project" node in the Project
+  view. It runs in the background with a progress bar you can cancel. A
+  notification then lists the functions added, changed and removed. The item
+  is greyed out when no server URL, no access key or no project is set; its
+  tooltip says which one. A local `proj` folder alone cannot sync: only the
+  server reads SkySpark.
 - A fetch that fails changes nothing: the old copy stays as it was. The error
   shows as a notification.
 
