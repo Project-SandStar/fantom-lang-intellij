@@ -10,6 +10,9 @@
     <!-- JVM debugger for .fan files and Java FFI (`using [java]`, fantom-java-ffi.xml, included by
          fantom-java-debugger.xml); IDEs without the Java plugin load the rest of the plugin. -->
     <depends optional="true" config-file="fantom-java-debugger.xml">com.intellij.java</depends>
+    <!-- MCP tools for AI agents (diagnostics, resolve, usages); IDEs without the MCP Server
+         plugin load the rest of the plugin. -->
+    <depends optional="true" config-file="fantom-mcp.xml">com.intellij.mcpServer</depends>
 
     <!-- Extension points defined by the plugin.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
