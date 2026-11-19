@@ -9,7 +9,7 @@ import co.anbora.labs.fantom.lang.axon.copy.AxonProjectKey
  * "All connections" row.
  *
  * A project matches a search when the search text is in its instance name, in its project
- * name, or in `instance/project` (case-insensitive). A blank search matches every project.
+ * name, in `instance/project`, or in `instance / project` as the list shows it (case-insensitive). A blank search matches every project.
  * A connection is shown when one of its projects matches; "All connections" is always shown.
  */
 class AxonProjectPickerModel(projects: List<AxonProjectInfo>) {
@@ -82,7 +82,8 @@ class AxonProjectPickerModel(projects: List<AxonProjectInfo>) {
             val k = info.key
             return k.instance.contains(q, ignoreCase = true) ||
                 k.project.contains(q, ignoreCase = true) ||
-                k.toString().contains(q, ignoreCase = true)
+                k.toString().contains(q, ignoreCase = true) ||
+                projectName(info, allConnections = true).contains(q, ignoreCase = true)
         }
 
         /** The name of a connection row. */

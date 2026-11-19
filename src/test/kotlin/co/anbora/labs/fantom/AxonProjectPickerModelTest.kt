@@ -66,6 +66,50 @@ class AxonProjectPickerModelTest : TestCase() {
         assertEquals(listOf(Connection(null, 1, 6), Connection("demo", 1, 2)), model.connections("demo/si"))
     }
 
+    fun testSearchOnTheShownInstanceSpaceSlashProjectText() {
+        // under "All connections" a row reads "demo / site"; typing what is shown finds it
+        assertEquals(listOf("demo/site"), names(model.projects(null, "demo / si")))
+        assertEquals(listOf(Connection(null, 1, 6), Connection("demo", 1, 2)), model.connections("demo / si"))
+    }
+
+    fun testAProjectNamedLikeAnotherConnection() {
+        val m = AxonProjectPickerModel(listOf(info("demo", "plant-a"), info("demo", "site"), info("plant-a", "annex")))
+        // both the project "plant-a" and every project of the connection "plant-a" match
+        assertEquals(listOf("demo/plant-a", "plant-a/annex"), names(m.projects(null, "plant-a")))
+        assertEquals(listOf(Connection(null, 2, 3), Connection("demo", 1, 2), Connection("plant-a", 1, 1)), m.connections("plant-a"))
+        assertEquals(listOf("demo/plant-a"), names(m.projects("demo", "plant-a")))
+        assertEquals(listOf("plant-a/annex"), names(m.projects("plant-a", "plant-a")))
+    }
+
+    fun testUnicodeNames() {
+        val m = AxonProjectPickerModel(listOf(info("démo", "Bâtiment Est"), info("demo", "Gebäude"), info("plant-a", "site")))
+        assertEquals(listOf("démo/Bâtiment Est"), names(m.projects(null, "BÂTIMENT")))
+        assertEquals(listOf("demo/Gebäude"), names(m.projects(null, "GEBÄUDE")))
+        assertEquals(listOf(Connection(null, 1, 3), Connection("démo", 1, 1)), m.connections("dém"))
+        assertEquals("démo", m.initialInstance(AxonProjectKey("démo", "Bâtiment Est"), null))
+    }
+
+    fun testFiveHundredProjectsFilterAtEveryKeystroke() {
+        val big = (0 until 500).map { info("plant-${it % 7}", "bldg$it", it) }
+        val m = AxonProjectPickerModel(big)
+        assertEquals(500, m.projects(null, "").size)
+        assertEquals(8, m.connections("").size)
+        val typed = "plant-3/bldg24"
+        val start = System.nanoTime()
+        for (i in 1..typed.length) {
+            val q = typed.substring(0, i)
+            m.connections(q)
+            m.projects(null, q)
+            m.projects("plant-3", q)
+        }
+        val ms = (System.nanoTime() - start) / 1_000_000
+        // bldg24 is on plant-3 (24 % 7 == 3); bldg240..249 are spread over the connections
+        assertEquals(listOf("plant-3/bldg24", "plant-3/bldg241", "plant-3/bldg248"), names(m.projects(null, typed)))
+        assertEquals(listOf(Connection(null, 3, 500), Connection("plant-3", 3, 71)), m.connections(typed))
+        // a generous bound: the real cost is well under a millisecond per keystroke
+        assertTrue("filtering took $ms ms", ms < 2000)
+    }
+
     fun testNamesWithSpacesAndDots() {
         assertEquals(listOf("plant-a/Site North"), names(model.projects(null, "e n")))
         assertEquals(listOf("demo/beta.v2"), names(model.projects(null, ".v2")))
