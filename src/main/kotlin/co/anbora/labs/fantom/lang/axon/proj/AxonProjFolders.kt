@@ -4,10 +4,12 @@ import co.anbora.labs.fantom.lang.axon.copy.AxonCopyLimits
 import co.anbora.labs.fantom.lang.axon.copy.AxonJson
 import co.anbora.labs.fantom.lang.axon.copy.AxonProjectKey
 import co.anbora.labs.fantom.lang.axon.copy.AxonServerSettings
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
@@ -91,7 +93,7 @@ class AxonProjFolders : Disposable {
                     val layout = layoutChange || events.any(::changesLayout)
                     layoutChange = false
                     if (layout) clear()
-                    else if (events.any(::changesFunctions)) functionMaps.clear()
+                    else if (events.any(::changesFunctions)) { generation.incrementAndGet(); functionMaps.clear() }
                 }
             })
     }
@@ -106,8 +108,10 @@ class AxonProjFolders : Disposable {
         val root = globalRoot()
         if (root != cachedRoot) { cachedRoot = root; clear() }
         places[dir]?.let { return it }
+        val gen = generation.get()
         val place = compute(dir, root)
-        places.putIfAbsent(dir, place)
+        // a clear() while computing means the VFS changed: answer, but do not keep the answer
+        if (generation.get() == gen) places.putIfAbsent(dir, place)
         return place
     }
 
@@ -145,14 +149,27 @@ class AxonProjFolders : Disposable {
      */
     fun functionFiles(folder: VirtualFile): Map<String, VirtualFile> {
         functionMaps[folder]?.let { return it }
+        val gen = generation.get()
         val func = folder.findChild(FUNC)?.takeIf { it.isDirectory }
         val map = HashMap<String, VirtualFile>()
         for (f in func?.children.orEmpty()) {
             val n = f.name
             if (!f.isDirectory && n.endsWith(AXON_EXT) && n.length > AXON_EXT.length) map[n.removeSuffix(AXON_EXT)] = f
         }
-        functionMaps.putIfAbsent(folder, map)
+        if (generation.get() == gen) functionMaps.putIfAbsent(folder, map)
         return map
+    }
+
+    /**
+     * The global proj folder changed: drops every cached answer and highlights the open files
+     * of every IDE project again, so names resolve against their new project at once. A VFS
+     * change needs no such step: its PSI events restart the highlighting already. UI thread.
+     */
+    fun settingChanged() {
+        clear()
+        for (p in ProjectManager.getInstance().openProjects) {
+            if (!p.isDisposed) DaemonCodeAnalyzer.getInstance(p).restart("Global proj folder changed")
+        }
     }
 
     /** Drops every cached answer. */
@@ -202,11 +219,13 @@ class AxonProjFolders : Disposable {
     }
 
     /**
-     * A copy folder with no metadata on the way up (`<connection>/.sidecar-x/<project>/func`)
-     * is in a `proj` layout when it, or one of the two folders above it, holds a project folder.
+     * A copy folder with no metadata on the way up (`<connection>/.sidecar-x/<project>/func`,
+     * `<connection>/backup/<n>/<project>/func`) is in a `proj` layout when it, or the folder
+     * that holds it (the connection), holds a project folder. Only these two folders are
+     * listed, so a `backup` folder in the home folder lists the home folder at most.
      */
     private fun nextToProjects(chain: List<VirtualFile>, copyAt: Int): Boolean =
-        (copyAt..minOf(copyAt + 2, chain.lastIndex)).any { i -> chain[i].children.any { it.isDirectory && hasMeta(it) } }
+        (copyAt..minOf(copyAt + 1, chain.lastIndex)).any { i -> chain[i].children.any { it.isDirectory && hasMeta(it) } }
 
     private fun hasMeta(dir: VirtualFile): Boolean = dir.findChild(METADATA)?.isDirectory == false
 

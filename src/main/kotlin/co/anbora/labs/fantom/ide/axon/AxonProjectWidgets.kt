@@ -7,6 +7,8 @@ import co.anbora.labs.fantom.lang.axon.copy.AxonServerSettings
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import co.anbora.labs.fantom.lang.axon.proj.AxonProjFolders
+import co.anbora.labs.fantom.lang.axon.AxonFileType
+import co.anbora.labs.fantom.lang.trio.TrioFileType
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
@@ -36,6 +38,8 @@ object AxonProjectWidgets {
      */
     fun editorPlace(project: Project): AxonProjFolders.Place? {
         val file = FileEditorManager.getInstance(project).selectedFiles.firstOrNull() ?: return null
+        // only Axon and trio files: any other file never walks up its folders on the UI thread
+        if (file.fileType != AxonFileType && file.fileType != TrioFileType) return null
         return AxonProjFolders.getInstance().placeOf(file).takeIf { it != AxonProjFolders.Place.Outside }
     }
 
@@ -133,8 +137,29 @@ class AxonProjectWidgetFactory : StatusBarWidgetFactory {
         return AxonProjFolders.getInstance().placeOf(dir) != AxonProjFolders.Place.Outside || hasProjectFolderBelow(dir)
     }
 
-    /** The IDE project is a whole proj folder or one connection: a project folder is one or two levels down. VFS only. */
-    private fun hasProjectFolderBelow(dir: VirtualFile): Boolean =
-        dir.children.any { c -> c.isDirectory && (c.findChild(AxonProjFolders.METADATA) != null || c.children.any { it.isDirectory && it.findChild(AxonProjFolders.METADATA) != null }) }
+    /**
+     * The IDE project is a whole proj folder or one connection: a project folder is one or two
+     * levels down. VFS only, and at most [MAX_LOOK] folders are looked at, so a large IDE
+     * project does not list its whole tree.
+     */
+    private fun hasProjectFolderBelow(dir: VirtualFile): Boolean {
+        var looked = 0
+        for (c in dir.children) {
+            if (!c.isDirectory || c.name.startsWith(".")) continue
+            if (++looked > MAX_LOOK) return false
+            if (c.findChild(AxonProjFolders.METADATA) != null) return true
+            for (g in c.children) {
+                if (!g.isDirectory || g.name.startsWith(".")) continue
+                if (++looked > MAX_LOOK) return false
+                if (g.findChild(AxonProjFolders.METADATA) != null) return true
+            }
+        }
+        return false
+    }
+
+    private companion object {
+        const val MAX_LOOK = 200
+    }
+
     override fun createWidget(project: Project): StatusBarWidget = AxonProjectWidget(project)
 }

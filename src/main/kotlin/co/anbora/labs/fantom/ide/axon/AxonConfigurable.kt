@@ -65,6 +65,7 @@ class AxonConfigurable(private val project: Project) : BoundConfigurable("Axon")
     private var testRun = 0
 
     /** Each count gets a number; only the newest one is shown. */
+    @Volatile
     private var countRun = 0
 
     private val hasUi: Boolean get() = ::urlField.isInitialized
@@ -238,7 +239,7 @@ class AxonConfigurable(private val project: Project) : BoundConfigurable("Axon")
         val sourceChanged = url != server.url || (url.isEmpty() && folderChanged)
         server.url = url
         server.projFolder = folder
-        if (folderChanged) AxonProjFolders.getInstance().clear()
+        if (folderChanged) AxonProjFolders.getInstance().settingChanged()
         // the password store can be slow and can ask for the keychain: not on the UI thread
         val typed = String(tokenField.password)
         val remove = removeTokenBox.isSelected

@@ -1,10 +1,18 @@
 package co.anbora.labs.fantom.ide.axon
 
+import co.anbora.labs.fantom.lang.axon.copy.AxonCopyException
+import co.anbora.labs.fantom.lang.axon.copy.AxonCopyLimits
+import co.anbora.labs.fantom.lang.axon.copy.AxonFunction
+import co.anbora.labs.fantom.lang.axon.copy.AxonFunctionList
+import co.anbora.labs.fantom.lang.axon.copy.AxonFunctionSource
+import co.anbora.labs.fantom.lang.axon.copy.AxonProjectCopy
+import co.anbora.labs.fantom.lang.axon.copy.AxonProjectInfo
 import co.anbora.labs.fantom.lang.axon.copy.AxonProjectKey
 import co.anbora.labs.fantom.lang.axon.copy.AxonProjectSettings
 import co.anbora.labs.fantom.lang.axon.copy.AxonServerSettings
 import co.anbora.labs.fantom.lang.axon.proj.AxonProjFolders
 import co.anbora.labs.fantom.lang.axon.psi.AxonNameUse
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
@@ -12,6 +20,7 @@ import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.PlatformTestUtil
@@ -59,6 +68,8 @@ class AxonProjFolderTest : BasePlatformTestCase() {
         // copies, never real code
         myFixture.addFileToProject("$root/demo/backup/site/.sync-metadata.json", meta("demo", "site"))
         myFixture.addFileToProject("$root/demo/backup/site/func/old.axon", "() => siteArea(1)")
+        myFixture.addFileToProject("$root/demo/backup/site/func/siteArea.axon", "(site) => -1")
+        myFixture.addFileToProject("$root/demo/site/func/.versions/siteArea.axon", "(site) => -2")
         myFixture.addFileToProject("$root/demo/site/func/.versions/siteReport.axon", "() => siteArea(2)")
         myFixture.addFileToProject("$root/demo/site/.backups/func/siteReport.axon", "() => siteArea(3)")
         myFixture.addFileToProject("$root/demo/.sidecar-x/site/func/siteReport.axon", "() => siteArea(4)")
@@ -158,6 +169,44 @@ class AxonProjFolderTest : BasePlatformTestCase() {
         assertEquals("Axon: none", AxonProjectWidgets.text(project))
     }
 
+    /** An in-memory copy source: no network. */
+    private class MemSource(val data: Map<AxonProjectKey, List<AxonFunction>>) : AxonFunctionSource {
+        override val id = "server"
+        override fun listProjects(check: () -> Unit) = data.map { AxonProjectInfo(it.key, it.value.size, null) }
+        override fun fetch(key: AxonProjectKey, sync: Boolean, check: () -> Unit): AxonFunctionList =
+            AxonFunctionList(key, null, data[key] ?: throw AxonCopyException(AxonCopyException.Kind.UNKNOWN_PROJECT, "unknown"))
+    }
+
+    /** With a project copy chosen: a file outside uses the copy, a file in a project folder never does. */
+    fun testTheCopyServesFilesOutsideOnly() {
+        layout()
+        myFixture.addFileToProject("scripts/a.axon", "() => copyOnly()")
+        val copy = AxonProjectCopy.getInstance(project)
+        val cache = FileUtil.createTempDirectory("axon-proj-cache", null)
+        val key = AxonProjectKey("lab", "copy")
+        fun fn(name: String, src: String) = AxonFunction(name, src, null, null, AxonCopyLimits.sha256(src))
+        try {
+            copy.testCacheRoot = cache
+            copy.testSource = MemSource(mapOf(key to listOf(fn("copyOnly", "() => 1"), fn("siteArea", "(site) => 7"))))
+            copy.selectNow(key)
+            PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+            val outside = resolveIn("scripts/a.axon", "() => <caret>copyOnly()") as? PsiFile
+            assertEquals("copyOnly.axon", outside?.virtualFile?.name)
+            assertFalse(outside!!.virtualFile.path, outside.virtualFile.path.contains("/proj/"))
+            assertEquals("Axon: lab/copy", AxonProjectWidgets.text(project))
+            assertNull("the copy is not used in a project folder", resolveIn("proj/demo/site/func/siteReport.axon", "() => <caret>copyOnly()"))
+            assertEquals("demo/site/func/siteArea.axon", pathOf(resolveIn("proj/demo/site/func/siteReport.axon", "() => <caret>siteArea(1)")))
+            assertNull("nor in a backup folder", resolveIn("proj/demo/backup/site/func/old.axon", "() => <caret>copyOnly()"))
+        } finally {
+            copy.dropNow()
+            PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+            copy.testSource = null
+            copy.testCacheRoot = null
+            cache.walkTopDown().forEach { it.setWritable(true) }
+            FileUtil.delete(cache)
+        }
+    }
+
     // ---- completion, doc, find usages, status bar ---------------------------------------------------
 
     fun testCompletionListsTheFunctionsOfTheSameProject() {
@@ -187,6 +236,41 @@ class AxonProjFolderTest : BasePlatformTestCase() {
             .map { it.element.containingFile.virtualFile.path.substringAfter("/proj/") }.sorted()
         assertEquals(listOf("demo/site/func/siteReport.axon"), usages.filter { it.endsWith(".axon") })
         assertFalse(usages.toString(), usages.any { it.startsWith("demo/other") || it.contains("backup") })
+        // the use scope itself: the project folder, not the IDE project
+        val scope = PsiSearchHelper.getInstance(project).getUseScope(target)
+        assertTrue(scope.toString(), scope is GlobalSearchScope)
+        scope as GlobalSearchScope
+        assertTrue(scope.contains(file("proj/demo/site/func/siteReport.axon")))
+        assertTrue(scope.contains(file("proj/demo/site/func/siteArea.trio")))
+        assertFalse("another project", scope.contains(file("proj/demo/other/func/otherOnly.axon")))
+        assertFalse("another connection", scope.contains(file("proj/plant-a/bldg2/func/load.axon")))
+        // a function in a backup folder is searched in its own file only
+        val old = PsiManager.getInstance(project).findFile(file("proj/demo/backup/site/func/siteArea.axon"))!!
+        val oldScope = PsiSearchHelper.getInstance(project).getUseScope(old) as GlobalSearchScope
+        assertTrue(oldScope.contains(file("proj/demo/backup/site/func/siteArea.axon")))
+        assertFalse(oldScope.contains(file("proj/demo/backup/site/func/old.axon")))
+    }
+
+    /** The `src` of a trio record in a project folder is Axon of that project too. */
+    fun testTrioSrcInAProjectFolderResolvesInThatProject() {
+        layout()
+        myFixture.addFileToProject("proj/demo/other/func/calc.trio", "name: calc\nsrc: (x) => siteArea(x)\nfunc\n")
+        val trio = PsiManager.getInstance(project).findFile(file("proj/demo/other/func/calc.trio"))!!
+        val leaf = InjectedLanguageManager.getInstance(project).findInjectedElementAt(trio, trio.text.indexOf("siteArea") + 1)
+        assertNotNull("no Axon in the src tag", leaf)
+        val use = PsiTreeUtil.getParentOfType(leaf, AxonNameUse::class.java, false)!!
+        assertEquals("demo/other/func/siteArea.axon", pathOf(use.reference!!.resolve()))
+    }
+
+    /** The status bar reads only Axon and trio files: other files never walk up their folders. */
+    fun testTheStatusBarSkipsOtherFiles() {
+        layout()
+        myFixture.addFileToProject("proj/demo/backup/notes.txt", "made up")
+        myFixture.openFileInEditor(file("proj/demo/backup/notes.txt"))
+        assertNull(AxonProjectWidgets.editorPlace(project))
+        assertEquals("Axon: none", AxonProjectWidgets.text(project))
+        myFixture.openFileInEditor(file("proj/demo/site/func/siteArea.trio"))
+        assertEquals("Axon: demo/site", AxonProjectWidgets.text(project))
     }
 
     fun testTheStatusBarShowsTheProjectOfTheEditorFile() {
@@ -251,7 +335,15 @@ class AxonProjFolderTest : BasePlatformTestCase() {
 
     fun testTheOldFallbackFolderMovesToTheGlobalFieldOnce() {
         val settings = AxonProjectSettings.getInstance(project)
+        // as the platform reads an old workspace file: through loadState
+        val old = AxonProjectSettings.State().apply { fallbackPath = "/made/up/proj"; instance = "demo"; this.project = "site" }
+        settings.loadState(old)
+        assertEquals("/made/up/proj", server.projFolder)
+        assertNull(settings.state.fallbackPath)
+        assertEquals(AxonProjectKey("demo", "site"), settings.activeKey)
+        settings.activeKey = null
         settings.setOldFallbackPathForTest("/made/up/proj")
+        server.projFolder = ""
         settings.migrateFallbackPath()
         assertEquals("/made/up/proj", server.projFolder)
         assertNull(settings.state.fallbackPath)
