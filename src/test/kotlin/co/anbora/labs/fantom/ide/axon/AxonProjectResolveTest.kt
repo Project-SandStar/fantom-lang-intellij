@@ -11,9 +11,13 @@ import co.anbora.labs.fantom.lang.axon.copy.AxonProjectKey
 import co.anbora.labs.fantom.lang.axon.psi.AxonDefExpr
 import co.anbora.labs.fantom.lang.axon.psi.AxonNameUse
 import co.anbora.labs.fantom.lang.axon.psi.AxonParam
+import co.anbora.labs.fantom.lang.axon.AxonFileType
 import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.lang.LanguageDocumentation
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiFile
@@ -238,6 +242,44 @@ class AxonProjectResolveTest : BasePlatformTestCase() {
         val start = System.nanoTime()
         for (use in uses) assertNotNull(use.referenceName, use.reference!!.resolve())
         val avgMs = (System.nanoTime() - start) / 1_000_000.0 / uses.size
+        println("AxonProjectResolveTest: one name of 20000 resolves in $avgMs ms on average")
         assertTrue("one name took $avgMs ms on average", avgMs < 10.0)
+    }
+
+    // ---- registration in plugin.xml ---------------------------------------------------------------
+
+    fun testProvidersAreRegistered() {
+        siteProject()
+        val target = resolveAt("() => <caret>siteArea(1)")
+        val doc = LanguageDocumentation.INSTANCE.forLanguage(AxonFileType.language)!!.generateDoc(target, null)!!
+        assertTrue(doc, doc.contains("siteArea(site)"))
+
+        myFixture.addFileToProject("one.axon", "() => siteArea(1)")
+        val usages = myFixture.findUsages(target!!).map { it.file!!.name }.sorted()
+        assertEquals(listOf("a.axon", "one.axon"), usages)
+    }
+
+    // ---- Axon in a Fantom string --------------------------------------------------------------------
+
+    fun testInjectedAxonResolvesToo() {
+        siteProject()
+        val file = myFixture.configureByText("A.fan", "class A\n{\n  Void run(Obj cx)\n  {\n    eval(\"siteArea(1)\")\n  }\n}\n")
+        val at = file.text.indexOf("siteArea") + 1
+        val leaf = InjectedLanguageManager.getInstance(project).findInjectedElementAt(file, at)
+        assertNotNull("no Axon in the string", leaf)
+        val use = PsiTreeUtil.getParentOfType(leaf, AxonNameUse::class.java, false)!!
+        assertIsFunctionFile("siteArea", use.reference!!.resolve())
+    }
+
+    // ---- doc from the trio record beside the file ----------------------------------------------
+
+    fun testQuickDocFallsBackToTheTrioDoc() {
+        siteProject()
+        val dir = File(copy.libraryRoot!!.path)
+        dir.setWritable(true)
+        File(dir, "siteReport.trio").writeText("name: siteReport\ndoc: \"Report of all sites.\"\nfunc\n")
+        LocalFileSystem.getInstance().refreshAndFindFileByIoFile(File(dir, "siteReport.trio"))
+        val doc = AxonDocumentationProvider().generateDoc(resolveAt("() => <caret>siteReport()"), null)!!
+        assertTrue(doc, doc.contains("Report of all sites."))
     }
 }
