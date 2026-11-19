@@ -5,6 +5,7 @@ import co.anbora.labs.fantom.lang.axon.project.AxonFunctionSet
 import co.anbora.labs.fantom.lang.axon.project.AxonProjectFunction
 import co.anbora.labs.fantom.lang.axon.project.AxonProjectFunctions
 import co.anbora.labs.fantom.lang.axon.psi.AxonNamedElement
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
@@ -55,9 +56,12 @@ class AxonProjFolderFunctions : AxonProjectFunctions {
             return files[name]?.takeIf { it == file }?.let { toFunction(name, it) }
         }
 
-        private fun toFunction(name: String, file: VirtualFile) = AxonProjectFunction(name) {
-            file.parent?.findChild("$name.trio")?.let { AxonTrioDocIndex.doc(project, it, name) }
-        }
+        /** The doc comes from the index: a null while the IDE indexes is not final. */
+        private fun toFunction(name: String, file: VirtualFile) = AxonProjectFunction(
+            name,
+            { file.parent?.findChild("$name.trio")?.let { AxonTrioDocIndex.doc(project, it, name) } },
+            { !DumbService.isDumb(project) },
+        )
     }
 
     /** A backup or version folder: no project, no functions. */

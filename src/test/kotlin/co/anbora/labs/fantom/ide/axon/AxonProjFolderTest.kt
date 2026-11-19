@@ -11,6 +11,8 @@ import co.anbora.labs.fantom.lang.axon.copy.AxonProjectKey
 import co.anbora.labs.fantom.lang.axon.copy.AxonProjectSettings
 import co.anbora.labs.fantom.lang.axon.copy.AxonServerSettings
 import co.anbora.labs.fantom.lang.axon.proj.AxonProjFolders
+import co.anbora.labs.fantom.lang.axon.project.AxonProjectFunction
+import co.anbora.labs.fantom.lang.axon.project.AxonProjectFunctions
 import co.anbora.labs.fantom.lang.axon.psi.AxonNameUse
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.util.io.FileUtil
@@ -23,6 +25,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import java.io.File
@@ -227,6 +230,38 @@ class AxonProjFolderTest : BasePlatformTestCase() {
         assertTrue(doc, doc.contains("siteArea(site)") && doc.contains("demo/site") && doc.contains("Area of a site."))
         val other = AxonDocumentationProvider().generateDoc(resolveIn("proj/demo/other/func/otherOnly.axon", "() => <caret>siteArea(1)"), null)!!
         assertFalse(other, other.contains("Area of a site."))
+    }
+
+    /** A doc asked while the IDE indexes is null, and is read again once indexing ends. */
+    fun testADocAskedInDumbModeIsReadAgainAfterIndexing() {
+        layout()
+        val psi = PsiManager.getInstance(project).findFile(file("proj/demo/site/func/siteReport.axon"))!!
+        val set = AxonProjectFunctions.of(psi)!!
+        val fn = set.function("siteArea")!!
+        DumbModeTestUtils.runInDumbModeSynchronously(project) {
+            assertNull(fn.doc)
+        }
+        assertEquals("Area of a site.\nIn square metres.", fn.doc)
+    }
+
+    /** The cache rule itself: a null is kept only when the source said it was final. */
+    fun testTheDocCacheKeepsOnlyAFinalAnswer() {
+        var ready = false
+        var calls = 0
+        val fn = AxonProjectFunction("siteArea", { calls++; if (ready) "Area." else null }, { ready })
+        assertNull(fn.doc)
+        assertNull(fn.doc)
+        assertEquals(2, calls)
+        ready = true
+        assertEquals("Area.", fn.doc)
+        assertEquals("Area.", fn.doc)
+        assertEquals(3, calls)
+        // a final null is kept
+        var n = 0
+        val none = AxonProjectFunction("x", { n++; null }, { true })
+        assertNull(none.doc)
+        assertNull(none.doc)
+        assertEquals(1, n)
     }
 
     fun testFindUsagesStaysInTheProject() {

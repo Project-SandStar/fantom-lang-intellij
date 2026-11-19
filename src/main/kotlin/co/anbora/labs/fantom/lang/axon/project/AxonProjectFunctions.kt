@@ -11,18 +11,40 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * One function of an Axon project: its name and its doc (fandoc), as the project stores them.
  * The doc can come from [docSource] on first use, so a name lookup does not read it.
+ *
+ * A doc is cached once found. A null is cached only when [docFinal] says so before and after
+ * the read: a source that answers null while the IDE indexes is asked again later.
  */
-class AxonProjectFunction(val name: String, docSource: () -> String?) {
+class AxonProjectFunction(
+    val name: String,
+    private val docSource: () -> String?,
+    private val docFinal: () -> Boolean = { true },
+) {
     constructor(name: String, doc: String?) : this(name, { doc })
 
-    val doc: String? by lazy(LazyThreadSafetyMode.PUBLICATION, docSource)
+    private val cached = AtomicReference<Any?>(NOT_READ)
+
+    val doc: String?
+        get() {
+            val c = cached.get()
+            if (c !== NOT_READ) return c as String?
+            val finalBefore = docFinal()
+            val v = docSource()
+            if (v != null || (finalBefore && docFinal())) cached.compareAndSet(NOT_READ, v)
+            return v
+        }
 
     /** The first line of the doc that is not blank, or null. Completion shows it as tail text. */
     val summary: String? get() = doc?.lineSequence()?.map { it.trim() }?.firstOrNull { it.isNotEmpty() }
+
+    private companion object {
+        val NOT_READ = Any()
+    }
 }
 
 /**
