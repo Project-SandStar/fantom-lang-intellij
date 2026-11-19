@@ -12,8 +12,15 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 
-/** One function of an Axon project: its name and its doc (fandoc), as the project stores them. */
-class AxonProjectFunction(val name: String, val doc: String?) {
+/**
+ * One function of an Axon project: its name and its doc (fandoc), as the project stores them.
+ * The doc can come from [docSource] on first use, so a name lookup does not read it.
+ */
+class AxonProjectFunction(val name: String, docSource: () -> String?) {
+    constructor(name: String, doc: String?) : this(name, { doc })
+
+    val doc: String? by lazy(LazyThreadSafetyMode.PUBLICATION, docSource)
+
     /** The first line of the doc that is not blank, or null. Completion shows it as tail text. */
     val summary: String? get() = doc?.lineSequence()?.map { it.trim() }?.firstOrNull { it.isNotEmpty() }
 }

@@ -1,6 +1,7 @@
 package co.anbora.labs.fantom.lang.axon.copy
 
 import co.anbora.labs.fantom.lang.axon.copy.AxonCopyException.Kind
+import co.anbora.labs.fantom.lang.axon.proj.AxonProjFolders
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
@@ -35,7 +36,7 @@ import java.util.concurrent.atomic.AtomicLong
  * of the SkySpark project the developer works on ([AxonProjectSettings.activeKey]).
  *
  * The functions come from the Axon server when its URL is set ([AxonServerSettings]),
- * else from the fallback `proj` folder ([AxonProjectSettings.fallbackPath]). They are
+ * else from the global `proj` folder ([AxonServerSettings.projFolder]). They are
  * written to [AxonProjectCache] and shown as the library "Axon: instance/project"
  * ([AxonProjectLibraryRootsProvider]). There is one copy per IDE project: picking
  * another project, or none, deletes the old one. The copy stays on disk when the IDE
@@ -137,21 +138,21 @@ class AxonProjectCopy(private val project: Project) {
     }
 
     /**
-     * Where the functions come from: the server when a URL is set, else the fallback
+     * Where the functions come from: the server when a URL is set, else the global proj
      * folder. A server that fails is an error; the folder is not read in its place, so
      * that an old folder never replaces a newer copy without the developer knowing.
      */
     fun source(): AxonFunctionSource {
         testSource?.let { return it }
         serverClient()?.let { return it }
-        val path = AxonProjectSettings.getInstance(project).fallbackPath
-        if (path.isNotEmpty()) return AxonFallbackFolder(File(path))
-        throw AxonCopyException(Kind.NOT_CONFIGURED, "Set the Axon server URL or the fallback folder in Settings | Languages & Frameworks | Fantom | Axon.")
+        val path = AxonServerSettings.getInstance().projFolder
+        if (path.isNotEmpty()) return AxonFallbackFolder(File(AxonProjFolders.normalize(path)))
+        throw AxonCopyException(Kind.NOT_CONFIGURED, "Set the Axon server URL or the global proj folder in Settings | Languages & Frameworks | Fantom | Axon.")
     }
 
-    /** True when a server URL or a fallback folder is set. Reads memory only. */
+    /** True when a server URL or a global proj folder is set. Reads memory only. */
     fun isConfigured(): Boolean =
-        testSource != null || AxonServerSettings.getInstance().url.isNotEmpty() || AxonProjectSettings.getInstance(project).fallbackPath.isNotEmpty()
+        testSource != null || AxonServerSettings.getInstance().url.isNotEmpty() || AxonServerSettings.getInstance().projFolder.isNotEmpty()
 
     // ---- blocking cores -----------------------------------------------------------------------
 

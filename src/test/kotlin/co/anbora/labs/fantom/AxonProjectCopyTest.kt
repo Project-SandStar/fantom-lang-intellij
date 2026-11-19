@@ -74,7 +74,7 @@ class AxonProjectCopyTest : BasePlatformTestCase() {
             AxonServerSettings.getInstance().url = ""
             AxonServerToken.set(null)
             copy.dropNow()
-            settings.fallbackPath = ""
+            AxonServerSettings.getInstance().projFolder = ""
             PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
             copy.testCacheRoot = null
             server.close()
@@ -417,7 +417,7 @@ class AxonProjectCopyTest : BasePlatformTestCase() {
         assertEquals(2, copy.functions().size)
     }
 
-    // ---- fallback folder -----------------------------------------------------------------------
+    // ---- the global proj folder as the source of the copy ---------------------------------------
 
     private fun projFolder(): File {
         val proj = temp("proj")
@@ -432,9 +432,9 @@ class AxonProjectCopyTest : BasePlatformTestCase() {
         return proj
     }
 
-    fun testTheFallbackFolderIsReadWhenNoServerUrlIsSet() {
+    fun testTheGlobalProjFolderIsReadWhenNoServerUrlIsSet() {
         AxonServerSettings.getInstance().url = ""
-        settings.fallbackPath = projFolder().path
+        AxonServerSettings.getInstance().projFolder = projFolder().path
         assertEquals(listOf("demo/site", "lab/plant"), copy.listProjectsNow().map { it.key.toString() })
         val c = copy.selectNow(key)
         PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
@@ -445,11 +445,11 @@ class AxonProjectCopyTest : BasePlatformTestCase() {
         assertEquals("() => 1", String(copy.findFunctionFile("calc daily avg")!!.contentsToByteArray()))
         assertTrue(ProjectFileIndex.getInstance(project).isInLibrary(copy.findFunctionFile("calcDailyAvg")!!))
         assertTrue(server.requests.isEmpty())
-        assertTrue(AxonProjectWidgets.tooltip(project).contains("the fallback folder"))
+        assertTrue(AxonProjectWidgets.tooltip(project).contains("the global proj folder"))
     }
 
-    fun testTheServerWinsOverTheFallbackFolderAndAFailingServerIsNotReplacedByIt() {
-        settings.fallbackPath = projFolder().path
+    fun testTheServerWinsOverTheGlobalProjFolderAndAFailingServerIsNotReplacedByIt() {
+        AxonServerSettings.getInstance().projFolder = projFolder().path
         bg { copy.selectNow(key) }
         assertEquals("server", copy.copy!!.source)
         assertEquals(listOf("calcDailyAvg", "siteReport"), copy.functions().map { it.name })
@@ -693,23 +693,25 @@ class AxonProjectCopyTest : BasePlatformTestCase() {
 
     private fun xml(state: Any): String = JDOMUtil.write(XmlSerializer.serialize(state))
 
-    fun testTheKeyAndTheFolderAreInTheWorkspaceFileAndTheTokenInNoXml() {
+    fun testTheKeyIsInTheWorkspaceFileTheFolderInTheAppFileAndTheTokenInNoXml() {
         val storages = AxonProjectSettings::class.java.getAnnotation(State::class.java).storages
         assertEquals(listOf(StoragePathMacros.WORKSPACE_FILE), storages.map { it.value })
         assertEquals("\$WORKSPACE_FILE\$", storages.single().value)
 
         settings.activeKey = AxonProjectKey("demoinstance", "siteproject")
-        settings.fallbackPath = "/made/up/proj"
+        AxonServerSettings.getInstance().projFolder = "/made/up/proj"
         val workspace = xml(settings.state)
-        assertTrue(workspace, workspace.contains("demoinstance") && workspace.contains("siteproject") && workspace.contains("/made/up/proj"))
+        assertTrue(workspace, workspace.contains("demoinstance") && workspace.contains("siteproject"))
+        assertFalse(workspace, workspace.contains("/made/up/proj"))
 
-        // the shared project settings and the application file know nothing of them
+        // the shared project settings know nothing of them; the application file has the URL and the folder only
         val shared = xml(FantomSettings.getInstance(project).state)
         val app = xml(AxonServerSettings.getInstance().state)
         for (text in listOf(shared, app)) {
-            assertFalse(text, text.contains("demoinstance") || text.contains("siteproject") || text.contains("/made/up/proj"))
+            assertFalse(text, text.contains("demoinstance") || text.contains("siteproject"))
         }
-        assertTrue(app, app.contains(server.url))
+        assertFalse(shared, shared.contains("/made/up/proj"))
+        assertTrue(app, app.contains(server.url) && app.contains("/made/up/proj"))
         assertEquals(token, AxonServerToken.get())
         for (text in listOf(workspace, shared, app)) assertFalse(text, text.contains(token))
         // the application file is not part of settings sync
@@ -807,11 +809,11 @@ class AxonProjectCopyTest : BasePlatformTestCase() {
             val folder = projFolder()
             page.urlField.text = "http://127.0.0.1:1/"
             page.tokenField.text = "new-token-5d1c"
-            page.fallbackField.text = folder.path
+            page.projFolderField.text = folder.path
             page.keyField.text = " demo/site "
             page.apply()
             assertEquals("http://127.0.0.1:1", AxonServerSettings.getInstance().url)
-            assertEquals(folder.path, settings.fallbackPath)
+            assertEquals(folder.path, AxonServerSettings.getInstance().projFolder)
             assertEquals("", String(page.tokenField.password))
             val end = System.currentTimeMillis() + 10_000
             while (copy.copy?.key != key && System.currentTimeMillis() < end) {
@@ -820,6 +822,7 @@ class AxonProjectCopyTest : BasePlatformTestCase() {
             }
             assertEquals("new-token-5d1c", AxonServerToken.get())
             assertEquals(key, settings.activeKey)
+            assertEquals("2 connections, 2 projects.", page.projFolderCount.text)
             assertEquals(listOf("calcDailyAvg"), copy.functions().map { it.name })
             assertFalse(page.isModified)
             page.reset()

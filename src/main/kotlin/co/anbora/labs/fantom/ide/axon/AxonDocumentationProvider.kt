@@ -14,9 +14,9 @@ import com.intellij.psi.PsiElement
  * Quick Documentation (Ctrl+Q, F1) for Axon functions: `name(a, b)`, the project it comes
  * from, and its doc (fandoc). A project function is its `.axon` file; its doc is the one the
  * [AxonFunctionSet][co.anbora.labs.fantom.lang.axon.project.AxonFunctionSet] holds in memory
- * (the index of the copy). Nothing is read from disk here: the doc runs in a read action. A
- * provider that reads `<name>.trio` files (the proj folder, task 4.38) puts their `doc` in its
- * set when it builds its index. A function defined in the file shows its parameters only.
+ * (the index of the copy, or the trio doc index of a `proj` folder, task 4.38). Nothing is
+ * read from disk here: the doc runs in a read action. A function defined in the file shows
+ * its parameters only.
  */
 class AxonDocumentationProvider : AbstractDocumentationProvider() {
 

@@ -20,12 +20,13 @@
         <!-- Supplies Axon functions that are not in the file at hand (project and pod functions). -->
         <extensionPoint qualifiedName="co.anbora.labs.fantom.axonFunctionSource"
                         interface="co.anbora.labs.fantom.lang.axon.psi.AxonFunctionSource" dynamic="true"/>
-        <!-- Says which Axon project a file belongs to: the active copy today, a proj folder later (4.38). -->
+        <!-- Says which Axon project a file belongs to: a proj folder first (4.38), the active copy last. -->
         <extensionPoint qualifiedName="co.anbora.labs.fantom.axonProjectFunctions"
                         interface="co.anbora.labs.fantom.lang.axon.project.AxonProjectFunctions" dynamic="true"/>
     </extensionPoints>
     <extensions defaultExtensionNs="co.anbora.labs.fantom">
         <axonFunctionSource implementation="co.anbora.labs.fantom.lang.axon.project.AxonProjectFunctionSource"/>
+        <axonProjectFunctions id="axonProjFolder" implementation="co.anbora.labs.fantom.lang.axon.proj.AxonProjFolderFunctions" order="first"/>
         <axonProjectFunctions implementation="co.anbora.labs.fantom.lang.axon.project.AxonCopyProjectFunctions" order="last"/>
     </extensions>
     <extensions defaultExtensionNs="com.intellij">
@@ -92,6 +93,8 @@
         <lang.namesValidator language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.refactoring.FantomNamesValidator"/>
 
         <fileBasedIndex implementation="co.anbora.labs.fantom.lang.index.FantomDeclarationIndex"/>
+        <fileBasedIndex implementation="co.anbora.labs.fantom.lang.axon.proj.AxonTrioDocIndex"/>
+        <useScopeOptimizer implementation="co.anbora.labs.fantom.lang.axon.proj.AxonProjFolderScopeOptimizer"/>
         <!-- Fantom install sources as a library, so sys names resolve from any project -->
         <additionalLibraryRootsProvider implementation="co.anbora.labs.fantom.lang.library.FantomLibraryRootsProvider"/>
         <!-- Settings | Languages & Frameworks | Fantom: pick the Fantom home -->

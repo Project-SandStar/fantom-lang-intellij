@@ -3,15 +3,20 @@ package co.anbora.labs.fantom.ide.axon
 import co.anbora.labs.fantom.lang.axon.copy.AxonProjectCopy
 import co.anbora.labs.fantom.lang.axon.copy.AxonProjectInfo
 import co.anbora.labs.fantom.lang.axon.copy.AxonProjectSettings
+import co.anbora.labs.fantom.lang.axon.copy.AxonServerSettings
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
+import co.anbora.labs.fantom.lang.axon.proj.AxonProjFolders
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.wm.StatusBarWidget
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.StatusBarWidgetFactory
 
 /** Text and popup of [AxonProjectWidget]. Everything here reads memory only. */
@@ -25,15 +30,37 @@ object AxonProjectWidgets {
         SETTINGS("Axon Settings\u2026"),
     }
 
-    /** "Axon: demo/site", or "Axon: none". */
-    fun text(project: Project): String = "Axon: " + (AxonProjectCopy.getInstance(project).activeKey?.toString() ?: "none")
+    /**
+     * Where the file in the editor is in a `proj` folder, or null when there is no such file
+     * or it is outside any `proj` layout. Memory and VFS only.
+     */
+    fun editorPlace(project: Project): AxonProjFolders.Place? {
+        val file = FileEditorManager.getInstance(project).selectedFiles.firstOrNull() ?: return null
+        return AxonProjFolders.getInstance().placeOf(file).takeIf { it != AxonProjFolders.Place.Outside }
+    }
+
+    /**
+     * "Axon: demo/site": the project of the file in the editor when it is in a `proj` folder,
+     * else the chosen project copy, or "Axon: none".
+     */
+    fun text(project: Project): String = when (val place = editorPlace(project)) {
+        is AxonProjFolders.Place.InProject -> "Axon: " + AxonProjFolders.getInstance().keyOf(place.folder)
+        AxonProjFolders.Place.Copy -> "Axon: no project"
+        else -> "Axon: " + (AxonProjectCopy.getInstance(project).activeKey?.toString() ?: "none")
+    }
 
     fun tooltip(project: Project): String {
+        when (val place = editorPlace(project)) {
+            is AxonProjFolders.Place.InProject -> return "This file is in the Axon project ${AxonProjFolders.getInstance().keyOf(place.folder)} " +
+                "(folder ${place.folder.name}): its names resolve to the functions of this project."
+            AxonProjFolders.Place.Copy -> return "This file is in a backup or version folder: it has no Axon project."
+            else -> {}
+        }
         val copy = AxonProjectCopy.getInstance(project)
         val key = copy.activeKey ?: return "No Axon project copy. Click to pick a SkySpark project."
         val c = copy.copy ?: return "Axon project $key: no local copy. Click and choose Refresh."
         val n = c.functions.size
-        val from = if (c.source == "folder") "the fallback folder" else "the Axon server"
+        val from = if (c.source == "folder") "the global proj folder" else "the Axon server"
         return "Read-only copy of $key: $n function${if (n == 1) "" else "s"} from $from" +
             (c.syncedAt?.let { ", synced $it" } ?: "") + ". Click to pick, refresh or drop."
     }
@@ -91,13 +118,23 @@ object AxonProjectWidgets {
     }
 }
 
-/** Shows [AxonProjectWidget] when an Axon source is set or a project is chosen. */
+/**
+ * Shows [AxonProjectWidget] when an Axon source (a server URL or a global proj folder) is
+ * set, a project is chosen, or the IDE project folder is in a `proj` layout.
+ */
 class AxonProjectWidgetFactory : StatusBarWidgetFactory {
     override fun getId(): String = AxonProjectWidget.ID
-    override fun getDisplayName(): String = "Axon Project Copy"
+    override fun getDisplayName(): String = "Axon Project"
     override fun isAvailable(project: Project): Boolean {
         val copy = AxonProjectCopy.getInstance(project)
-        return copy.isConfigured() || copy.activeKey != null
+        if (copy.isConfigured() || copy.activeKey != null) return true
+        if (AxonServerSettings.getInstance().projFolder.isNotEmpty()) return true
+        val dir = project.guessProjectDir() ?: return false
+        return AxonProjFolders.getInstance().placeOf(dir) != AxonProjFolders.Place.Outside || hasProjectFolderBelow(dir)
     }
+
+    /** The IDE project is a whole proj folder or one connection: a project folder is one or two levels down. VFS only. */
+    private fun hasProjectFolderBelow(dir: VirtualFile): Boolean =
+        dir.children.any { c -> c.isDirectory && (c.findChild(AxonProjFolders.METADATA) != null || c.children.any { it.isDirectory && it.findChild(AxonProjFolders.METADATA) != null }) }
     override fun createWidget(project: Project): StatusBarWidget = AxonProjectWidget(project)
 }

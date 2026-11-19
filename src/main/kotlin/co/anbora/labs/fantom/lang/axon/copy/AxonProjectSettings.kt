@@ -12,11 +12,11 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.TestOnly
 
 /**
- * The Axon project of this IDE project, and the local `proj` folder to read when no
- * server is set. Both hold customer names (instance, project, a path), so they are in
- * the workspace file, which is never shared, and not in `fantom.xml`.
+ * The Axon project of this IDE project. It holds customer names (instance, project), so it
+ * is in the workspace file, which is never shared, and not in `fantom.xml`.
  */
 @Service(Service.Level.PROJECT)
 @State(name = "FantomAxonProject", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
@@ -25,8 +25,25 @@ class AxonProjectSettings : SimplePersistentStateComponent<AxonProjectSettings.S
     class State : BaseState() {
         var instance by string()
         var project by string()
+        /** The old per-project "Fallback folder" (before 4.38). Read once, moved to [AxonServerSettings.projFolder]. */
         var fallbackPath by string()
         var pickerConnection by string()
+    }
+
+    override fun loadState(state: State) {
+        super.loadState(state)
+        migrateFallbackPath()
+    }
+
+    /**
+     * Moves the old per-project fallback folder into the global proj folder when that one is
+     * empty, then forgets it. Runs when the workspace file is read.
+     */
+    internal fun migrateFallbackPath() {
+        val old = state.fallbackPath?.trim()?.takeIf { it.isNotEmpty() } ?: return
+        val server = AxonServerSettings.getInstance()
+        if (server.projFolder.isEmpty()) server.projFolder = old
+        state.fallbackPath = null
     }
 
     /**
@@ -49,10 +66,9 @@ class AxonProjectSettings : SimplePersistentStateComponent<AxonProjectSettings.S
             state.project = value?.project
         }
 
-    /** The `proj` folder of a local Axon server, or blank. */
-    var fallbackPath: String
-        get() = state.fallbackPath.orEmpty()
-        set(value) { state.fallbackPath = value.trim().takeIf { it.isNotEmpty() } }
+    /** For tests of the move: sets the old per-project folder as an old workspace file would hold it. */
+    @TestOnly
+    fun setOldFallbackPathForTest(path: String?) { state.fallbackPath = path }
 
     companion object {
         fun getInstance(project: Project): AxonProjectSettings = project.service()
@@ -60,9 +76,10 @@ class AxonProjectSettings : SimplePersistentStateComponent<AxonProjectSettings.S
 }
 
 /**
- * The Axon server of this machine: its URL, for every IDE project. A host name is as
- * private as an instance name, so the file is application level (never in a project
- * folder) and is left out of settings sync. The token is not here: see [AxonServerToken].
+ * The Axon server of this machine: its URL and the global `proj` folder, for every IDE
+ * project. A host name or a path is as private as an instance name, so the file is
+ * application level (never in a project folder) and is left out of settings sync. The
+ * token is not here: see [AxonServerToken].
  */
 @Service(Service.Level.APP)
 @State(name = "FantomAxonServer", storages = [Storage("fantom-axon.xml", roamingType = RoamingType.DISABLED)])
@@ -70,12 +87,22 @@ class AxonServerSettings : SimplePersistentStateComponent<AxonServerSettings.Sta
 
     class State : BaseState() {
         var url by string()
+        var projFolder by string()
     }
 
     /** The base URL, without a slash at the end; blank when no server is set. */
     var url: String
         get() = state.url.orEmpty()
         set(value) { state.url = value.trim().trimEnd('/').takeIf { it.isNotEmpty() } }
+
+    /**
+     * The global `proj` folder of the Axon server (`proj/<connection>/<project>/func/`), as
+     * typed; blank when not set. Files under it map to their project by path, and the
+     * project copy reads it when no server URL is set.
+     */
+    var projFolder: String
+        get() = state.projFolder.orEmpty()
+        set(value) { state.projFolder = value.trim().takeIf { it.isNotEmpty() } }
 
     companion object {
         fun getInstance(): AxonServerSettings = service()
