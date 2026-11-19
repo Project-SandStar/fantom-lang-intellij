@@ -12,7 +12,8 @@ import java.io.File
  *
  * [unchanged] is null for the read-only copy. A proj-folder sync sets it, and then the
  * message counts the unchanged functions, says "moved to .versions" for [removed] and
- * names the `.skyspark` files of the conflicts.
+ * names the `.skyspark` files of the conflicts. [keptGone] are functions gone in SkySpark
+ * whose local files were edited: they stay where they are.
  */
 data class AxonSyncResult(
     val key: AxonProjectKey,
@@ -22,6 +23,7 @@ data class AxonSyncResult(
     val total: Int,
     val conflicts: List<String> = emptyList(),
     val unchanged: List<String>? = null,
+    val keptGone: List<String> = emptyList(),
 ) {
     /** "Axon: demo/site synced, 1 added, 2 changed, 0 removed (12 functions)." and the names. */
     fun message(): String = if (unchanged != null) folderMessage(unchanged) else copyMessage()
@@ -35,7 +37,8 @@ data class AxonSyncResult(
         names("Added", added, sb)
         names("Changed", changed, sb)
         names("Moved to .versions", removed, sb)
-        names("Conflicts, local file kept and the SkySpark version written as <name>.axon.skyspark", conflicts, sb)
+        names("Conflicts, local file kept and the SkySpark version written as <name>.axon.skyspark or <name>.trio.skyspark", conflicts, sb)
+        names("Gone in SkySpark but edited locally, kept in place", keptGone, sb)
         return sb.toString()
     }
 

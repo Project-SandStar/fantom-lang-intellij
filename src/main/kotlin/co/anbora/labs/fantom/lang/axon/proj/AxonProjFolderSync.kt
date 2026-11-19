@@ -18,6 +18,7 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -84,8 +85,8 @@ class AxonProjFolderSync : AxonSyncTarget {
     override fun write(project: Project, target: AxonSyncTarget.Target, list: AxonFunctionList, check: () -> Unit): AxonSyncResult {
         checkNames(list.functions.map { it.name })
         val folder = target.folder.absoluteFile.toPath().normalize().toFile()
-        for (f in listOf(folder, File(folder, FUNC), File(folder, VERSIONS))) {
-            if (Files.isSymbolicLink(f.toPath())) throw AxonCopyException(Kind.IO, "${f.name} is a link; the sync writes into real folders only.")
+        for (f in listOf(folder, File(folder, FUNC), File(folder, VERSIONS), File(folder, METADATA))) {
+            if (Files.isSymbolicLink(f.toPath())) throw AxonCopyException(Kind.IO, "${f.name} is a link; the sync writes into real files only.")
         }
         if (folder.exists() && !folder.isDirectory) throw AxonCopyException(Kind.IO, "${folder.name} is not a folder.")
 
@@ -99,92 +100,144 @@ class AxonProjFolderSync : AxonSyncTarget {
         val oldFns = AxonJson.obj(oldMeta?.get("functions")).orEmpty()
         val funcVf = dirVf?.findChild(FUNC)?.takeIf { it.isDirectory }
         val now = Instant.now().truncatedTo(ChronoUnit.MILLIS)
-        val nowIso = DateTimeFormatter.ISO_INSTANT.format(now)
+        val nowIso = JS_ISO.format(now)
+
+        fun file(name: String): VirtualFile? {
+            val vf = funcVf?.findChild(name) ?: return null
+            // a link could lead out of the project folder: stop before anything is written
+            if (Files.isSymbolicLink(File(vf.path).toPath())) throw AxonCopyException(Kind.IO, "$name is a link; the sync writes into real files only.")
+            return vf.takeIf { !it.isDirectory }
+        }
 
         val steps = ArrayList<Step>(list.functions.size)
         for (f in list.functions) {
             check()
-            val axon = funcVf?.findChild("${f.name}$AXON")?.takeIf { !it.isDirectory }
+            val entry = AxonJson.obj(oldFns[f.name])
+            val axon = file("${f.name}$AXON")
             val local = axon?.let(::localOf)
-            val trioVf = funcVf?.findChild("${f.name}$TRIO")?.takeIf { !it.isDirectory }
-            val oldTrio = trioVf?.let(::readText)
-            val stored = AxonJson.str(AxonJson.obj(oldFns[f.name])?.get("hash"))
+            val trioVf = file("${f.name}$TRIO")
+            val trioLocal = trioVf?.let(::localOf)
+            file("${f.name}$SKYSPARK"); file("${f.name}$TRIO_SKYSPARK")
             val state = when {
                 local == null -> State.ADDED
                 local.text == f.src -> State.UNCHANGED
                 local.unsaved -> State.CONFLICT
-                sameHash(stored, AxonCopyLimits.sha256(local.text)) -> State.CHANGED
+                sameHash(AxonJson.str(entry?.get("hash")), AxonCopyLimits.sha256(local.text)) -> State.CHANGED
                 else -> State.CONFLICT
             }
-            val trio = if (state == State.CONFLICT) null else trioText(oldTrio, f)
-            steps += Step(f, state, axon, axon?.modificationStamp ?: -1, trio)
+            val trio = if (state == State.CONFLICT) null else trioText(trioLocal?.text, f)
+            val trioEdited = trioLocal != null && trio != trioLocal.text && trioEdited(trioLocal, entry)
+            steps += Step(f, state, axon, axon?.modificationStamp ?: -1, trio, trioVf, trioVf?.modificationStamp ?: -1, trioEdited)
         }
-        val gone = oldFns.keys.filter { NAME.matches(it) && list.functions.none { f -> f.name == it } }.sorted()
+        // on a disk that ignores case, a gone "Foo" can find the file of a listed "foo": that file is not Foo's
+        val listedFiles = steps.flatMap { listOfNotNull(it.axon, it.trioVf) }.toSet()
+        val gone = oldFns.keys.filter { NAME.matches(it) && list.functions.none { f -> f.name == it } }.sorted().map { name ->
+            check()
+            val entry = AxonJson.obj(oldFns[name])
+            fun own(ext: String) = file(name + ext)?.takeIf { it !in listedFiles }
+            val files = listOf(AXON, TRIO, SKYSPARK, TRIO_SKYSPARK).mapNotNull(::own)
+            val axon = own(AXON)?.let(::localOf)
+            val trio = own(TRIO)?.let(::localOf)
+            val edited = (axon != null && (axon.unsaved || !sameHash(AxonJson.str(entry?.get("hash")), AxonCopyLimits.sha256(axon.text)))) ||
+                (trio != null && trioEdited(trio, entry))
+            Gone(name, files.map { it to it.modificationStamp }, edited)
+        }
 
         // ---- write: one write action per batch, all in one undo group ----
         val writer = Writer(project, now)
-        val conflicts = ArrayList<String>()
-        for (batch in steps.chunked(BATCH)) {
-            check()
-            writer.command {
-                val func = writer.dir(writer.root(folder), FUNC)
-                for (s in batch) {
-                    val state = if (s.state != State.ADDED && s.state != State.UNCHANGED && !s.fresh()) State.CONFLICT else s.state
-                    when (state) {
-                        State.ADDED, State.CHANGED -> {
-                            // a file that appeared since the plan is kept: it is a conflict
-                            if (state == State.ADDED && func.findChild("${s.f.name}$AXON") != null) {
-                                writer.put(folder, func, "${s.f.name}$SKYSPARK", s.f.src); s.state = State.CONFLICT; continue
-                            }
-                            writer.put(folder, func, "${s.f.name}$AXON", s.f.src)
-                            s.trio?.let { writer.put(folder, func, "${s.f.name}$TRIO", it) }
-                        }
-                        State.UNCHANGED -> s.trio?.let { writer.put(folder, func, "${s.f.name}$TRIO", it) }
-                        State.CONFLICT -> { writer.put(folder, func, "${s.f.name}$SKYSPARK", s.f.src); s.state = State.CONFLICT }
+        var complete = false
+        try {
+            for (batch in steps.chunked(BATCH)) {
+                check()
+                writer.command {
+                    val func = writer.dir(writer.root(folder), FUNC)
+                    for (s in batch) {
+                        writeStep(writer, folder, func, s)
+                        s.done = true
                     }
                 }
             }
-        }
-        check()
-        val moved = ArrayList<String>()
-        writer.command {
-            val root = writer.root(folder)
-            val func = root.findChild(FUNC)
-            for (name in gone) {
-                val files = listOf(AXON, TRIO, SKYSPARK).mapNotNull { func?.findChild(name + it)?.takeIf { f -> !f.isDirectory } }
-                files.forEach { writer.moveToVersions(folder, it) }
-                moved += name
+            check()
+            writer.command {
+                val func = writer.root(folder).findChild(FUNC)
+                // on a disk that ignores case, a gone "Foo" can be the file of a listed "foo"
+                val listed = steps.flatMap { s -> listOf(AXON, TRIO).mapNotNull { func?.findChild(s.f.name + it) } }.toSet()
+                for (g in gone) {
+                    g.done = true
+                    val own = g.files.filter { it.first.isValid && it.first !in listed }
+                    if (g.edited || own.any { (vf, stamp) -> !fresh(vf, stamp) }) { g.kept = true; continue }
+                    own.forEach { writer.moveToVersions(folder, it.first) }
+                }
             }
-            writer.put(folder, root, METADATA, metadata(target.key, list, oldMeta, oldFns, steps, nowIso))
+            complete = true
+        } finally {
+            // also after an error or a cancel: the metadata must know the files that were written,
+            // or the next sync takes them for local edits
+            if (complete || steps.any { it.done } || gone.any { it.done }) {
+                val text = metadata(target.key, list, oldMeta, oldFns, steps, gone, nowIso, complete)
+                if (complete) {
+                    writer.command { writer.put(folder, writer.root(folder), METADATA, text, keep = false) }
+                } else {
+                    runCatching { writer.command { writer.put(folder, writer.root(folder), METADATA, text, keep = false) } }
+                }
+            }
+            (lfs.findFileByIoFile(folder) ?: dirVf)?.let { VfsUtil.markDirtyAndRefresh(false, true, true, it) }
         }
-        dirVf?.let { VfsUtil.markDirtyAndRefresh(false, true, true, it) }
-            ?: lfs.refreshAndFindFileByIoFile(folder)?.let { VfsUtil.markDirtyAndRefresh(false, true, true, it) }
 
-        steps.filter { it.state == State.CONFLICT }.mapTo(conflicts) { it.f.name }
         return AxonSyncResult(
             target.key,
             added = steps.filter { it.state == State.ADDED }.map { it.f.name }.sorted(),
             changed = steps.filter { it.state == State.CHANGED }.map { it.f.name }.sorted(),
-            removed = moved.sorted(),
+            removed = gone.filter { !it.kept }.map { it.name },
             total = list.functions.size,
-            conflicts = conflicts.sorted(),
+            conflicts = steps.filter { it.state == State.CONFLICT || it.trioConflict }.map { it.f.name }.sorted(),
             unchanged = steps.filter { it.state == State.UNCHANGED }.map { it.f.name }.sorted(),
+            keptGone = gone.filter { it.kept }.map { it.name },
         )
+    }
+
+    /** The files of one function. Write action. */
+    private fun writeStep(writer: Writer, folder: File, func: VirtualFile, s: Step) {
+        val name = s.f.name
+        var state = s.state
+        // changed since the plan, or an unsaved change now: a local edit
+        if (state == State.CHANGED && !fresh(s.axon, s.stamp)) state = State.CONFLICT
+        // a file that appeared since the plan is kept: it is a conflict
+        if (state == State.ADDED && func.findChild("$name$AXON") != null) state = State.CONFLICT
+        s.state = state
+        when (state) {
+            State.ADDED, State.CHANGED -> writer.put(folder, func, "$name$AXON", s.f.src)
+            State.UNCHANGED -> {}
+            State.CONFLICT -> { writer.put(folder, func, "$name$SKYSPARK", s.f.src); return }
+        }
+        writer.fixCase(s.axon, "$name$AXON")
+        val trio = s.trio ?: return
+        val trioNow = func.findChild("$name$TRIO")
+        if (!s.trioConflict && (if (s.trioVf == null) trioNow != null else !fresh(s.trioVf, s.trioStamp))) s.trioConflict = true
+        if (s.trioConflict) writer.put(folder, func, "$name$TRIO_SKYSPARK", trio)
+        else { writer.put(folder, func, "$name$TRIO", trio); writer.fixCase(s.trioVf, "$name$TRIO") }
     }
 
     // ---- the plan --------------------------------------------------------------------------------
 
     private enum class State { ADDED, CHANGED, UNCHANGED, CONFLICT }
 
-    /** What the sync does with one function. [stamp] is the VFS stamp of the `.axon` file when it was read. */
-    private class Step(val f: AxonFunction, var state: State, val axon: VirtualFile?, val stamp: Long, val trio: String?) {
-        /** The `.axon` file is as it was read, with no unsaved change. Write action. */
-        fun fresh(): Boolean {
-            val vf = axon ?: return true
-            if (!vf.isValid || vf.modificationStamp != stamp) return false
-            val fdm = FileDocumentManager.getInstance()
-            return fdm.getCachedDocument(vf)?.let { !fdm.isDocumentUnsaved(it) } ?: true
-        }
+    /**
+     * What the sync does with one function. [stamp] and [trioStamp] are the VFS stamps of the
+     * `.axon` and `.trio` files when they were read; [trio] is the SkySpark trio, null for a
+     * conflict. [trioConflict]: the local trio was edited and is kept. [done]: written.
+     */
+    private class Step(
+        val f: AxonFunction, var state: State, val axon: VirtualFile?, val stamp: Long,
+        val trio: String?, val trioVf: VirtualFile?, val trioStamp: Long, var trioConflict: Boolean,
+    ) {
+        @Volatile var done = false
+    }
+
+    /** A function gone in SkySpark: its files with their stamps, and whether one was edited locally. */
+    private class Gone(val name: String, val files: List<Pair<VirtualFile, Long>>, val edited: Boolean) {
+        @Volatile var done = false
+        @Volatile var kept = false
     }
 
     /** The text of a local file: the editor's text when it has unsaved changes. */
@@ -199,41 +252,77 @@ class AxonProjFolderSync : AxonSyncTarget {
         return readText(vf)?.let { Local(it, false) }
     }
 
+    /**
+     * A trio was edited locally: it has unsaved changes, or it is not the trio the folder last
+     * got from SkySpark ([TRIO_HASH] in the entry). A trio written by the server has no such
+     * hash; it is replaced, and the old one is kept in `.versions/`.
+     */
+    private fun trioEdited(trio: Local, entry: Map<String, Any?>?): Boolean {
+        if (trio.unsaved) return true
+        val stored = AxonJson.str(entry?.get(TRIO_HASH)) ?: return false
+        return !sameHash(stored, AxonCopyLimits.sha256(trio.text))
+    }
+
+    /** [vf] is as it was read, with no unsaved change. Write action. */
+    private fun fresh(vf: VirtualFile?, stamp: Long): Boolean {
+        if (vf == null) return true
+        if (!vf.isValid || vf.modificationStamp != stamp) return false
+        val fdm = FileDocumentManager.getInstance()
+        return fdm.getCachedDocument(vf)?.let { !fdm.isDocumentUnsaved(it) } ?: true
+    }
+
     private fun readText(vf: VirtualFile): String? =
         if (vf.length > AxonCopyLimits.MAX_BYTES) null
         else runCatching { String(vf.contentsToByteArray(), Charsets.UTF_8) }.getOrNull()
 
+    /**
+     * `.sync-metadata.json` in the server's form. A function the folder did not take (a
+     * conflict, or not written before an error) keeps its old entry. [complete] is false
+     * after an error or a cancel: then `lastSync` stays and the count is the entries'.
+     */
     private fun metadata(
         key: AxonProjectKey,
         list: AxonFunctionList,
         old: Map<String, Any?>?,
         oldFns: Map<String, Any?>,
         steps: List<Step>,
+        gone: List<Gone>,
         nowIso: String,
+        complete: Boolean,
     ): String {
         val out = LinkedHashMap<String, Any?>()
         out["instance"] = key.instance
         out["project"] = key.project
-        out["lastSync"] = list.syncedAt?.takeIf { AxonFallbackFolder.isoOf(it) == it } ?: nowIso
+        out["lastSync"] = if (!complete) old?.get("lastSync") ?: nowIso
+            else list.syncedAt?.let { AxonFallbackFolder.instantOf(it) }?.let { JS_ISO.format(it) } ?: nowIso
         out["functionCount"] = list.functions.size
         val fns = LinkedHashMap<String, Any?>()
         for (s in steps.sortedBy { it.f.name }) {
             val before = AxonJson.obj(oldFns[s.f.name])
-            if (s.state == State.CONFLICT) {
+            if (!s.done || s.state == State.CONFLICT) {
                 // the folder did not get this version: the entry stays as it was
                 if (before != null) fns[s.f.name] = before
                 continue
             }
             val e = LinkedHashMap<String, Any?>()
+            val modIso = AxonFallbackFolder.instantOf(s.f.mod)?.let { JS_ISO.format(it) }
             e["name"] = s.f.name
             e["hash"] = shortHash(s.f.src)
-            e["lastModified"] = AxonFallbackFolder.folderTimeOf(s.f.mod) ?: before?.get("lastModified")
+            // the server writes lastModified in the zone it runs in: keep its text while the mod is the same
+            e["lastModified"] = before?.get("lastModified")?.takeIf { modIso != null && before["modIso"] == modIso }
+                ?: AxonFallbackFolder.folderTimeOf(s.f.mod) ?: before?.get("lastModified")
             e["synced"] = nowIso
+            e["modIso"] = modIso
+            e["doc"] = s.f.doc
+            // the trio the folder got from SkySpark: a local trio that differs from it is an edit
+            s.trio?.let { e[TRIO_HASH] = shortHash(it) }
             // the server's other keys of an unchanged function are still right
             if (before != null && s.state == State.UNCHANGED) for ((k, v) in before) if (k !in e) e[k] = v
             fns[s.f.name] = e
         }
+        for (g in gone) if (!g.done || g.kept) AxonJson.obj(oldFns[g.name])?.let { fns[g.name] = it }
         out["functions"] = fns
+        if (!complete) out["functionCount"] = fns.size
         old?.forEach { (k, v) -> if (k !in out) out[k] = v }
         return AxonJson.write(out)
     }
@@ -278,16 +367,24 @@ class AxonProjFolderSync : AxonSyncTarget {
             return parent.createChildDirectory(this, name)
         }
 
-        /** Writes [text] into [dir]/[name]; the old file goes to `.versions/` first when it differs. */
-        fun put(folder: File, dir: VirtualFile, name: String, text: String) {
+        /**
+         * Writes [text] into [dir]/[name]. With [keep], the old file goes to `.versions/` first
+         * when it differs.
+         */
+        fun put(folder: File, dir: VirtualFile, name: String, text: String, keep: Boolean = true) {
             val bytes = text.toByteArray(Charsets.UTF_8)
             val old = dir.findChild(name)
             if (old != null) {
                 if (old.isDirectory) throw AxonCopyException(Kind.IO, "$name is a folder.")
-                if (old.contentsToByteArray().contentEquals(bytes)) return
-                copyToVersions(folder, old)
+                if (old.length == bytes.size.toLong() && old.contentsToByteArray().contentEquals(bytes)) return
+                if (keep) copyToVersions(folder, old)
             }
             (old ?: dir.createChildData(this, name)).setBinaryContent(bytes)
+        }
+
+        /** On a disk that ignores case, [vf] found as [name] may have another case: give it [name]. */
+        fun fixCase(vf: VirtualFile?, name: String) {
+            if (vf != null && vf.isValid && vf.name != name && vf.name.equals(name, ignoreCase = true)) vf.rename(this, name)
         }
 
         fun copyToVersions(folder: File, file: VirtualFile) {
@@ -328,17 +425,28 @@ class AxonProjFolderSync : AxonSyncTarget {
         const val AXON = ".axon"
         const val TRIO = ".trio"
         const val SKYSPARK = ".axon.skyspark"
+        const val TRIO_SKYSPARK = ".trio.skyspark"
+
+        /** The plugin's key in a function's entry: the short hash of the trio the folder got from SkySpark. */
+        const val TRIO_HASH = "trioHash"
         private const val BATCH = 200
         private val NAME = Regex("[A-Za-z_][A-Za-z0-9_]{0,199}")
+        /** An instant as JavaScript's `toISOString` writes it, as the server does: always with milliseconds. */
+        private val JS_ISO = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.ROOT).withZone(ZoneOffset.UTC)
         private val STAMP = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss-SSS'Z'", Locale.ROOT).withZone(ZoneOffset.UTC)
 
         private fun globalRoot(): String? =
             AxonServerSettings.getInstance().projFolder.takeIf { it.isNotBlank() }?.let { AxonProjFolders.normalize(it) }
 
-        /** `<root>/<instance>/<project>`, or null when a name could leave [root]. */
-        fun folderFor(root: File, key: AxonProjectKey): File? {
-            fun ok(s: String) = s.isNotBlank() && s.trim() == s && !s.startsWith(".") && s.none { it == '/' || it == '\\' || it < ' ' } &&
-                !AxonProjFolders.isCopyFolder(s)
+        /**
+         * `<root>/<instance>/<project>`, or null when a name could leave [root] or is not a
+         * plain folder name. On Windows ([windows]) also no `<>:"|?*`, no trailing dot and no
+         * device name such as `con`.
+         */
+        fun folderFor(root: File, key: AxonProjectKey, windows: Boolean = SystemInfo.isWindows): File? {
+            fun ok(s: String) = s.isNotBlank() && s.trim() == s && !s.startsWith(".") && s.none { it == '/' || it == '\\' || it < ' ' || it == '\u007f' } &&
+                !AxonProjFolders.isCopyFolder(s) &&
+                (!windows || (s.none { it in WINDOWS_BAD } && !s.endsWith(".") && !isDevice(s.substringBefore('.'))))
             if (!ok(key.instance) || !ok(key.project)) return null
             return File(File(root, key.instance), key.project)
         }
@@ -347,13 +455,19 @@ class AxonProjFolderSync : AxonSyncTarget {
          * Every name must be a plain Axon name, and no two may differ in case only (one file
          * on a disk that ignores case). Throws before anything is written.
          */
-        fun checkNames(names: List<String>) {
+        fun checkNames(names: List<String>, windows: Boolean = SystemInfo.isWindows) {
             val seen = HashSet<String>()
             for (n in names) {
-                if (!NAME.matches(n)) throw AxonCopyException(Kind.BAD_REPLY, "The function name \"${n.take(80)}\" cannot be a file name.")
+                if (!NAME.matches(n) || (windows && isDevice(n))) throw AxonCopyException(Kind.BAD_REPLY, "The function name \"${n.take(80)}\" cannot be a file name.")
                 if (!seen.add(n.lowercase(Locale.ROOT))) throw AxonCopyException(Kind.BAD_REPLY, "Two functions differ in case only: $n.")
             }
         }
+
+        private const val WINDOWS_BAD = "<>:\"|?*"
+        private val DEVICE = Regex("(con|prn|aux|nul|com[0-9\u00b9\u00b2\u00b3]|lpt[0-9\u00b9\u00b2\u00b3]|conin\\$|conout\\$)", RegexOption.IGNORE_CASE)
+
+        /** A Windows device name: a file of that name is the device, in any folder. */
+        private fun isDevice(base: String) = DEVICE.matches(base.trimEnd(' ', '.'))
 
         /** The hash the server keeps in `.sync-metadata.json`: the first 16 hex digits of the sha256 of the source. */
         fun shortHash(src: String): String = AxonCopyLimits.sha256(src).substring(0, 16)

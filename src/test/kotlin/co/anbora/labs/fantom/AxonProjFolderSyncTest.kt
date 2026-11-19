@@ -296,4 +296,175 @@ class AxonProjFolderSyncTest : BasePlatformTestCase() {
         assertEquals("() => 42", File(folder, "func/plantLoad.axon").readText())
         assertEquals("plant-a", AxonJson.parseObject(File(folder, ".sync-metadata.json").readText())["instance"])
     }
+
+    // ---- review: local edits, names, links, cancel, the server's form ----------------------
+
+    fun testAnEditedFunctionGoneInSkySparkStaysInPlace() {
+        firstSync()
+        File(func, "siteReport.axon").writeText("() => 1 // local")
+        server.projects["demo/site"]!!.remove("siteReport")
+        val r = syncAt(site)
+        assertEquals("() => 1 // local", File(func, "siteReport.axon").readText())
+        assertTrue(File(func, "siteReport.trio").exists())
+        assertEquals(emptyList<String>(), r.removed)
+        assertEquals(listOf("siteReport"), r.keptGone)
+        assertTrue(r.message(), r.message().contains("siteReport"))
+        assertNotNull("the entry stays, so the next sync sees the edit again", metaFn("siteReport"))
+        assertEquals(emptyList<String>(), versions().filter { it.startsWith("siteReport_") })
+    }
+
+    fun testAnUnsavedTrioEditIsKept() {
+        firstSync()
+        val trio = vf(File(func, "calcDailyAvg.trio"))
+        val doc = com.intellij.openapi.fileEditor.FileDocumentManager.getInstance().getDocument(trio)!!
+        val disk = File(func, "calcDailyAvg.trio").readText()
+        com.intellij.openapi.command.WriteCommandAction.runWriteCommandAction(project) { doc.setText(doc.text.replace("Daily average", "Typed doc")) }
+        server.put("demo/site", "calcDailyAvg", "(points) => points.hisRead(yesterday)", "Server doc")
+        val r = syncAt(site)
+        assertEquals(listOf("calcDailyAvg"), r.conflicts)
+        assertTrue(doc.text, doc.text.contains("Typed doc"))
+        assertEquals(disk, File(func, "calcDailyAvg.trio").readText())
+        assertTrue(File(func, "calcDailyAvg.trio.skyspark").readText().contains("Server doc"))
+    }
+
+    fun testASavedTrioEditIsKept() {
+        firstSync()
+        val edited = File(func, "calcDailyAvg.trio").readText().replace("Daily average", "My doc")
+        File(func, "calcDailyAvg.trio").writeText(edited)
+        server.put("demo/site", "calcDailyAvg", "(points) => points.hisRead(yesterday)", "Server doc")
+        val r = syncAt(site)
+        assertEquals(listOf("calcDailyAvg"), r.conflicts)
+        assertEquals(edited, File(func, "calcDailyAvg.trio").readText())
+        assertTrue(File(func, "calcDailyAvg.trio.skyspark").readText().contains("Server doc"))
+        // still a conflict on the next sync, until the user deals with it
+        assertEquals(listOf("calcDailyAvg"), syncAt(site).conflicts)
+        assertEquals(edited, File(func, "calcDailyAvg.trio").readText())
+    }
+
+    fun testACaseOnlyRenameKeepsTheFunctionFile() {
+        firstSync()
+        if (!File(func, "SITEREPORT.axon").exists()) return // a disk that tells case apart: no clash
+        server.projects["demo/site"]!!.remove("siteReport")
+        server.put("demo/site", "SiteReport", "() => readAll(site).map(calcDailyAvg)")
+        syncAt(site)
+        assertEquals("() => readAll(site).map(calcDailyAvg)", File(func, "SiteReport.axon").readText())
+        assertTrue(File(func, "SiteReport.trio").exists())
+    }
+
+    fun testALinkedFunctionFileStopsTheSync() {
+        firstSync()
+        val outside = File(temp("outside"), "keep.axon")
+        outside.writeText("() => readAll(site).map(calcDailyAvg)") // the hash in the metadata: looks clean
+        File(func, "siteReport.axon").delete()
+        java.nio.file.Files.createSymbolicLink(File(func, "siteReport.axon").toPath(), outside.toPath())
+        val before = snapshot(site)
+        server.put("demo/site", "siteReport", "() => 2")
+        try {
+            syncAt(site)
+            fail("expected an IO error")
+        } catch (e: AxonCopyException) {
+            assertEquals(AxonCopyException.Kind.IO, e.kind)
+        }
+        assertEquals("() => readAll(site).map(calcDailyAvg)", outside.readText())
+        assertEquals(before, snapshot(site))
+    }
+
+    fun testTheMetadataHasTheServerKeys() {
+        server.put("demo/site", "plantLoad", "() => 42", null, "2026-03-04T05:06:07Z")
+        server.put("demo/site", "groesse", "(x) => \"Größe é\" + x // ü")
+        firstSync()
+        // the server's hashContent: sha256 of the UTF-8 source, first 16 hex digits (vectors from node)
+        assertEquals("e5afcafb4e2aff0d", metaFn("plantLoad")!!["hash"])
+        assertEquals("8802f552aab0c192", metaFn("groesse")!!["hash"])
+        assertEquals("e5afcafb4e2aff0d", AxonProjFolderSync.shortHash("() => 42"))
+        // readStoredFunctions reads modIso and doc from the entry
+        assertEquals("2026-03-04T05:06:07.000Z", metaFn("plantLoad")!!["modIso"])
+        assertEquals("3/4/2026, 5:06:07 AM UTC", metaFn("plantLoad")!!["lastModified"])
+        assertEquals("Daily average", metaFn("calcDailyAvg")!!["doc"])
+        assertTrue(metaFn("plantLoad")!!.containsKey("doc"))
+        assertNull(metaFn("plantLoad")!!["doc"])
+        // times as JavaScript's toISOString writes them
+        val iso = Regex("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z")
+        assertTrue(meta()["lastSync"].toString(), iso.matches(meta()["lastSync"].toString()))
+        assertTrue(iso.matches(metaFn("plantLoad")!!["synced"].toString()))
+        // a second sync does not pile copies of the metadata into .versions
+        syncAt(site)
+        assertEquals(emptyList<String>(), versions().filter { it.contains("sync-metadata") })
+    }
+
+    fun testAFolderTheServerWroteSyncsWithNoConflict() {
+        func.mkdirs()
+        File(func, "calcDailyAvg.axon").writeText("(points) => points.hisRead(yesterday)")
+        // the server's trio: a doc with raw line breaks inside the quotes
+        File(func, "calcDailyAvg.trio").writeText("dis:\"Daily\"\nname:\"calcDailyAvg\"\ndoc:\"Daily\naverage\"\nmod:\"1/2/2026, 3:04:05 AM UTC\"\nsrc:\n  (points) => points.hisRead(yesterday)")
+        File(site, ".sync-metadata.json").writeText(
+            """{"instance":"demo","project":"site","lastSync":"2026-01-02T03:04:05.000Z","functionCount":1,"functions":{"calcDailyAvg":{"name":"calcDailyAvg","hash":"${AxonProjFolderSync.shortHash("(points) => points.hisRead(yesterday)")}","lastModified":"1/2/2026, 3:04:05 AM UTC","synced":"2026-01-02T03:04:05.000Z","complexity":{"linesOfCode":1},"modIso":"2026-01-02T03:04:05.000Z","doc":"Daily\naverage"}}}""",
+        )
+        server.put("demo/site", "calcDailyAvg", "(points) => points.hisRead(yesterday)", "Daily average")
+        val r = syncAt(site)
+        assertEquals(emptyList<String>(), r.conflicts + r.keptGone)
+        assertEquals(listOf("calcDailyAvg"), r.unchanged)
+        assertEquals(listOf("siteReport"), r.added)
+        // the server's own keys of an unchanged function stay
+        assertEquals(1, (AxonJson.obj(metaFn("calcDailyAvg")!!["complexity"])!!["linesOfCode"] as Number).toInt())
+        assertEquals("Daily average", metaFn("calcDailyAvg")!!["doc"])
+    }
+
+    fun testACancelAfterTheFirstBatchKeepsWhatWasWritten() {
+        val names = (0 until 201).map { "fn%03d".format(it) }
+        val list = AxonFunctionList(key, null, names.map { AxonFunction(it, "() => 1", null, null, AxonCopyLimits.sha256("() => 1")) })
+        val target = AxonSyncTarget.Target(key, site)
+        var calls = 0
+        // checks: 1 after the refresh, 1 per function in the plan, 1 per batch: the 2nd batch stops
+        val cancelAtBatch2 = { if (++calls == 1 + names.size + 2) throw com.intellij.openapi.progress.ProcessCanceledException() }
+        try {
+            bg { AxonProjFolderSync().write(project, target, list, cancelAtBatch2) }
+            fail("expected a cancel")
+        } catch (_: com.intellij.openapi.progress.ProcessCanceledException) {
+        }
+        assertTrue(File(func, "fn000.axon").exists())
+        assertFalse(File(func, "fn200.axon").exists())
+        assertEquals(AxonProjFolderSync.shortHash("() => 1"), metaFn("fn000")?.get("hash"))
+        assertNull(metaFn("fn200"))
+        // SkySpark changes fn001 and fn000; the user edited fn000 in between
+        File(func, "fn000.axon").writeText("() => 0 // local")
+        val list2 = AxonFunctionList(key, null, names.map {
+            val src = if (it == "fn000" || it == "fn001") "() => 2" else "() => 1"
+            AxonFunction(it, src, null, null, AxonCopyLimits.sha256(src))
+        })
+        val r = bg { AxonProjFolderSync().write(project, target, list2) {} }
+        assertEquals(listOf("fn000"), r.conflicts)
+        assertTrue(r.changed.toString(), "fn001" in r.changed)
+        assertEquals("() => 0 // local", File(func, "fn000.axon").readText())
+        assertEquals("() => 2", File(func, "fn001.axon").readText())
+    }
+
+    fun testNamesThatCouldLeaveTheFolder() {
+        val bad = listOf("..", "../x", "a/b", "a\\b", ".hidden", "", " ", "a b", "a\u0000", "x".repeat(201), "a.b", "1abc")
+        for (n in bad) {
+            try {
+                AxonProjFolderSync.checkNames(listOf(n), windows = false)
+                fail("accepted \"$n\"")
+            } catch (e: AxonCopyException) {
+                assertEquals(AxonCopyException.Kind.BAD_REPLY, e.kind)
+            }
+        }
+        AxonProjFolderSync.checkNames(listOf("con", "aux_1", "x".repeat(200)), windows = false)
+        for (n in listOf("con", "NUL", "com1", "Lpt9", "aux")) {
+            try {
+                AxonProjFolderSync.checkNames(listOf(n), windows = true)
+                fail("accepted \"$n\" on Windows")
+            } catch (_: AxonCopyException) {
+            }
+        }
+        val root = temp("root")
+        for (n in listOf("..", ".", ".versions", "a/b", "a\\b", "", " x", "x ", "a\u0001", "backup")) {
+            assertNull(n, AxonProjFolderSync.folderFor(root, AxonProjectKey(n, "site"), windows = false))
+            assertNull(n, AxonProjFolderSync.folderFor(root, AxonProjectKey("demo", n), windows = false))
+        }
+        for (n in listOf("con", "x.", "a:b", "a*b", "a?b", "a|b", "a<b", "a\"b")) {
+            assertNull(n, AxonProjFolderSync.folderFor(root, AxonProjectKey("demo", n), windows = true))
+        }
+        assertEquals(File(root, "demo.example.test/site 2"), AxonProjFolderSync.folderFor(root, AxonProjectKey("demo.example.test", "site 2"), windows = true))
+    }
 }
