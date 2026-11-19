@@ -215,6 +215,11 @@ that project's Axon functions.
 
 - The status bar shows "Axon: none" or "Axon: instance/project". Click it to
   pick a project, to refresh the copy, or to drop it.
+- "Pick Axon Project..." opens a window with a search field, the connections
+  on the left and their projects on the right. Type to filter by connection or
+  project name. Up and Down move in the project list, and Enter or a
+  double-click picks. The window opens at the current project, or else at the
+  connection you used last.
 - The functions come from an Axon server when its URL is set. With no URL
   they come from a local `proj` folder. See [Settings](settings.md).
 - The copy shows under External Libraries as "Axon: instance/project", one

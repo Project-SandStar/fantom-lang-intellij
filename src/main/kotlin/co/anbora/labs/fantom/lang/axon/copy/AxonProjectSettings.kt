@@ -26,7 +26,16 @@ class AxonProjectSettings : SimplePersistentStateComponent<AxonProjectSettings.S
         var instance by string()
         var project by string()
         var fallbackPath by string()
+        var pickerConnection by string()
     }
+
+    /**
+     * The connection last selected in the project picker, as the picker stores it: an
+     * instance name, or a marker for "All connections"; null when none was selected yet.
+     */
+    var pickerConnection: String?
+        get() = state.pickerConnection?.takeIf { it.isNotEmpty() }
+        set(value) { state.pickerConnection = value?.takeIf { it.isNotEmpty() } }
 
     /** The chosen project, or null for none. */
     var activeKey: AxonProjectKey?
