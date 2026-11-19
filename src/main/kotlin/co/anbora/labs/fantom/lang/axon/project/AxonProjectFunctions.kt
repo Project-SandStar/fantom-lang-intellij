@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
@@ -90,6 +91,7 @@ class AxonProjectFunctionSource : AxonFunctionSource {
     override fun lookups(context: PsiElement): Collection<LookupElement> {
         val set = AxonProjectFunctions.of(context) ?: return emptyList()
         return set.functions().map { f ->
+            ProgressManager.checkCanceled() // up to 20,000 items: let a new keystroke stop the list
             var lookup = LookupElementBuilder.create(f.name).withIcon(FantomIcons.FUNCTION).withTypeText(set.title, true)
             f.summary?.let { lookup = lookup.withTailText("  $it", true) }
             lookup

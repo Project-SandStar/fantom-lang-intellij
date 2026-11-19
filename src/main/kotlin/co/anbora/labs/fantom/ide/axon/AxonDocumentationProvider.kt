@@ -1,7 +1,6 @@
 package co.anbora.labs.fantom.ide.axon
 
 import co.anbora.labs.fantom.lang.axon.AxonFile
-import co.anbora.labs.fantom.lang.axon.copy.AxonFallbackFolder
 import co.anbora.labs.fantom.lang.axon.project.AxonProjectFunctions
 import co.anbora.labs.fantom.lang.axon.psi.AxonDefExpr
 import co.anbora.labs.fantom.lang.axon.psi.AxonLambdaExpr
@@ -13,10 +12,11 @@ import com.intellij.psi.PsiElement
 
 /**
  * Quick Documentation (Ctrl+Q, F1) for Axon functions: `name(a, b)`, the project it comes
- * from, and its doc (fandoc). A project function is its `.axon` file; its doc comes from
- * the project (the index of the copy) or, when the project has none, from the `doc` tag of
- * the `<name>.trio` record beside the file. A function defined in the file shows its
- * parameters only.
+ * from, and its doc (fandoc). A project function is its `.axon` file; its doc is the one the
+ * [AxonFunctionSet][co.anbora.labs.fantom.lang.axon.project.AxonFunctionSet] holds in memory
+ * (the index of the copy). Nothing is read from disk here: the doc runs in a read action. A
+ * provider that reads `<name>.trio` files (the proj folder, task 4.38) puts their `doc` in its
+ * set when it builds its index. A function defined in the file shows its parameters only.
  */
 class AxonDocumentationProvider : AbstractDocumentationProvider() {
 
@@ -46,7 +46,7 @@ class AxonDocumentationProvider : AbstractDocumentationProvider() {
                 val set = AxonProjectFunctions.of(element)
                 val fn = set?.functionOf(element)
                 if (set == null || fn == null) null
-                else Info(fn.name + params(topLambda(element)), fn.doc ?: trioDoc(element, fn.name), set.title)
+                else Info(fn.name + params(topLambda(element)), fn.doc, set.title)
             }
             is AxonDefExpr ->
                 if (AxonResolver.isFunction(element)) Info((element.name ?: "?") + params(element.expr as? AxonLambdaExpr), null, null) else null
@@ -64,15 +64,5 @@ class AxonDocumentationProvider : AbstractDocumentationProvider() {
 
         private fun params(lambda: AxonLambdaExpr?): String =
             lambda?.paramList?.joinToString(", ", "(", ")") { it.text } ?: "()"
-
-        /** The `doc` of `<name>.trio` beside [file], or null. Small files only; no network. */
-        private fun trioDoc(file: AxonFile, name: String): String? {
-            val trio = file.virtualFile?.parent?.findChild("$name.trio") ?: return null
-            if (trio.length > MAX_TRIO) return null
-            val text = runCatching { String(trio.contentsToByteArray(), trio.charset) }.getOrNull() ?: return null
-            return AxonFallbackFolder.trioTags(text)["doc"]?.takeIf { it.isNotBlank() }
-        }
-
-        private const val MAX_TRIO = 1024L * 1024
     }
 }

@@ -271,15 +271,59 @@ class AxonProjectResolveTest : BasePlatformTestCase() {
         assertIsFunctionFile("siteArea", use.reference!!.resolve())
     }
 
-    // ---- doc from the trio record beside the file ----------------------------------------------
+    fun testTrioSrcResolvesToo() {
+        siteProject()
+        val file = myFixture.configureByText("funcs.trio", "name: calc\nsrc: (x) => siteArea(x)\nfunc\n")
+        val at = file.text.indexOf("siteArea") + 1
+        val leaf = InjectedLanguageManager.getInstance(project).findInjectedElementAt(file, at)
+        assertNotNull("no Axon in the src tag", leaf)
+        val use = PsiTreeUtil.getParentOfType(leaf, AxonNameUse::class.java, false)!!
+        assertIsFunctionFile("siteArea", use.reference!!.resolve())
+    }
 
-    fun testQuickDocFallsBackToTheTrioDoc() {
+    /** features.md says Find Usages works in Fantom strings and trio files too. */
+    fun testFindUsagesInFantomStringsAndTrioFiles() {
+        siteProject()
+        myFixture.addFileToProject("A.fan", "class A\n{\n  Void run(Obj cx)\n  {\n    eval(\"siteArea(1)\")\n  }\n}\n")
+        myFixture.addFileToProject("funcs.trio", "name: calc\nsrc: (x) => siteArea(x)\nfunc\n")
+        myFixture.addFileToProject("one.axon", "() => siteArea(1)")
+        val target = PsiManager.getInstance(project).findFile(copy.findFunctionFile("siteArea")!!)!!
+        val usages = myFixture.findUsages(target).map { it.file!!.name }.sorted()
+        assertEquals(listOf("A.fan", "funcs.trio", "one.axon"), usages)
+    }
+
+    // ---- rename of a function file -----------------------------------------------------------
+
+    /** A file rename passes the file name; the call must get the function name, with no `.axon`. */
+    fun testRenameOfTheFunctionFileWritesTheFunctionName() {
+        siteProject()
+        val use = useAtCaret("() => <caret>siteArea(1)")
+        assertIsFunctionFile("siteArea", use.reference!!.resolve())
+        com.intellij.openapi.command.WriteCommandAction.runWriteCommandAction(project) {
+            use.reference!!.handleElementRename("siteSize.axon")
+        }
+        assertEquals("() => siteSize(1)", myFixture.file.text)
+    }
+
+    fun testRenameOfALocalKeepsTheNewNameAsItIs() {
+        val use = useAtCaret("(x) => do\n  v: 1\n  <caret>v\nend")
+        com.intellij.openapi.command.WriteCommandAction.runWriteCommandAction(project) {
+            use.reference!!.handleElementRename("w")
+        }
+        assertEquals("(x) => do\n  v: 1\n  w\nend", myFixture.file.text)
+    }
+
+    // ---- the doc comes from the function set only ---------------------------------------------
+
+    /** Quick doc runs in a read action: it shows the doc of the set and reads no file beside the function. */
+    fun testQuickDocReadsNoTrioFileBesideTheFunction() {
         siteProject()
         val dir = File(copy.libraryRoot!!.path)
         dir.setWritable(true)
         File(dir, "siteReport.trio").writeText("name: siteReport\ndoc: \"Report of all sites.\"\nfunc\n")
         LocalFileSystem.getInstance().refreshAndFindFileByIoFile(File(dir, "siteReport.trio"))
         val doc = AxonDocumentationProvider().generateDoc(resolveAt("() => <caret>siteReport()"), null)!!
-        assertTrue(doc, doc.contains("Report of all sites."))
+        assertTrue(doc, doc.contains("siteReport()"))
+        assertFalse(doc, doc.contains("Report of all sites."))
     }
 }
