@@ -135,6 +135,37 @@ class AxonSyncActionTest : BasePlatformTestCase() {
         assertTrue(r.message(), r.message().endsWith("Added: f1, f2, f3, f4, f5, and 3 more."))
     }
 
+    fun testTheNotificationTextIsSafeHtmlWithLineBreaks() {
+        val r = AxonSyncResult.diff(key, mapOf("old<b>" to "h"), mapOf("a&b" to "h"))
+        assertEquals(
+            "Axon: demo/site synced, 1 added, 0 changed, 1 removed (1 function).<br>Added: a&amp;b.<br>Removed: old&lt;b&gt;.",
+            r.html(),
+        )
+    }
+
+    fun testADropDuringTheSyncWinsAndTheSyncWritesNothing() {
+        bg { copy.selectNow(key) }
+        copy.testSource = object : AxonFunctionSource {
+            override val id = "server"
+            override fun listProjects(check: () -> Unit) = emptyList<AxonProjectInfo>()
+            override fun fetch(key: AxonProjectKey, sync: Boolean, check: () -> Unit): AxonFunctionList {
+                // the developer drops the project while the server syncs
+                copy.dropNow()
+                return AxonFunctionList(key, null, listOf(AxonFunction("late", "() => 1", null, null, AxonCopyLimits.sha256("late"))))
+            }
+        }
+        try {
+            bg { copy.syncNow() }
+            fail("expected the sync to be cancelled")
+        } catch (e: com.intellij.openapi.progress.ProcessCanceledException) {
+            // expected
+        } finally {
+            copy.testSource = null
+        }
+        assertNull(copy.activeKey)
+        assertEmpty(copy.functions())
+    }
+
     fun testASyncThatFailsKeepsTheCopy() {
         bg { copy.selectNow(key) }
         AxonServerToken.set("wrong")
@@ -189,7 +220,9 @@ class AxonSyncActionTest : BasePlatformTestCase() {
             copy.testSource = null
         }
         PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
-        assertTrue(seen.joinToString { it.content }, seen.any { it.content.startsWith("Axon: demo/site synced, 1 added") })
+        assertTrue(seen.joinToString { it.content }, seen.any {
+            it.content.startsWith("Axon: demo/site synced, 1 added") && it.content.contains("<br>Added: newFunc.")
+        })
     }
 
     // ---- the action -----------------------------------------------------------------------

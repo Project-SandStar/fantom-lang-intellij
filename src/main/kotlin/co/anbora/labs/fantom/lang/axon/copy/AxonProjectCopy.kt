@@ -215,9 +215,11 @@ class AxonProjectCopy(private val project: Project) {
      */
     fun syncNow(check: () -> Unit = {}): AxonSyncResult {
         requireServer()
+        // one ticket and one key: a pick that comes in between cancels this sync
+        val ticket = choice.get()
         val key = activeKey ?: throw AxonCopyException(Kind.NOT_CONFIGURED, "No Axon project is chosen.")
         val before = registered?.copy?.takeIf { it.key == key }?.functions.orEmpty().associate { it.name to it.hash }
-        val after = refreshNow(sync = true, check = check)
+        val after = fetchAndStore(key, true, check, ticket, onlyIfActive = true)
         return AxonSyncResult.diff(key, before, after.functions.associate { it.name to it.hash })
     }
 
@@ -354,7 +356,7 @@ class AxonProjectCopy(private val project: Project) {
         val key = match?.target?.key ?: activeKey ?: return
         background("Syncing Axon functions of $key") { indicator ->
             val r = cancellable(indicator) { check -> if (match != null) syncNow(match, check) else syncNow(check) }
-            notify(r.message(), if (r.conflicts.isEmpty()) NotificationType.INFORMATION else NotificationType.WARNING)
+            notify(r.html(), if (r.conflicts.isEmpty()) NotificationType.INFORMATION else NotificationType.WARNING)
         }
     }
 

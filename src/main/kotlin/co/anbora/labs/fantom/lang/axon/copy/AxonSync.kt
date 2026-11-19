@@ -30,6 +30,14 @@ data class AxonSyncResult(
         return sb.toString()
     }
 
+    /**
+     * [message] for a notification. Notification text is HTML: the names come from the
+     * server, so `<` and `&` are escaped, and each line break becomes `<br>`.
+     */
+    fun html(): String = message()
+        .replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;")
+        .replace("\n", "<br>")
+
     private fun names(label: String, list: List<String>, sb: StringBuilder) {
         if (list.isEmpty()) return
         sb.append('\n').append(label).append(": ").append(list.take(MAX_NAMES).joinToString(", "))
