@@ -65,7 +65,7 @@ class AxonSyncActionTest : BasePlatformTestCase() {
             AxonServerSettings.getInstance().url = ""
             AxonServerToken.set(null)
             copy.dropNow()
-            AxonProjectSettings.getInstance(project).fallbackPath = ""
+            AxonServerSettings.getInstance().projFolder = ""
             PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
             copy.testCacheRoot = null
             server.close()
@@ -186,7 +186,7 @@ class AxonSyncActionTest : BasePlatformTestCase() {
             assertEquals(AxonCopyException.Kind.NOT_CONFIGURED, e.kind)
         }
         AxonServerSettings.getInstance().url = ""
-        AxonProjectSettings.getInstance(project).fallbackPath = temp("proj").path
+        AxonServerSettings.getInstance().projFolder = temp("proj").path
         try {
             bg { copy.syncNow() }
             fail("expected no server")
