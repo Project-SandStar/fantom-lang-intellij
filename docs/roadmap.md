@@ -110,3 +110,16 @@ Items 1 to 15 shipped in 2.1.0; items 16 and 17 shipped in 3.0.0; item 18 shippe
 The promotional video follows these items.
 
 Ideas and votes: <https://github.com/Project-SandStar/fantom-lang-intellij/discussions>.
+
+## Axon: work in the Axon server's `proj` folder
+
+Open the `proj` folder of an Axon MCP server (every connection and project,
+as the server syncs them from SkySpark) and work in it directly:
+
+- Each `.axon` and `.trio` file knows its connection and project from its
+  folder (`proj/<connection>/<project>/func/<name>.axon`).
+- A function name resolves, completes and finds usages inside its own
+  project only, never in another project with a function of the same name.
+- Backup and version folders are skipped.
+- Right-click a project: **Sync Axon Functions** syncs it from SkySpark
+  through the Axon server.
