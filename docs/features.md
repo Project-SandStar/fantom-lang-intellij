@@ -235,3 +235,21 @@ that project's Axon functions.
 
 Not there yet: editing a function and pushing it back from the IDE, and
 resolve or completion from the copy.
+
+## Tools for AI agents (MCP)
+
+When the bundled MCP Server plugin is on (Settings, Tools, MCP Server), an AI
+agent such as Claude Code can ask the IDE about Fantom and Axon code. The
+answers are the ones the IDE itself gives.
+
+| Tool | What it answers |
+|---|---|
+| `fantom_diagnostics` | The problems of a `.fan` or `.axon` file: syntax errors, enabled inspections, and compiler messages when a fresh compile exists. One line per problem: severity, line:column, message |
+| `fantom_resolve` | Where a name is defined, as Go to Declaration finds it. Give a file with an offset or a line and column, or give a name such as `demo::Foo.go`, `Foo.go` or `Foo` |
+| `fantom_find_usages` | Find Usages for a declaration, in project files only. Point at the declaration or at a use of it. An Axon name is searched in its own file |
+
+- The tools read only files in the open project.
+- While the IDE indexes, each tool answers "indexing, retry".
+- Each tool returns at most 50 lines unless you ask for more (500 at most).
+- Without the MCP Server plugin the Fantom plugin works as before; only these
+  tools are missing.
