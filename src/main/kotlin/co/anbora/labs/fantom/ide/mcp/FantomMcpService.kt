@@ -1,6 +1,6 @@
 package co.anbora.labs.fantom.ide.mcp
 
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
@@ -10,9 +10,11 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 
 /**
- * The three MCP tools as plain blocking calls, with no MCP server types. Call them off the
- * UI thread. Each one takes short read actions for PSI work and does disk work (finding the
- * file, reading `build.fan`) between them. In dumb mode each answers [FantomMcpQueries.INDEXING].
+ * The three MCP tools as suspend calls, with no MCP server types. Call them off the UI
+ * thread. Each one takes short read actions for PSI work and does disk work (finding the
+ * file, reading `build.fan`) between them. The read actions are the cancellable kind: a
+ * write action (typing in the editor) stops one and runs it again later, and a cancelled
+ * MCP call stops the search. In dumb mode each answers [FantomMcpQueries.INDEXING].
  */
 object FantomMcpService {
 
@@ -27,7 +29,7 @@ object FantomMcpService {
 
     private fun fail(text: String): Nothing = throw Stop(Answer.Fail(text))
 
-    fun diagnostics(project: Project, path: String, limit: Int): Answer = guard(project) {
+    suspend fun diagnostics(project: Project, path: String, limit: Int): Answer = guard(project) {
         val max = FantomMcpQueries.clampLimit(limit)
         val vf = locate(project, path)
         val (shown, psi, problems) = read(project) {
@@ -39,7 +41,7 @@ object FantomMcpService {
         Answer.Ok(list("$shown: ${count(all.size, "problem")}", all.map { it.render() }, max))
     }
 
-    fun resolve(
+    suspend fun resolve(
         project: Project, path: String, offset: Int, line: Int, column: Int, qualifiedName: String, limit: Int,
     ): Answer = guard(project) {
         val max = FantomMcpQueries.clampLimit(limit)
@@ -68,7 +70,7 @@ object FantomMcpService {
         Answer.Ok(if (lines.isEmpty()) "no declaration found" else list(count(lines.size, "target"), lines, max))
     }
 
-    fun usages(project: Project, path: String, offset: Int, line: Int, column: Int, limit: Int): Answer = guard(project) {
+    suspend fun usages(project: Project, path: String, offset: Int, line: Int, column: Int, limit: Int): Answer = guard(project) {
         val max = FantomMcpQueries.clampLimit(limit)
         val vf = locate(project, path)
         val target = read(project) {
@@ -100,15 +102,18 @@ object FantomMcpService {
         }
     }
 
-    /** A read action that stops with [FantomMcpQueries.INDEXING] in dumb mode. */
-    private fun <T> read(project: Project, body: () -> T): T = ReadAction.computeBlocking<T, RuntimeException> {
+    /**
+     * A read action that stops with [FantomMcpQueries.INDEXING] in dumb mode. It gives way
+     * to write actions and runs [body] again after them, so [body] must have no side effects.
+     */
+    private suspend fun <T> read(project: Project, body: () -> T): T = readAction {
         if (project.isDisposed) fail("project closed")
         if (DumbService.isDumb(project)) fail(FantomMcpQueries.INDEXING)
         body()
     }
 
     /** Outside a read action: the file for [path]. [sourceFile] then checks that it is a project file. */
-    private fun locate(project: Project, path: String): VirtualFile {
+    private suspend fun locate(project: Project, path: String): VirtualFile {
         if (path.isBlank()) fail("path is empty")
         val roots = read(project) { ProjectRootManager.getInstance(project).contentRoots.toList() }
         return FantomMcpQueries.findFile(path, project.basePath, roots) ?: fail("file not found: $path")
@@ -125,7 +130,7 @@ object FantomMcpService {
         FantomMcpQueries.offsetOf(psi, offset, line, column) ?: fail("position outside the file")
 
     /** The pods of the Fantom files of [elements], found outside a read action. */
-    private fun pods(project: Project, elements: List<PsiElement>): Map<VirtualFile, String?> {
+    private suspend fun pods(project: Project, elements: List<PsiElement>): Map<VirtualFile, String?> {
         val files = read(project) { FantomMcpQueries.fantomFiles(elements.filter { it.isValid }) }
         return files.associateWith { FantomMcpQueries.podName(project, it) }
     }

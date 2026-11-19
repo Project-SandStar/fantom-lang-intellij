@@ -8,7 +8,11 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNameIdentifierOwner
+import kotlinx.coroutines.runBlocking
+import java.util.concurrent.Callable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.testFramework.DumbModeTestUtils
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
 /**
@@ -45,6 +49,26 @@ class FantomMcpServiceTest : BasePlatformTestCase() {
         val a = myFixture.addFileToProject("Foo.fan", foo)
         val b = myFixture.addFileToProject("Bar.fan", bar)
         return a to b
+    }
+
+    // The tools run off the UI thread, as the MCP server calls them; this thread serves UI events meanwhile.
+    private fun diagnostics(path: String, limit: Int) = call { FantomMcpService.diagnostics(project, path, limit) }
+
+    private fun resolve(path: String, offset: Int, line: Int, column: Int, qualifiedName: String, limit: Int) =
+        call { FantomMcpService.resolve(project, path, offset, line, column, qualifiedName, limit) }
+
+    private fun usages(path: String, offset: Int, line: Int, column: Int, limit: Int) =
+        call { FantomMcpService.usages(project, path, offset, line, column, limit) }
+
+    private fun call(work: suspend () -> FantomMcpService.Answer): FantomMcpService.Answer {
+        val f = ApplicationManager.getApplication().executeOnPooledThread(Callable { runCatching { runBlocking { work() } } })
+        val end = System.currentTimeMillis() + 60_000
+        while (!f.isDone) {
+            PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+            Thread.sleep(5)
+            if (System.currentTimeMillis() > end) fail("the tool did not end")
+        }
+        return f.get().getOrThrow()
     }
 
     private fun ok(answer: FantomMcpService.Answer): String {
@@ -103,7 +127,7 @@ class FantomMcpServiceTest : BasePlatformTestCase() {
             .sorted()
         assertFalse("the editor must show at least one problem", expected.isEmpty())
 
-        val text = ok(FantomMcpService.diagnostics(project, "Baz.fan", 0))
+        val text = ok(diagnostics("Baz.fan", 0))
         val lines = text.lines()
         assertEquals("Baz.fan: ${if (expected.size == 1) "1 problem" else "${expected.size} problems"}", lines[0])
         val actual = lines.drop(1).map { it.substringBeforeLast(" [") }.sorted()
@@ -112,13 +136,13 @@ class FantomMcpServiceTest : BasePlatformTestCase() {
 
     fun testDiagnosticsReportsParseErrors() {
         myFixture.addFileToProject("Broken.fan", "class Broken { Void m( { }")
-        val text = ok(FantomMcpService.diagnostics(project, "Broken.fan", 0))
+        val text = ok(diagnostics("Broken.fan", 0))
         assertTrue(text, text.lines().drop(1).any { it.startsWith("ERROR ") && it.endsWith("[parser]") })
     }
 
     fun testDiagnosticsOfAxonFile() {
         myFixture.addFileToProject("f.axon", "(a) => a + 1")
-        assertEquals("f.axon: 0 problems", ok(FantomMcpService.diagnostics(project, "f.axon", 0)))
+        assertEquals("f.axon: 0 problems", ok(diagnostics("f.axon", 0)))
     }
 
     // ---- resolve -----------------------------------------------------------------------
@@ -130,7 +154,7 @@ class FantomMcpServiceTest : BasePlatformTestCase() {
         val ideTarget = b.findReferenceAt(offset)!!.resolve()!!
         assertEquals(a, ideTarget.containingFile)
 
-        val text = ok(FantomMcpService.resolve(project, "Bar.fan", offset, 0, 0, "", 0))
+        val text = ok(resolve("Bar.fan", offset, 0, 0, "", 0))
         assertEquals("1 target\nmethod demo::Foo.go  ${where(a, nameOffset(ideTarget))}", text)
     }
 
@@ -142,7 +166,7 @@ class FantomMcpServiceTest : BasePlatformTestCase() {
         val column = offset - doc.getLineStartOffset(line) + 1
         val ideTarget = b.findReferenceAt(offset)!!.resolve()!!
 
-        val text = ok(FantomMcpService.resolve(project, "Bar.fan", -1, line + 1, column, "", 0))
+        val text = ok(resolve("Bar.fan", -1, line + 1, column, "", 0))
         assertEquals("1 target\nfield demo::Foo.count  ${where(a, nameOffset(ideTarget))}", text)
     }
 
@@ -151,15 +175,15 @@ class FantomMcpServiceTest : BasePlatformTestCase() {
         val goOffset = a.text.indexOf("go()")
         assertEquals(
             "1 target\nmethod demo::Foo.go  ${where(a, goOffset)}",
-            ok(FantomMcpService.resolve(project, "", -1, 0, 0, "demo::Foo.go", 0)),
+            ok(resolve("", -1, 0, 0, "demo::Foo.go", 0)),
         )
         val fooOffset = a.text.indexOf("Foo")
         assertEquals(
             "1 target\nclass demo::Foo  ${where(a, fooOffset)}",
-            ok(FantomMcpService.resolve(project, "", -1, 0, 0, "Foo", 0)),
+            ok(resolve("", -1, 0, 0, "Foo", 0)),
         )
-        assertEquals("no declaration found", ok(FantomMcpService.resolve(project, "", -1, 0, 0, "other::Foo", 0)))
-        assertTrue(failText(FantomMcpService.resolve(project, "", -1, 0, 0, "not a name!", 0)).startsWith("not a qualified name"))
+        assertEquals("no declaration found", ok(resolve("", -1, 0, 0, "other::Foo", 0)))
+        assertTrue(failText(resolve("", -1, 0, 0, "not a name!", 0)).startsWith("not a qualified name"))
     }
 
     fun testResolveAxonLocal() {
@@ -174,7 +198,7 @@ class FantomMcpServiceTest : BasePlatformTestCase() {
         )
         val use = f.text.lastIndexOf("total")
         val ideTarget = f.findReferenceAt(use)!!.resolve()!!
-        val text = ok(FantomMcpService.resolve(project, "f.axon", use, 0, 0, "", 0))
+        val text = ok(resolve("f.axon", use, 0, 0, "", 0))
         assertEquals("1 target\naxon total  ${where(f, nameOffset(ideTarget))}", text)
     }
 
@@ -190,7 +214,7 @@ class FantomMcpServiceTest : BasePlatformTestCase() {
         val ide = myFixture.findUsages(goDecl).map { u -> where(u.file!!, u.navigationRange!!.startOffset) }.sorted()
         assertEquals(2, ide.size)
 
-        val text = ok(FantomMcpService.usages(project, "Foo.fan", a.text.indexOf("go()"), 0, 0, 0))
+        val text = ok(usages("Foo.fan", a.text.indexOf("go()"), 0, 0, 0))
         val lines = text.lines()
         assertEquals("usages of method demo::Foo.go: 2", lines[0])
         assertEquals(ide, lines.drop(1).sorted())
@@ -200,13 +224,13 @@ class FantomMcpServiceTest : BasePlatformTestCase() {
     /** At a use, usages are those of the declaration it resolves to. */
     fun testUsagesFromUseSite() {
         val (_, b) = pod()
-        val text = ok(FantomMcpService.usages(project, "Bar.fan", b.text.indexOf("go()"), 0, 0, 0))
+        val text = ok(usages("Bar.fan", b.text.indexOf("go()"), 0, 0, 0))
         assertTrue(text, text.startsWith("usages of method demo::Foo.go: 2"))
     }
 
     fun testUsagesLimit() {
         pod()
-        val text = ok(FantomMcpService.usages(project, "Foo.fan", foo.indexOf("go()"), 0, 0, 1))
+        val text = ok(usages("Foo.fan", foo.indexOf("go()"), 0, 0, 1))
         val lines = text.lines()
         assertEquals(3, lines.size)
         assertTrue(lines[2], lines[2].startsWith("... 1 more"))
@@ -222,7 +246,7 @@ class FantomMcpServiceTest : BasePlatformTestCase() {
             end
             """.trimIndent()
         )
-        val text = ok(FantomMcpService.usages(project, "f.axon", f.text.indexOf("total"), 0, 0, 0))
+        val text = ok(usages("f.axon", f.text.indexOf("total"), 0, 0, 0))
         assertEquals("usages of axon total: 1\n${where(f, f.text.lastIndexOf("total"))}", text)
     }
 
@@ -231,26 +255,26 @@ class FantomMcpServiceTest : BasePlatformTestCase() {
     fun testDumbModeAnswersIndexing() {
         pod()
         DumbModeTestUtils.runInDumbModeSynchronously(project) {
-            assertEquals(FantomMcpQueries.INDEXING, failText(FantomMcpService.diagnostics(project, "Foo.fan", 0)))
-            assertEquals(FantomMcpQueries.INDEXING, failText(FantomMcpService.resolve(project, "", -1, 0, 0, "Foo", 0)))
-            assertEquals(FantomMcpQueries.INDEXING, failText(FantomMcpService.usages(project, "Foo.fan", 7, 0, 0, 0)))
+            assertEquals(FantomMcpQueries.INDEXING, failText(diagnostics("Foo.fan", 0)))
+            assertEquals(FantomMcpQueries.INDEXING, failText(resolve("", -1, 0, 0, "Foo", 0)))
+            assertEquals(FantomMcpQueries.INDEXING, failText(usages("Foo.fan", 7, 0, 0, 0)))
         }
     }
 
     fun testRefusesFilesOutsideTheProject() {
         val outside = java.io.File.createTempFile("outside", ".fan").also { it.writeText("class Secret {}") }
         try {
-            val text = failText(FantomMcpService.diagnostics(project, outside.absolutePath, 0))
+            val text = failText(diagnostics(outside.absolutePath, 0))
             assertTrue(text, text.startsWith("not a file in the project") || text.startsWith("file not found"))
             assertFalse(text.contains("Secret"))
         } finally {
             outside.delete()
         }
-        assertTrue(failText(FantomMcpService.diagnostics(project, "../x.fan", 0)).startsWith("file not found"))
+        assertTrue(failText(diagnostics("../x.fan", 0)).startsWith("file not found"))
     }
 
     fun testRefusesOtherFileTypes() {
         myFixture.addFileToProject("notes.txt", "hello")
-        assertTrue(failText(FantomMcpService.diagnostics(project, "notes.txt", 0)).startsWith("not a Fantom or Axon file"))
+        assertTrue(failText(diagnostics("notes.txt", 0)).startsWith("not a Fantom or Axon file"))
     }
 }

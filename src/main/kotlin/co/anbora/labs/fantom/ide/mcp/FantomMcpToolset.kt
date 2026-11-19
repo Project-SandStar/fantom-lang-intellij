@@ -82,7 +82,7 @@ class FantomMcpToolset : McpToolset {
     ): String = answer { FantomMcpService.usages(it, path, offset, line, column, limit) }
 
     /** Runs [body] on a pool thread, never on the UI thread; it takes its own read actions. */
-    private suspend fun answer(body: (Project) -> FantomMcpService.Answer): String {
+    private suspend fun answer(body: suspend (Project) -> FantomMcpService.Answer): String {
         val project = currentCoroutineContext().project
         return when (val a = withContext(Dispatchers.IO) { body(project) }) {
             is FantomMcpService.Answer.Ok -> a.text
