@@ -101,7 +101,7 @@ object FantomMcpService {
     }
 
     /** A read action that stops with [FantomMcpQueries.INDEXING] in dumb mode. */
-    private fun <T> read(project: Project, body: () -> T): T = ReadAction.compute<T, RuntimeException> {
+    private fun <T> read(project: Project, body: () -> T): T = ReadAction.computeBlocking<T, RuntimeException> {
         if (project.isDisposed) fail("project closed")
         if (DumbService.isDumb(project)) fail(FantomMcpQueries.INDEXING)
         body()
