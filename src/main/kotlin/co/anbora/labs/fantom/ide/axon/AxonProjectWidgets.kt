@@ -86,7 +86,7 @@ object AxonProjectWidgets {
         val dialog = AxonProjectPickerDialog(project, AxonProjectPickerModel(list), copy.activeKey, settings.pickerConnection)
         val ok = dialog.showAndGet()
         if (project.isDisposed) return
-        settings.pickerConnection = dialog.rememberValue
+        dialog.rememberValue?.let { settings.pickerConnection = it }
         if (ok) dialog.chosen?.let { copy.select(it.key) }
     }
 }

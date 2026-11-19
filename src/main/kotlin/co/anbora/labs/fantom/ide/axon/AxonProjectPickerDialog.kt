@@ -16,6 +16,8 @@ import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
+import java.awt.event.HierarchyEvent
+import java.awt.event.HierarchyListener
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
@@ -23,6 +25,7 @@ import javax.swing.JComponent
 import javax.swing.JList
 import javax.swing.JPanel
 import javax.swing.ListSelectionModel
+import javax.swing.SwingUtilities
 import javax.swing.event.DocumentEvent
 
 /**
@@ -39,7 +42,7 @@ class AxonProjectPickerDialog(
     remembered: String?,
 ) : DialogWrapper(project) {
 
-    internal val searchField = SearchTextField(false)
+    internal val searchField = PickerSearchField()
     private val connectionModel = CollectionListModel<Connection>()
     private val projectModel = CollectionListModel<AxonProjectInfo>()
     internal val connectionList = JBList(connectionModel)
@@ -55,8 +58,14 @@ class AxonProjectPickerDialog(
     var chosen: AxonProjectInfo? = null
         private set
 
-    /** What to store as the last connection. */
-    val rememberValue: String get() = AxonProjectPickerModel.remember(userInstance)
+    /** True once the user selected a connection; a search or the start selection does not count. */
+    private var userChoseConnection = false
+
+    /**
+     * What to store as the last connection, or null to keep the stored one: only a
+     * connection the user selected is stored, so opening and closing the window changes nothing.
+     */
+    val rememberValue: String? get() = if (userChoseConnection) AxonProjectPickerModel.remember(userInstance) else null
 
     private val search: String get() = searchField.text
 
@@ -83,6 +92,7 @@ class AxonProjectPickerDialog(
             if (updating || e.valueIsAdjusting) return@addListSelectionListener
             val c = connectionList.selectedValue ?: return@addListSelectionListener
             userInstance = c.instance
+            userChoseConnection = true
             refreshProjects()
         }
         projectList.addListSelectionListener { updateOk() }
@@ -103,6 +113,9 @@ class AxonProjectPickerDialog(
             firstComponent = JBScrollPane(connectionList)
             secondComponent = JBScrollPane(projectList)
         }
+        // the selection was made before the lists had a size; scroll to it once they are on screen
+        scrollToSelectionWhenShown(connectionList)
+        scrollToSelectionWhenShown(projectList)
         return JPanel(BorderLayout(0, JBUI.scale(8))).apply {
             add(searchField, BorderLayout.NORTH)
             add(splitter, BorderLayout.CENTER)
@@ -118,6 +131,19 @@ class AxonProjectPickerDialog(
         val info = projectList.selectedValue ?: return
         chosen = info
         super.doOKAction()
+    }
+
+    private fun scrollToSelectionWhenShown(list: JList<*>) {
+        list.addHierarchyListener(object : HierarchyListener {
+            override fun hierarchyChanged(e: HierarchyEvent) {
+                if ((e.changeFlags and HierarchyEvent.SHOWING_CHANGED.toLong()) == 0L || !list.isShowing) return
+                list.removeHierarchyListener(this)
+                SwingUtilities.invokeLater {
+                    val i = list.selectedIndex
+                    if (i >= 0) list.ensureIndexIsVisible(i)
+                }
+            }
+        })
     }
 
     /** Moves the project selection by [delta] rows, within the list. */
@@ -169,6 +195,17 @@ class AxonProjectPickerDialog(
 
     private fun updateOk() {
         isOKActionEnabled = projectList.selectedValue != null
+    }
+
+    /**
+     * A search field whose Escape closes the window. The platform field clears its text on
+     * Escape and keeps the window open, so the user had to press Escape twice.
+     */
+    internal class PickerSearchField : SearchTextField(false) {
+        override fun toClearTextOnEscape(): Boolean = false
+
+        /** What [toClearTextOnEscape] answers, for the tests. */
+        internal val clearsTextOnEscape: Boolean get() = toClearTextOnEscape()
     }
 
     private inner class ConnectionRenderer : ColoredListCellRenderer<Connection>() {
