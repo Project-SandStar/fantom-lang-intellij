@@ -38,8 +38,6 @@ import com.intellij.psi.PsiPolyVariantReference
 import com.intellij.psi.PsiReference
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.search.LocalSearchScope
-import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
@@ -292,13 +290,12 @@ object FantomMcpQueries {
     }
 
     /**
-     * Read action. Find Usages: the references to [target] in project files. An Axon name is
-     * looked up in its own file, the scope Axon resolution has.
+     * Read action. Find Usages: the references to [target] in project files. The search is
+     * the one IDE Find Usages runs: the project files, cut down to the use scope of [target]
+     * (an Axon local stays in its function, a proj-folder function in its project folder).
      */
     fun usages(project: Project, target: PsiElement): List<PsiReference> {
-        val scope: SearchScope =
-            if (target.language == AxonLanguage) LocalSearchScope(target.containingFile)
-            else GlobalSearchScope.projectScope(project)
+        val scope = GlobalSearchScope.projectScope(project)
         return ReferencesSearch.search(target, scope).findAll()
             .filter { it.element.containingFile?.virtualFile?.let { vf -> isProjectFile(project, vf) } == true }
             .sortedWith(compareBy({ it.element.containingFile.virtualFile.path }, { offsetOf(it) }))
