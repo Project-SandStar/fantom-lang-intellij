@@ -51,6 +51,13 @@ class AxonServerClient(
         }
     }
 
+    /**
+     * Checks the URL and the token with one `GET /api/ide/projects`. Returns the number of
+     * projects the token can see. Throws [AxonCopyException] with a reason a person can act
+     * on: no server at the URL, a refused token, a timeout.
+     */
+    fun checkConnection(check: () -> Unit = {}): Int = listProjects(check).size
+
     override fun fetch(key: AxonProjectKey, sync: Boolean, check: () -> Unit): AxonFunctionList {
         val reply = call(projectPath(key) + "/functions?sync=$sync", null, check)
         if (reply.status != 200) throw failure(reply, key)

@@ -157,9 +157,14 @@ Settings | Languages & Frameworks | Fantom | Axon sets where the
 | Field | What it is | Where it is stored |
 |---|---|---|
 | Server URL | The base URL of the Axon server, with `http://` or `https://`. Empty by default | An IDE settings file on this machine, for all projects. Not part of settings sync |
-| Token | The bearer token of the server. The field is always shown empty; leave it empty to keep the stored token | The IDE password store. Never in a settings file |
+| Access key | Your access key from the Axon dashboard (Users page). The field is always shown empty; the line under it says whether a key is stored. Leave it empty to keep the stored key | The IDE password store. Never in a settings file |
 | proj folder | The `proj` folder of a local Axon server: `proj/<instance>/<project>/func/<name>.axon`. Read only when no server URL is set | The workspace file of the project |
 | Instance/project | The SkySpark project to copy, as `instance/project`. Empty drops the copy | The workspace file of the project |
+
+**Test Connection** checks the server URL and the access key with one call
+to the server, before you save. It uses the key in the field, or the stored
+key when the field is empty, and says how many projects the key can see, or
+why it failed: no server at that URL, a refused key, or a timeout.
 
 The workspace file (`.idea/workspace.xml`) is not shared, so instance and
 project names never get into version control.
