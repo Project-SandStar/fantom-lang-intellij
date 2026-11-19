@@ -3,6 +3,7 @@ package co.anbora.labs.fantom.lang.axon.copy
 import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.generateServiceName
 import com.intellij.ide.passwordSafe.PasswordSafe
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.Service
@@ -12,6 +13,7 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * The Axon project of this IDE project, and the local `proj` folder to read when no
@@ -91,10 +93,30 @@ object AxonServerToken {
 
     private fun attributes() = CredentialAttributes(generateServiceName("Fantom", "Axon server token"))
 
+    /** What the last [get] or [set] saw: true when a token is stored, null before the first. */
+    @Volatile private var stored: Boolean? = null
+    private val warming = AtomicBoolean()
+
     fun get(): String? = PasswordSafe.instance.getPassword(attributes())?.takeIf { it.isNotEmpty() }
+        .also { stored = it != null }
 
     /** Stores [token]; null or blank removes it. */
     fun set(token: String?) {
-        PasswordSafe.instance.setPassword(attributes(), token?.trim()?.takeIf { it.isNotEmpty() })
+        val t = token?.trim()?.takeIf { it.isNotEmpty() }
+        PasswordSafe.instance.setPassword(attributes(), t)
+        stored = t != null
+    }
+
+    /**
+     * Whether a token is stored, as the last read saw it; null when nothing was read yet.
+     * Memory only, so an action's update can call it. When it is null, a read starts on
+     * a pooled thread, once.
+     */
+    fun storedHint(): Boolean? {
+        stored?.let { return it }
+        if (warming.compareAndSet(false, true)) {
+            ApplicationManager.getApplication().executeOnPooledThread { runCatching { get() } }
+        }
+        return null
     }
 }
