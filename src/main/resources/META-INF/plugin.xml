@@ -20,7 +20,14 @@
         <!-- Supplies Axon functions that are not in the file at hand (project and pod functions). -->
         <extensionPoint qualifiedName="co.anbora.labs.fantom.axonFunctionSource"
                         interface="co.anbora.labs.fantom.lang.axon.psi.AxonFunctionSource" dynamic="true"/>
+        <!-- Says which Axon project a file belongs to: the active copy today, a proj folder later (4.38). -->
+        <extensionPoint qualifiedName="co.anbora.labs.fantom.axonProjectFunctions"
+                        interface="co.anbora.labs.fantom.lang.axon.project.AxonProjectFunctions" dynamic="true"/>
     </extensionPoints>
+    <extensions defaultExtensionNs="co.anbora.labs.fantom">
+        <axonFunctionSource implementation="co.anbora.labs.fantom.lang.axon.project.AxonProjectFunctionSource"/>
+        <axonProjectFunctions implementation="co.anbora.labs.fantom.lang.axon.project.AxonCopyProjectFunctions" order="last"/>
+    </extensions>
     <extensions defaultExtensionNs="com.intellij">
         <fileType name="Fantom" implementationClass="co.anbora.labs.fantom.lang.FantomFileType"
                   fieldName="INSTANCE" language="fantom_lang" extensions="fan"/>
@@ -146,6 +153,9 @@
         <lang.formatter language="axon_lang" implementationClass="co.anbora.labs.fantom.ide.axon.AxonFormattingModelBuilder"/>
         <langCodeStyleSettingsProvider implementation="co.anbora.labs.fantom.ide.axon.AxonLanguageCodeStyleSettingsProvider"/>
         <highlightErrorFilter implementation="co.anbora.labs.fantom.ide.axon.AxonInjectedErrorFilter"/>
+        <!-- Quick doc and Find Usages for Axon functions (task 4.30) -->
+        <lang.documentationProvider language="axon_lang" implementationClass="co.anbora.labs.fantom.ide.axon.AxonDocumentationProvider"/>
+        <lang.findUsagesProvider language="axon_lang" implementationClass="co.anbora.labs.fantom.ide.axon.AxonFindUsagesProvider"/>
         <!-- Axon project copy: read-only functions of one SkySpark project, as the library "Axon: instance/project" -->
         <additionalLibraryRootsProvider implementation="co.anbora.labs.fantom.lang.axon.copy.AxonProjectLibraryRootsProvider"/>
         <writingAccessProvider implementation="co.anbora.labs.fantom.lang.axon.copy.AxonProjectCopyWritingAccessProvider"/>

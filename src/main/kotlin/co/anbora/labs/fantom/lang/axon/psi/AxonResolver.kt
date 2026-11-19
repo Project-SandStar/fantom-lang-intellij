@@ -1,5 +1,7 @@
 package co.anbora.labs.fantom.lang.axon.psi
 
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
@@ -24,6 +26,10 @@ interface AxonFunctionSource {
     /** The names of the functions that [context] can call, for completion. */
     fun functionNames(context: PsiElement): Collection<String> = emptyList()
 
+    /** The completion items for the functions that [context] can call. By default one plain item per name. */
+    fun lookups(context: PsiElement): Collection<LookupElement> =
+        functionNames(context).map { LookupElementBuilder.create(it) }
+
     companion object {
         val EP_NAME: ExtensionPointName<AxonFunctionSource> =
             ExtensionPointName.create("co.anbora.labs.fantom.axonFunctionSource")
@@ -38,7 +44,20 @@ class AxonReference(element: AxonNameUse, range: TextRange) : PsiReferenceBase<A
 
     override fun resolve(): PsiElement? = AxonResolver.resolve(element)
 
-    override fun getVariants(): Array<Any> = AxonResolver.visible(element).toTypedArray()
+    /**
+     * The names visible in the file, then the functions of the sources (the Axon project of the
+     * file). A source function with the name of a visible declaration is left out: the
+     * declaration in the file wins, as it does in [AxonResolver.resolve].
+     */
+    override fun getVariants(): Array<Any> {
+        val visible = AxonResolver.visible(element)
+        val seen = visible.mapNotNullTo(HashSet()) { it.name }
+        val out = ArrayList<Any>(visible)
+        for (source in AxonFunctionSource.EP_NAME.extensionList) {
+            for (lookup in source.lookups(element)) if (seen.add(lookup.lookupString)) out.add(lookup)
+        }
+        return out.toTypedArray()
+    }
 
     @Throws(IncorrectOperationException::class)
     override fun handleElementRename(newElementName: String): PsiElement {
