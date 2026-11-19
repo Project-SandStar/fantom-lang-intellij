@@ -23,6 +23,9 @@
         <!-- Says which Axon project a file belongs to: a proj folder first (4.38), the active copy last. -->
         <extensionPoint qualifiedName="co.anbora.labs.fantom.axonProjectFunctions"
                         interface="co.anbora.labs.fantom.lang.axon.project.AxonProjectFunctions" dynamic="true"/>
+        <!-- Proj-folder mode (task 4.38): a sync that writes into a folder of the proj folder. No implementation yet. -->
+        <extensionPoint qualifiedName="co.anbora.labs.fantom.axonSyncTarget"
+                        interface="co.anbora.labs.fantom.lang.axon.copy.AxonSyncTarget" dynamic="true"/>
     </extensionPoints>
     <extensions defaultExtensionNs="co.anbora.labs.fantom">
         <axonFunctionSource implementation="co.anbora.labs.fantom.lang.axon.project.AxonProjectFunctionSource"/>
@@ -224,6 +227,16 @@
                 icon="AllIcons.Actions.Compile">
             <add-to-group group-id="BuildMenu" anchor="last"/>
             <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+        </action>
+    </actions>
+    <actions>
+        <action id="Fantom.AxonSync"
+                class="co.anbora.labs.fantom.ide.axon.AxonSyncAction"
+                text="Sync Axon Functions"
+                description="Sync the Axon project from SkySpark through the Axon server"
+                icon="AllIcons.Actions.Refresh">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+            <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
         </action>
     </actions>
 </idea-plugin>

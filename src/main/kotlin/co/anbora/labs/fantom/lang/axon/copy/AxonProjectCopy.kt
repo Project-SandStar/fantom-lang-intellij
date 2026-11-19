@@ -202,6 +202,42 @@ class AxonProjectCopy(private val project: Project) {
         return fetchAndStore(key, sync, check, ticket, onlyIfActive = true)
     }
 
+    /** True when a server URL is set: only the server can sync from SkySpark. Reads memory only. */
+    fun canSync(): Boolean = testSource != null || AxonServerSettings.getInstance().url.isNotEmpty()
+
+    private fun requireServer() {
+        if (!canSync()) throw AxonCopyException(Kind.NOT_CONFIGURED, "Set the Axon server URL in Settings | Languages & Frameworks | Fantom | Axon. Only the server can sync from SkySpark.")
+    }
+
+    /**
+     * "Sync Axon Functions": the server reads the active project from SkySpark
+     * (`sync=true`), the copy is written again, and the result says which functions
+     * were added, changed or removed. Blocks.
+     */
+    fun syncNow(check: () -> Unit = {}): AxonSyncResult {
+        requireServer()
+        // one ticket and one key: a pick that comes in between cancels this sync
+        val ticket = choice.get()
+        val key = activeKey ?: throw AxonCopyException(Kind.NOT_CONFIGURED, "No Axon project is chosen.")
+        val before = registered?.copy?.takeIf { it.key == key }?.functions.orEmpty().associate { it.name to it.hash }
+        val after = fetchAndStore(key, true, check, ticket, onlyIfActive = true)
+        return AxonSyncResult.diff(key, before, after.functions.associate { it.name to it.hash })
+    }
+
+    /**
+     * The same for a folder that an [AxonSyncTarget] claims (proj-folder mode): the server
+     * syncs [AxonSyncTarget.Target.key] and the hook writes the functions; the read-only
+     * copy is not touched. Blocks.
+     */
+    fun syncNow(match: AxonSyncTarget.Match, check: () -> Unit = {}): AxonSyncResult {
+        requireServer()
+        val key = match.target.key
+        val list = source().fetch(key, true, check)
+        if (list.key != key) throw AxonCopyException(Kind.BAD_REPLY, "The reply is for another project.")
+        check()
+        return match.hook.write(project, match.target, list, check)
+    }
+
     /** Forgets the active project and deletes its copy. */
     fun dropNow() {
         // a fetch that is under way ends after this choice: it writes nothing
@@ -310,6 +346,18 @@ class AxonProjectCopy(private val project: Project) {
         background("Refreshing Axon functions of $key") { indicator ->
             val c = cancellable(indicator) { check -> fetchAndStore(key, true, check, ticket, onlyIfActive = true) }
             notify("Axon: $key refreshed, ${count(c.functions.size)}.", NotificationType.INFORMATION)
+        }
+    }
+
+    /**
+     * [syncNow] in the background, with a progress bar that can be cancelled. The result
+     * (or the error) is a notification. With [match] the hook's folder is synced.
+     */
+    fun sync(match: AxonSyncTarget.Match? = null) {
+        val key = match?.target?.key ?: activeKey ?: return
+        background("Syncing Axon functions of $key") { indicator ->
+            val r = cancellable(indicator) { check -> if (match != null) syncNow(match, check) else syncNow(check) }
+            notify(r.html(), if (r.conflicts.isEmpty()) NotificationType.INFORMATION else NotificationType.WARNING)
         }
     }
 
