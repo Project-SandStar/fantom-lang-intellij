@@ -221,7 +221,7 @@ that project's Axon functions.
   double-click picks, and Escape closes the window. The window opens at the
   current project, or else at the connection you clicked last.
 - The functions come from an Axon server when its URL is set. With no URL
-  they come from a local `proj` folder. See [Settings](settings.md).
+  they come from the global proj folder. See [Settings](settings.md).
 - The copy shows under External Libraries as "Axon: instance/project", one
   `.axon` file per function. The files open with the Axon colours.
 - The files are read-only. They are outside your project, so version control
@@ -247,3 +247,35 @@ Only the functions of the project you picked are used. Pick another project
 and the old names no longer resolve.
 
 Not there yet: editing a function and pushing it back from the IDE.
+
+## Axon files in a proj folder
+
+The Axon server keeps the functions of each SkySpark project in a `proj`
+folder:
+
+```
+proj/<connection>/<project>/.sync-metadata.json
+proj/<connection>/<project>/func/<name>.axon
+proj/<connection>/<project>/func/<name>.trio
+```
+
+Open that folder in the IDE (the whole `proj` folder, one connection or one
+project) and each `.axon` file knows its own project:
+
+- A call resolves to the function of the same project only. Two projects can
+  each have a function of the same name; they never mix.
+- Completion lists the functions of the same project.
+- Quick Documentation shows the `doc` of the function's `.trio` file.
+- Find Usages on a function file searches its own project folder only.
+- The status bar shows "Axon: connection/project" for the file in the
+  editor.
+- Files in `backup`, `.versions`, `.backups` and `.sidecar-*` folders are
+  copies: they have no project, and their names resolve to nothing.
+
+The project comes from the path under the **Global proj folder** setting, and
+its name from `.sync-metadata.json`. With the setting empty, the IDE looks for
+the nearest `.sync-metadata.json`, at most four folders up. See
+[Settings](settings.md#axon).
+
+For these files the project copy is not used. Files outside a `proj` folder
+work as before.
