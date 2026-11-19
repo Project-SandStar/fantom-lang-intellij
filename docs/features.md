@@ -265,10 +265,11 @@ project) and each `.axon` file knows its own project:
 - A call resolves to the function of the same project only. Two projects can
   each have a function of the same name; they never mix.
 - Completion lists the functions of the same project.
+- Axon in the `src` tag of a `.trio` file in the project uses the same project.
 - Quick Documentation shows the `doc` of the function's `.trio` file.
 - Find Usages on a function file searches its own project folder only.
-- The status bar shows "Axon: connection/project" for the file in the
-  editor.
+- The status bar shows "Axon: connection/project" for the `.axon` or
+  `.trio` file in the editor.
 - Files in `backup`, `.versions`, `.backups` and `.sidecar-*` folders are
   copies: they have no project, and their names resolve to nothing.
 
