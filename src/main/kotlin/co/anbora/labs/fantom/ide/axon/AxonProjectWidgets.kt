@@ -1,8 +1,8 @@
 package co.anbora.labs.fantom.ide.axon
 
-import co.anbora.labs.fantom.ide.settings.FantomTextRenderer
 import co.anbora.labs.fantom.lang.axon.copy.AxonProjectCopy
 import co.anbora.labs.fantom.lang.axon.copy.AxonProjectInfo
+import co.anbora.labs.fantom.lang.axon.copy.AxonProjectSettings
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.options.ShowSettingsUtil
@@ -72,11 +72,7 @@ object AxonProjectWidgets {
         }
     }
 
-    /** "demo/site  (12 functions)". */
-    fun label(info: AxonProjectInfo): String =
-        "${info.key}  (${info.functionCount} function${if (info.functionCount == 1) "" else "s"})"
-
-    /** Shows the projects; the one picked is fetched. Called on the UI thread, after the list came in. */
+    /** Shows the picker; the project picked is fetched. Called on the UI thread, after the list came in. */
     private fun choose(project: Project, list: List<AxonProjectInfo>) {
         if (project.isDisposed) return
         if (list.isEmpty()) {
@@ -85,14 +81,13 @@ object AxonProjectWidgets {
                 ?.notify(project)
             return
         }
-        val current = AxonProjectCopy.getInstance(project).activeKey
-        val builder = JBPopupFactory.getInstance().createPopupChooserBuilder(list)
-            .setTitle("Axon Project")
-            .setRenderer(FantomTextRenderer<AxonProjectInfo> { label(it) })
-            .setNamerForFiltering { it.key.toString() }
-            .setItemChosenCallback { AxonProjectCopy.getInstance(project).select(it.key) }
-        list.firstOrNull { it.key == current }?.let { builder.setSelectedValue(it, true) }
-        builder.createPopup().showCenteredInCurrentWindow(project)
+        val copy = AxonProjectCopy.getInstance(project)
+        val settings = AxonProjectSettings.getInstance(project)
+        val dialog = AxonProjectPickerDialog(project, AxonProjectPickerModel(list), copy.activeKey, settings.pickerConnection)
+        val ok = dialog.showAndGet()
+        if (project.isDisposed) return
+        dialog.rememberValue?.let { settings.pickerConnection = it }
+        if (ok) dialog.chosen?.let { copy.select(it.key) }
     }
 }
 

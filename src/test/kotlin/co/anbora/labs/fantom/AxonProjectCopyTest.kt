@@ -3,6 +3,7 @@ package co.anbora.labs.fantom
 import co.anbora.labs.fantom.ide.axon.AxonConfigurable
 import co.anbora.labs.fantom.ide.axon.AxonProjectWidget
 import co.anbora.labs.fantom.ide.axon.AxonProjectWidgetFactory
+import co.anbora.labs.fantom.ide.axon.AxonProjectPickerModel
 import co.anbora.labs.fantom.ide.axon.AxonProjectWidgets
 import co.anbora.labs.fantom.lang.axon.AxonFileType
 import co.anbora.labs.fantom.lang.axon.copy.AxonCopyException
@@ -535,7 +536,7 @@ class AxonProjectCopyTest : BasePlatformTestCase() {
         assertTrue(AxonProjectWidgetFactory().isAvailable(project))
         copy.dropNow()
         assertFalse(AxonProjectWidgetFactory().isAvailable(project))
-        assertEquals("demo/site  (1 function)", AxonProjectWidgets.label(AxonProjectInfo(key, 1, null)))
+        assertEquals("1 function", AxonProjectPickerModel.projectDetail(AxonProjectInfo(key, 1, null)))
     }
 
     /** An in-memory source, so that the widget actions can run inline on the test's UI thread. */
