@@ -26,6 +26,8 @@ jobs:
           path: build/distributions/*.zip
 
   publish:
+    permissions:
+      contents: write
     # Publishes only when the Marketplace token is configured; a tag without it still builds.
     if: startsWith(github.ref, 'refs/tags/v') && vars.MARKETPLACE_PUBLISH == 'true'
     needs: build
@@ -44,3 +46,26 @@ jobs:
           CERTIFICATE_CHAIN: ${{ secrets.CERTIFICATE_CHAIN }}
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
           PRIVATE_KEY_PASSWORD: ${{ secrets.PRIVATE_KEY_PASSWORD }}
+      - name: Create the GitHub release with the signed zip and the change notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          VERSION="${TAG#v}"
+          ZIP="build/distributions/fantom-lang-${VERSION}-signed.zip"
+          test -f "$ZIP" || { echo "signed zip $ZIP not found"; exit 1; }
+          # The <li> of this version in change-notes.html, without the tags, one item per "; "
+          python3 - "$VERSION" > notes.md <<'PY'
+          import html, re, sys
+          v = sys.argv[1]
+          s = open('src/main/html/change-notes.html', encoding='utf-8').read()
+          m = re.search(r'<li><b>' + re.escape(v) + r'</b>.*?</em>\s*-\s*(.*?)</li>', s, re.S)
+          text = html.unescape(re.sub(r'<[^>]+>', '', m.group(1))).strip() if m else f'Release {v}.'
+          for part in [p.strip() for p in text.split('; ') if p.strip()]:
+              print('- ' + part[0].upper() + part[1:])
+          PY
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$ZIP" --clobber
+          else
+            gh release create "$TAG" "$ZIP" --title "$VERSION" --notes-file notes.md --verify-tag
+          fi
