@@ -718,6 +718,61 @@ class AxonProjectCopyTest : BasePlatformTestCase() {
         settings.activeKey = null
     }
 
+    fun testSettingsPageSaysWhetherAKeyIsStored() {
+        val page = AxonConfigurable(project)
+        try {
+            page.createComponent()
+            // setUp stored a key: the page says so, and the field stays empty
+            assertEquals(true, page.tokenStored)
+            assertTrue(page.tokenState.text, page.tokenState.text.contains("is stored"))
+            assertEquals("", String(page.tokenField.password))
+
+            // remove it: the label changes at once, before the store write
+            page.removeTokenBox.isSelected = true
+            page.apply()
+            assertEquals(false, page.tokenStored)
+            assertTrue(page.tokenState.text, page.tokenState.text.contains("No access key"))
+            bg { Thread.sleep(50) }
+            assertNull(AxonServerToken.get())
+
+            // type a new one and save: the label says stored again
+            page.tokenField.text = token
+            page.apply()
+            assertEquals(true, page.tokenStored)
+            bg { Thread.sleep(50) }
+            assertEquals(token, AxonServerToken.get())
+            page.reset()
+            assertEquals(true, page.tokenStored)
+        } finally {
+            page.disposeUIResources()
+        }
+    }
+
+    fun testConnectionTestReportsTheResult() {
+        // the good key: the server answers with its projects
+        val ok = bg { AxonConfigurable.testConnection(server.url, token, typedKey = true) }
+        assertTrue(ok.second, ok.first)
+        assertTrue(ok.second, ok.second.contains("works") && ok.second.contains("2 projects"))
+
+        // a wrong key: refused, and the text says which key
+        val bad = bg { AxonConfigurable.testConnection(server.url, "wrong-key", typedKey = false) }
+        assertFalse(bad.first)
+        assertTrue(bad.second, bad.second.contains("refused the stored key"))
+
+        // no key at all
+        val none = bg { AxonConfigurable.testConnection(server.url, null, typedKey = false) }
+        assertFalse(none.first)
+        assertTrue(none.second, none.second.contains("No access key"))
+
+        // nothing listens on the URL
+        val down = bg { AxonConfigurable.testConnection("http://127.0.0.1:1", token, typedKey = true) }
+        assertFalse(down.first)
+        assertTrue(down.second, down.second.contains("Cannot reach"))
+
+        // the key never shows in the text
+        for (r in listOf(ok, bad, none, down)) assertFalse(r.second.contains(token))
+    }
+
     fun testSettingsPageStoresUrlFolderAndKeyAndNeverShowsTheToken() {
         val mem = MemSource(mutableMapOf(key to listOf(fn("calcDailyAvg", "() => 1"))))
         copy.testSource = mem
