@@ -20,6 +20,7 @@ import java.awt.event.HierarchyEvent
 import java.awt.event.HierarchyListener
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
+import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import javax.swing.JList
@@ -95,6 +96,10 @@ class AxonProjectPickerDialog(
             userChoseConnection = true
             refreshProjects()
         }
+        // a click on the row a search selected fires no selection event; it is still a choice
+        connectionList.addMouseListener(object : MouseAdapter() {
+            override fun mouseReleased(e: MouseEvent) = connectionClicked()
+        })
         projectList.addListSelectionListener { updateOk() }
         object : DoubleClickListener() {
             override fun onDoubleClick(event: MouseEvent): Boolean {
@@ -144,6 +149,13 @@ class AxonProjectPickerDialog(
                 }
             }
         })
+    }
+
+    /** The user clicked the connection list: the selected row becomes the user's connection. */
+    internal fun connectionClicked() {
+        val c = connectionList.selectedValue ?: return
+        userInstance = c.instance
+        userChoseConnection = true
     }
 
     /** Moves the project selection by [delta] rows, within the list. */

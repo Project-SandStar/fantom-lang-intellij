@@ -12,6 +12,7 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.xmlb.XmlSerializer
 import java.awt.event.KeyEvent
+import java.awt.event.MouseEvent
 
 /**
  * The Axon project picker builds in headless mode, and the search narrows both panes. The
@@ -90,6 +91,20 @@ class AxonProjectPickerDialogTest : BasePlatformTestCase() {
         assertEquals(listOf("demo/bldg2", "demo/site"), d.projects())
         d.connectionList.selectedIndex = 0
         assertEquals(AxonProjectPickerModel.ALL, d.rememberValue)
+    }
+
+    fun testAClickOnTheRowASearchSelectedIsAChoice() = withDialog(null, "demo") { d ->
+        d.searchField.text = "annex"
+        assertNull(d.connectionList.selectedValue.instance)
+        // the user clicks "All connections", which the search already selected: no selection event
+        d.connectionList.mouseListeners.forEach {
+            it.mouseReleased(MouseEvent(d.connectionList, MouseEvent.MOUSE_RELEASED, 0L, 0, 1, 1, 1, false))
+        }
+        assertEquals(AxonProjectPickerModel.ALL, d.rememberValue)
+        d.searchField.text = ""
+        // the search no longer takes the user back to "demo"
+        assertNull(d.connectionList.selectedValue.instance)
+        assertEquals(4, d.projects().size)
     }
 
     fun testOpeningOnTheActiveProjectDoesNotOverwriteTheRememberedConnection() = withDialog(AxonProjectKey("plant-a", "site"), "demo") { d ->
