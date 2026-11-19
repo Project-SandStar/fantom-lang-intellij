@@ -192,7 +192,7 @@ class AxonProjFolderSync : AxonSyncTarget {
 
     private fun localOf(vf: VirtualFile): Local? {
         val fdm = FileDocumentManager.getInstance()
-        val unsaved = ReadAction.compute<String?, RuntimeException> {
+        val unsaved = ReadAction.computeBlocking<String?, RuntimeException> {
             fdm.getCachedDocument(vf)?.takeIf { fdm.isDocumentUnsaved(it) }?.text
         }
         if (unsaved != null) return Local(unsaved, true)
