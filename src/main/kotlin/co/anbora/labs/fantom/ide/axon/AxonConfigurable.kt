@@ -7,6 +7,7 @@ import co.anbora.labs.fantom.lang.axon.copy.AxonProjectSettings
 import co.anbora.labs.fantom.lang.axon.copy.AxonServerClient
 import co.anbora.labs.fantom.lang.axon.copy.AxonServerSettings
 import co.anbora.labs.fantom.lang.axon.copy.AxonServerToken
+import co.anbora.labs.fantom.lang.axon.proj.AxonProjFolders
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -18,13 +19,17 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
+import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
+import java.io.File
+import java.util.concurrent.CancellationException
 import javax.swing.JButton
+import javax.swing.event.DocumentEvent
 
 /**
  * Settings | Languages & Frameworks | Fantom | Axon: where the Axon project copy comes
@@ -36,7 +41,9 @@ import javax.swing.JButton
  *   keeps the stored token.
  * - "Test Connection" checks the URL and the token in the fields (or the stored token when
  *   the field is empty) with one call to the server, off the UI thread.
- * - The fallback folder and the project key are in the workspace file ([AxonProjectSettings]).
+ * - The global proj folder is in the same application file as the URL. A line under it says
+ *   how many connections and projects it holds; it is counted off the UI thread.
+ * - The project key is in the workspace file ([AxonProjectSettings]).
  */
 class AxonConfigurable(private val project: Project) : BoundConfigurable("Axon") {
 
@@ -46,7 +53,8 @@ class AxonConfigurable(private val project: Project) : BoundConfigurable("Axon")
     internal lateinit var tokenState: JBLabel
     internal lateinit var testButton: JButton
     internal lateinit var testResult: JBLabel
-    internal lateinit var fallbackField: TextFieldWithBrowseButton
+    internal lateinit var projFolderField: TextFieldWithBrowseButton
+    internal lateinit var projFolderCount: JBLabel
     internal lateinit var keyField: JBTextField
 
     /** Whether the password store holds a token; read off the UI thread when the page opens. */
@@ -55,6 +63,10 @@ class AxonConfigurable(private val project: Project) : BoundConfigurable("Axon")
 
     /** Each test gets a number; a slow reply of an older test never overwrites a newer result. */
     private var testRun = 0
+
+    /** Each count gets a number; only the newest one is shown. */
+    @Volatile
+    private var countRun = 0
 
     private val hasUi: Boolean get() = ::urlField.isInitialized
     private val settings: AxonProjectSettings get() = AxonProjectSettings.getInstance(project)
@@ -66,9 +78,13 @@ class AxonConfigurable(private val project: Project) : BoundConfigurable("Axon")
         tokenState = JBLabel()
         testButton = JButton("Test Connection")
         testResult = JBLabel()
-        fallbackField = TextFieldWithBrowseButton().apply {
-            addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle("Axon Fallback Folder"))
+        projFolderField = TextFieldWithBrowseButton().apply {
+            addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle("Global Proj Folder"))
         }
+        projFolderCount = JBLabel()
+        projFolderField.textField.document.addDocumentListener(object : DocumentAdapter() {
+            override fun textChanged(e: DocumentEvent) = countProjFolder()
+        })
         keyField = JBTextField()
         testButton.addActionListener { runTest() }
         reset()
@@ -76,7 +92,7 @@ class AxonConfigurable(private val project: Project) : BoundConfigurable("Axon")
             group("Axon Server") {
                 row("Server URL:") {
                     cell(urlField).align(AlignX.FILL)
-                        .comment("The base URL of the Axon server, with http:// or https://. Empty: the fallback folder is read.")
+                        .comment("The base URL of the Axon server, with http:// or https://. Empty: the global proj folder is read.")
                 }
                 row("Access key:") {
                     cell(tokenField).align(AlignX.FILL)
@@ -89,17 +105,20 @@ class AxonConfigurable(private val project: Project) : BoundConfigurable("Axon")
                     cell(testResult)
                 }
             }
-            group("Fallback Folder") {
-                row("proj folder:") {
-                    cell(fallbackField).align(AlignX.FILL)
-                        .comment("The proj folder of a local Axon server: proj/<instance>/<project>/func/<name>.axon. Read only when no server URL is set.")
+            group("Global Proj Folder") {
+                row("Global proj folder:") {
+                    cell(projFolderField).align(AlignX.FILL)
+                        .comment("The proj folder of the Axon server: proj/<connection>/<project>/func/<name>.axon. " +
+                            "An Axon file under it uses the functions of its own project. The project copy reads it when no server URL is set. " +
+                            "For all IDE projects; not synced.")
                 }
+                row("") { cell(projFolderCount) }
             }
             group("Project") {
                 row("Instance/project:") {
                     cell(keyField).align(AlignX.FILL)
                         .comment("The SkySpark project to copy, as instance/project. Or pick it from the status bar entry “Axon”. " +
-                            "Empty drops the copy. This and the fallback folder are stored in the workspace file, which is not shared.")
+                            "Empty drops the copy. Stored in the workspace file, which is not shared.")
                 }
             }
         }
@@ -110,7 +129,7 @@ class AxonConfigurable(private val project: Project) : BoundConfigurable("Axon")
     override fun isModified(): Boolean = hasUi && (
         urlField.text.trim().trimEnd('/') != AxonServerSettings.getInstance().url ||
             tokenField.password.isNotEmpty() || removeTokenBox.isSelected ||
-            fallbackField.text.trim() != settings.fallbackPath ||
+            projFolderField.text.trim() != AxonServerSettings.getInstance().projFolder ||
             keyText() != settings.activeKey?.toString().orEmpty()
         )
 
@@ -119,11 +138,39 @@ class AxonConfigurable(private val project: Project) : BoundConfigurable("Axon")
         urlField.text = AxonServerSettings.getInstance().url
         tokenField.text = ""
         removeTokenBox.isSelected = false
-        fallbackField.text = settings.fallbackPath
+        projFolderField.text = AxonServerSettings.getInstance().projFolder
         keyField.text = settings.activeKey?.toString().orEmpty()
         testResult.text = ""
         testResult.icon = null
         refreshTokenState()
+        countProjFolder()
+    }
+
+    /** Counts the connections and projects in the folder of the field, off the UI thread. */
+    internal fun countProjFolder() {
+        val path = projFolderField.text.trim()
+        val run = ++countRun
+        if (path.isEmpty()) { projFolderCount.text = "Not set."; projFolderCount.icon = null; return }
+        projFolderCount.text = "Counting projects\u2026"
+        projFolderCount.icon = null
+        val app = ApplicationManager.getApplication()
+        val job = Runnable {
+            val n = runCatching { AxonProjFolders.count(File(AxonProjFolders.normalize(path))) { if (run != countRun) throw CancellationException() } }
+            if (n.exceptionOrNull() is CancellationException) return@Runnable
+            app.invokeLater({ if (run == countRun && hasUi) showCount(n.getOrNull()) }, ModalityState.any())
+        }
+        if (app.isUnitTestMode) job.run() else app.executeOnPooledThread(job)
+    }
+
+    private fun showCount(n: AxonProjFolders.Companion.Count?) {
+        when {
+            n == null -> { projFolderCount.text = "The folder does not exist."; projFolderCount.icon = AllIcons.General.Warning }
+            n.projects == 0 -> { projFolderCount.text = "No project found: no <connection>/<project>/.sync-metadata.json."; projFolderCount.icon = AllIcons.General.Warning }
+            else -> {
+                projFolderCount.text = "${n.connections} connection${if (n.connections == 1) "" else "s"}, ${n.projects} project${if (n.projects == 1) "" else "s"}."
+                projFolderCount.icon = AllIcons.General.InspectionsOK
+            }
+        }
     }
 
     /** Reads whether a key is stored, off the UI thread (the password store can be slow). */
@@ -187,9 +234,12 @@ class AxonConfigurable(private val project: Project) : BoundConfigurable("Axon")
             throw ConfigurationException("Write the Axon project as instance/project.")
 
         val server = AxonServerSettings.getInstance()
-        val sourceChanged = url != server.url || fallbackField.text.trim() != settings.fallbackPath
+        val folder = projFolderField.text.trim()
+        val folderChanged = folder != server.projFolder
+        val sourceChanged = url != server.url || (url.isEmpty() && folderChanged)
         server.url = url
-        settings.fallbackPath = fallbackField.text
+        server.projFolder = folder
+        if (folderChanged) AxonProjFolders.getInstance().settingChanged()
         // the password store can be slow and can ask for the keychain: not on the UI thread
         val typed = String(tokenField.password)
         val remove = removeTokenBox.isSelected

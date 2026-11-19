@@ -152,19 +152,27 @@ reference" inspection stays quiet for that file.
 ## Axon
 
 Settings | Languages & Frameworks | Fantom | Axon sets where the
-[Axon project copy](features.md#axon-project-copy) comes from.
+[Axon project copy](features.md#axon-project-copy) comes from, and where the
+[proj folder](features.md#axon-files-in-a-proj-folder) of the Axon server is.
 
 | Field | What it is | Where it is stored |
 |---|---|---|
 | Server URL | The base URL of the Axon server, with `http://` or `https://`. Empty by default | An IDE settings file on this machine, for all projects. Not part of settings sync |
 | Access key | Your access key from the Axon dashboard (Users page). The field is always shown empty; the line under it says whether a key is stored. Leave it empty to keep the stored key | The IDE password store. Never in a settings file |
-| proj folder | The `proj` folder of a local Axon server: `proj/<instance>/<project>/func/<name>.axon`. Read only when no server URL is set | The workspace file of the project |
+| Global proj folder | The `proj` folder of the Axon server: `proj/<connection>/<project>/func/<name>.axon`. An Axon file under it uses the functions of its own project. The project copy reads it when no server URL is set. `~` is your home folder. Empty by default | An IDE settings file on this machine, for all projects. Not part of settings sync |
 | Instance/project | The SkySpark project to copy, as `instance/project`. Empty drops the copy | The workspace file of the project |
 
 **Test Connection** checks the server URL and the access key with one call
 to the server, before you save. It uses the key in the field, or the stored
 key when the field is empty, and says how many projects the key can see, or
 why it failed: no server at that URL, a refused key, or a timeout.
+
+Under **Global proj folder** a line says how many connections and projects
+the folder holds, or that it does not exist.
+
+The global proj folder replaces the old per-project "Fallback folder". The
+first time a project opens, its old value moves into the global field when
+that field is empty.
 
 The workspace file (`.idea/workspace.xml`) is not shared, so instance and
 project names never get into version control.

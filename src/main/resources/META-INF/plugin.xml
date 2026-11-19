@@ -10,6 +10,9 @@
     <!-- JVM debugger for .fan files and Java FFI (`using [java]`, fantom-java-ffi.xml, included by
          fantom-java-debugger.xml); IDEs without the Java plugin load the rest of the plugin. -->
     <depends optional="true" config-file="fantom-java-debugger.xml">com.intellij.java</depends>
+    <!-- MCP tools for AI agents (diagnostics, resolve, usages); IDEs without the MCP Server
+         plugin load the rest of the plugin. -->
+    <depends optional="true" config-file="fantom-mcp.xml">com.intellij.mcpServer</depends>
 
     <!-- Extension points defined by the plugin.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
@@ -20,7 +23,19 @@
         <!-- Supplies Axon functions that are not in the file at hand (project and pod functions). -->
         <extensionPoint qualifiedName="co.anbora.labs.fantom.axonFunctionSource"
                         interface="co.anbora.labs.fantom.lang.axon.psi.AxonFunctionSource" dynamic="true"/>
+        <!-- Says which Axon project a file belongs to: a proj folder first (4.38), the active copy last. -->
+        <extensionPoint qualifiedName="co.anbora.labs.fantom.axonProjectFunctions"
+                        interface="co.anbora.labs.fantom.lang.axon.project.AxonProjectFunctions" dynamic="true"/>
+        <!-- Proj-folder mode (task 4.38): a sync that writes into a folder of the proj folder. -->
+        <extensionPoint qualifiedName="co.anbora.labs.fantom.axonSyncTarget"
+                        interface="co.anbora.labs.fantom.lang.axon.copy.AxonSyncTarget" dynamic="true"/>
     </extensionPoints>
+    <extensions defaultExtensionNs="co.anbora.labs.fantom">
+        <axonFunctionSource implementation="co.anbora.labs.fantom.lang.axon.project.AxonProjectFunctionSource"/>
+        <axonProjectFunctions id="axonProjFolder" implementation="co.anbora.labs.fantom.lang.axon.proj.AxonProjFolderFunctions" order="first"/>
+        <axonProjectFunctions implementation="co.anbora.labs.fantom.lang.axon.project.AxonCopyProjectFunctions" order="last"/>
+        <axonSyncTarget implementation="co.anbora.labs.fantom.lang.axon.proj.AxonProjFolderSync"/>
+    </extensions>
     <extensions defaultExtensionNs="com.intellij">
         <fileType name="Fantom" implementationClass="co.anbora.labs.fantom.lang.FantomFileType"
                   fieldName="INSTANCE" language="fantom_lang" extensions="fan"/>
@@ -85,6 +100,8 @@
         <lang.namesValidator language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.refactoring.FantomNamesValidator"/>
 
         <fileBasedIndex implementation="co.anbora.labs.fantom.lang.index.FantomDeclarationIndex"/>
+        <fileBasedIndex implementation="co.anbora.labs.fantom.lang.axon.proj.AxonTrioDocIndex"/>
+        <useScopeOptimizer implementation="co.anbora.labs.fantom.lang.axon.proj.AxonProjFolderScopeOptimizer"/>
         <!-- Fantom install sources as a library, so sys names resolve from any project -->
         <additionalLibraryRootsProvider implementation="co.anbora.labs.fantom.lang.library.FantomLibraryRootsProvider"/>
         <!-- Settings | Languages & Frameworks | Fantom: pick the Fantom home -->
@@ -146,6 +163,9 @@
         <lang.formatter language="axon_lang" implementationClass="co.anbora.labs.fantom.ide.axon.AxonFormattingModelBuilder"/>
         <langCodeStyleSettingsProvider implementation="co.anbora.labs.fantom.ide.axon.AxonLanguageCodeStyleSettingsProvider"/>
         <highlightErrorFilter implementation="co.anbora.labs.fantom.ide.axon.AxonInjectedErrorFilter"/>
+        <!-- Quick doc and Find Usages for Axon functions (task 4.30) -->
+        <lang.documentationProvider language="axon_lang" implementationClass="co.anbora.labs.fantom.ide.axon.AxonDocumentationProvider"/>
+        <lang.findUsagesProvider language="axon_lang" implementationClass="co.anbora.labs.fantom.ide.axon.AxonFindUsagesProvider"/>
         <!-- Axon project copy: read-only functions of one SkySpark project, as the library "Axon: instance/project" -->
         <additionalLibraryRootsProvider implementation="co.anbora.labs.fantom.lang.axon.copy.AxonProjectLibraryRootsProvider"/>
         <writingAccessProvider implementation="co.anbora.labs.fantom.lang.axon.copy.AxonProjectCopyWritingAccessProvider"/>
@@ -211,6 +231,16 @@
                 icon="AllIcons.Actions.Compile">
             <add-to-group group-id="BuildMenu" anchor="last"/>
             <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+        </action>
+    </actions>
+    <actions>
+        <action id="Fantom.AxonSync"
+                class="co.anbora.labs.fantom.ide.axon.AxonSyncAction"
+                text="Sync Axon Functions"
+                description="Sync the Axon project from SkySpark through the Axon server"
+                icon="AllIcons.Actions.Refresh">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+            <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
         </action>
     </actions>
 </idea-plugin>

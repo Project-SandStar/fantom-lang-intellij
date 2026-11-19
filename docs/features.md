@@ -202,7 +202,7 @@ What does not work:
 
 | File or place | What you get |
 |---|---|
-| `.axon` files | A real Axon parser. Syntax errors are marked as you type, and one error does not hide the rest of the file. Ctrl+click (Cmd+click) on a name goes to its definition in the same file: a local (`name: expr`), a lambda parameter, a `defcomp` cell, a `catch` variable or a function defined at the top of the file. Rename works for these names. Functions from SkySpark, Haxall and your project (`readAll`, `hisRead`) are not resolved yet and are not marked as errors. Folding for `do ... end`, `defcomp ... end`, lists, dicts and comments. Structure view with functions and `defcomp` cells. Reformat Code sets the indent of lines (two spaces) and changes nothing else. Colours (keywords, strings, numbers with units, dates, times, `@refs`, `^symbols`, URIs, comments, operators). Names are coloured by what they are: a function name, a parameter, a local, a function call, a tag name, a `defcomp` cell; a name that is not defined in the file and is not called keeps the plain colour. Brace matching for `( ) [ ] { }`, and Cmd+/ comments. Colours: Settings, Editor, Color Scheme, Axon |
+| `.axon` files | A real Axon parser. Syntax errors are marked as you type, and one error does not hide the rest of the file. Ctrl+click (Cmd+click) on a name goes to its definition in the same file: a local (`name: expr`), a lambda parameter, a `defcomp` cell, a `catch` variable or a function defined at the top of the file. Rename works for these names. A call to a function of your Axon project (see [Axon project copy](#axon-project-copy)) goes to its `.axon` file; a local or a function of the file with the same name wins. Built-in SkySpark and Haxall functions (`readAll`, `hisRead`) are not resolved and are not marked as errors. Folding for `do ... end`, `defcomp ... end`, lists, dicts and comments. Structure view with functions and `defcomp` cells. Reformat Code sets the indent of lines (two spaces) and changes nothing else. Colours (keywords, strings, numbers with units, dates, times, `@refs`, `^symbols`, URIs, comments, operators). Names are coloured by what they are: a function name, a parameter, a local, a function call, a tag name, a `defcomp` cell; a name that is not defined in the file and is not called keeps the plain colour. Brace matching for `( ) [ ] { }`, and Cmd+/ comments. Colours: Settings, Editor, Color Scheme, Axon |
 | Axon in Fantom strings | The first string argument of `eval`, `evalAll`, `evalToFunc`, `parseAxon` or `Axon` is parsed as Axon, with colours, syntax errors and navigation. Put `// language=axon` on the line above any other string to do the same. A string with `$name` interpolation, or one joined with `+`, is only a part of the Axon text, so no syntax error is shown in it |
 | `.trio` files | A full parser for Haystack records. Colours for `---` separators, tag names, `//` comments and each kind of value: strings, numbers with units, `true`/`false`, `@refs` with their names, `^symbols`, dates, times, URIs, `C(lat,lng)`, `Type("text")`, `NA`, lists `[ ]` and dicts `{ }`. Indented text, `Zinc:` and `Trio:` blocks are one value. Syntax errors are marked, and an error in one record does not spoil the next. Fold a record or a multi-line value. The Structure view shows one node per record, named by its `name`, `dis` or `id` tag. Cmd+/ comments a line, and `[ ]`, `{ }`, `( )` are matched. The `src:` value is coloured as Axon The `src:` value is parsed as Axon, with the same errors and navigation as an `.axon` file. The `src:` of a `view` record holds view settings and is left as plain text |
 | `.fandoc` files | Headings and their underlines, list markers, `pre>` blocks, backtick links and `'code'` |
@@ -221,7 +221,7 @@ that project's Axon functions.
   double-click picks, and Escape closes the window. The window opens at the
   current project, or else at the connection you clicked last.
 - The functions come from an Axon server when its URL is set. With no URL
-  they come from a local `proj` folder. See [Settings](settings.md).
+  they come from the global proj folder. See [Settings](settings.md).
 - The copy shows under External Libraries as "Axon: instance/project", one
   `.axon` file per function. The files open with the Axon colours.
 - The files are read-only. They are outside your project, so version control
@@ -230,8 +230,78 @@ that project's Axon functions.
   deletes the old copy. The copy stays after an IDE restart; no network is
   used at start.
 - Refresh asks the server to read SkySpark again, then fetches the functions.
+- "Sync Axon Functions" does the same from a menu: Tools, or a right-click on
+  the project root or on the "Axon: instance/project" node in the Project
+  view. It runs in the background with a progress bar you can cancel. A
+  notification then lists the functions added, changed and removed. The item
+  is greyed out when no server URL, no access key or no project is set; its
+  tooltip says which one. A local `proj` folder alone cannot sync: only the
+  server reads SkySpark.
 - A fetch that fails changes nothing: the old copy stays as it was. The error
   shows as a notification.
 
-Not there yet: editing a function and pushing it back from the IDE, and
-resolve or completion from the copy.
+In any `.axon` file, and in Axon inside Fantom strings and `.trio` files, the
+functions of the copy work like the functions of the file:
+
+- Ctrl+click (Cmd+click) on a call opens the `.axon` file of the function.
+- Completion offers the function names, with the first line of each doc.
+- Quick Documentation (F1 or Ctrl+Q) shows `name(params)`, the project and
+  the doc.
+- Find Usages on a function file finds its calls in your project.
+- A name the copy does not know is not marked as an error.
+
+Only the functions of the project you picked are used. Pick another project
+and the old names no longer resolve.
+
+Not there yet: editing a function and pushing it back from the IDE.
+
+## Axon files in a proj folder
+
+The Axon server keeps the functions of each SkySpark project in a `proj`
+folder:
+
+```
+proj/<connection>/<project>/.sync-metadata.json
+proj/<connection>/<project>/func/<name>.axon
+proj/<connection>/<project>/func/<name>.trio
+```
+
+Open that folder in the IDE (the whole `proj` folder, one connection or one
+project) and each `.axon` file knows its own project:
+
+- A call resolves to the function of the same project only. Two projects can
+  each have a function of the same name; they never mix.
+- Completion lists the functions of the same project.
+- Axon in the `src` tag of a `.trio` file in the project uses the same project.
+- Quick Documentation shows the `doc` of the function's `.trio` file.
+- Find Usages on a function file searches its own project folder only.
+- The status bar shows "Axon: connection/project" for the `.axon` or
+  `.trio` file in the editor.
+- Files in `backup`, `.versions`, `.backups` and `.sidecar-*` folders are
+  copies: they have no project, and their names resolve to nothing.
+
+The project comes from the path under the **Global proj folder** setting, and
+its name from `.sync-metadata.json`. With the setting empty, the IDE looks for
+the nearest `.sync-metadata.json`, at most four folders up. See
+[Settings](settings.md#axon).
+
+For these files the project copy is not used. Files outside a `proj` folder
+work as before.
+
+## Tools for AI agents (MCP)
+
+When the bundled MCP Server plugin is on (Settings, Tools, MCP Server), an AI
+agent such as Claude Code can ask the IDE about Fantom and Axon code. The
+answers are the ones the IDE itself gives.
+
+| Tool | What it answers |
+|---|---|
+| `fantom_diagnostics` | The problems of a `.fan` or `.axon` file: syntax errors, enabled inspections, and compiler messages when a fresh compile exists. One line per problem: severity, line:column, message |
+| `fantom_resolve` | Where a name is defined, as Go to Declaration finds it. Give a file with an offset or a line and column, or give a name such as `demo::Foo.go`, `Foo.go` or `Foo` |
+| `fantom_find_usages` | Find Usages for a declaration, in project files only. Point at the declaration or at a use of it. An Axon name is searched in its own file |
+
+- The tools read only files in the open project.
+- While the IDE indexes, each tool answers "indexing, retry".
+- Each tool returns at most 50 lines unless you ask for more (500 at most).
+- Without the MCP Server plugin the Fantom plugin works as before; only these
+  tools are missing.

@@ -1,8 +1,11 @@
 package co.anbora.labs.fantom.lang.axon.copy
 
 import co.anbora.labs.fantom.lang.axon.copy.AxonCopyException.Kind
+import co.anbora.labs.fantom.lang.axon.proj.AxonProjFolders
 import java.io.File
+import java.time.Instant
 import java.time.LocalDateTime
+import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -18,14 +21,15 @@ import java.util.Locale
  *
  * A project is a folder two levels down that holds `.sync-metadata.json`. The key comes
  * from the folder names, and a project is found by listing folders, never by building a
- * path from a key. `sync` has no meaning here: the folder is what it is.
+ * path from a key. Backup and version folders are skipped. `sync` has no meaning here:
+ * the folder is what it is.
  */
 class AxonFallbackFolder(private val root: File) : AxonFunctionSource {
 
     override val id: String get() = "folder"
 
     override fun listProjects(check: () -> Unit): List<AxonProjectInfo> {
-        if (!root.isDirectory) throw AxonCopyException(Kind.NOT_CONFIGURED, "The Axon fallback folder does not exist.")
+        if (!root.isDirectory) throw AxonCopyException(Kind.NOT_CONFIGURED, "The global proj folder does not exist.")
         return projectDirs(check).map { (key, dir) ->
             val meta = metadata(dir)
             val count = (meta?.get("functionCount") as? Number)?.toInt() ?: (File(dir, FUNC).list()?.count { it.endsWith(AXON_EXT) } ?: 0)
@@ -34,9 +38,9 @@ class AxonFallbackFolder(private val root: File) : AxonFunctionSource {
     }
 
     override fun fetch(key: AxonProjectKey, sync: Boolean, check: () -> Unit): AxonFunctionList {
-        if (!root.isDirectory) throw AxonCopyException(Kind.NOT_CONFIGURED, "The Axon fallback folder does not exist.")
+        if (!root.isDirectory) throw AxonCopyException(Kind.NOT_CONFIGURED, "The global proj folder does not exist.")
         val dir = projectDirs(check).firstOrNull { it.first == key }?.second
-            ?: throw AxonCopyException(Kind.UNKNOWN_PROJECT, "The Axon fallback folder has no project $key.")
+            ?: throw AxonCopyException(Kind.UNKNOWN_PROJECT, "The global proj folder has no project $key.")
         val meta = metadata(dir)
         val metaFunctions = AxonJson.obj(meta?.get("functions"))
         val files = (File(dir, FUNC).listFiles() ?: emptyArray())
@@ -72,7 +76,7 @@ class AxonFallbackFolder(private val root: File) : AxonFunctionSource {
     }
 
     private fun dirs(dir: File): List<File> =
-        (dir.listFiles() ?: emptyArray()).filter { it.isDirectory && !it.name.startsWith(".") }.sortedBy { it.name }
+        (dir.listFiles() ?: emptyArray()).filter { it.isDirectory && !it.name.startsWith(".") && !AxonProjFolders.isCopyFolder(it.name) }.sortedBy { it.name }
 
     private fun metadata(dir: File): Map<String, Any?>? {
         val f = File(dir, METADATA)
@@ -154,6 +158,23 @@ class AxonFallbackFolder(private val root: File) : AxonFunctionSource {
             return runCatching {
                 DateTimeFormatter.ISO_INSTANT.format(LocalDateTime.parse(t.removeSuffix(" UTC").uppercase(Locale.ENGLISH), LOCAL).toInstant(ZoneOffset.UTC))
             }.getOrNull()
+        }
+
+        /**
+         * The time [text] (ISO, or already in the folder's form) in the form the server writes
+         * into a proj folder: `2023-11-10T19:07:07Z` becomes `11/10/2023, 7:07:07 PM UTC`.
+         * Null for anything else.
+         */
+        fun folderTimeOf(text: String?): String? {
+            val instant = instantOf(text) ?: return null
+            return LOCAL.format(LocalDateTime.ofInstant(instant, ZoneOffset.UTC)) + " UTC"
+        }
+
+        /** [text] (ISO, or the folder's form) as an instant, or null. */
+        fun instantOf(text: String?): Instant? {
+            val iso = isoOf(text) ?: return null
+            return runCatching { OffsetDateTime.parse(iso).toInstant() }.getOrNull()
+                ?: runCatching { Instant.parse(iso) }.getOrNull()
         }
     }
 }

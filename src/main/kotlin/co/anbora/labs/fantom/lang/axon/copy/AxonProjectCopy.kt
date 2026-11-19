@@ -1,6 +1,7 @@
 package co.anbora.labs.fantom.lang.axon.copy
 
 import co.anbora.labs.fantom.lang.axon.copy.AxonCopyException.Kind
+import co.anbora.labs.fantom.lang.axon.proj.AxonProjFolders
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
@@ -35,7 +36,7 @@ import java.util.concurrent.atomic.AtomicLong
  * of the SkySpark project the developer works on ([AxonProjectSettings.activeKey]).
  *
  * The functions come from the Axon server when its URL is set ([AxonServerSettings]),
- * else from the fallback `proj` folder ([AxonProjectSettings.fallbackPath]). They are
+ * else from the global `proj` folder ([AxonServerSettings.projFolder]). They are
  * written to [AxonProjectCache] and shown as the library "Axon: instance/project"
  * ([AxonProjectLibraryRootsProvider]). There is one copy per IDE project: picking
  * another project, or none, deletes the old one. The copy stays on disk when the IDE
@@ -137,21 +138,21 @@ class AxonProjectCopy(private val project: Project) {
     }
 
     /**
-     * Where the functions come from: the server when a URL is set, else the fallback
+     * Where the functions come from: the server when a URL is set, else the global proj
      * folder. A server that fails is an error; the folder is not read in its place, so
      * that an old folder never replaces a newer copy without the developer knowing.
      */
     fun source(): AxonFunctionSource {
         testSource?.let { return it }
         serverClient()?.let { return it }
-        val path = AxonProjectSettings.getInstance(project).fallbackPath
-        if (path.isNotEmpty()) return AxonFallbackFolder(File(path))
-        throw AxonCopyException(Kind.NOT_CONFIGURED, "Set the Axon server URL or the fallback folder in Settings | Languages & Frameworks | Fantom | Axon.")
+        val path = AxonServerSettings.getInstance().projFolder
+        if (path.isNotEmpty()) return AxonFallbackFolder(File(AxonProjFolders.normalize(path)))
+        throw AxonCopyException(Kind.NOT_CONFIGURED, "Set the Axon server URL or the global proj folder in Settings | Languages & Frameworks | Fantom | Axon.")
     }
 
-    /** True when a server URL or a fallback folder is set. Reads memory only. */
+    /** True when a server URL or a global proj folder is set. Reads memory only. */
     fun isConfigured(): Boolean =
-        testSource != null || AxonServerSettings.getInstance().url.isNotEmpty() || AxonProjectSettings.getInstance(project).fallbackPath.isNotEmpty()
+        testSource != null || AxonServerSettings.getInstance().url.isNotEmpty() || AxonServerSettings.getInstance().projFolder.isNotEmpty()
 
     // ---- blocking cores -----------------------------------------------------------------------
 
@@ -199,6 +200,43 @@ class AxonProjectCopy(private val project: Project) {
         val ticket = choice.get()
         val key = activeKey ?: throw AxonCopyException(Kind.NOT_CONFIGURED, "No Axon project is chosen.")
         return fetchAndStore(key, sync, check, ticket, onlyIfActive = true)
+    }
+
+    /** True when a server URL is set: only the server can sync from SkySpark. Reads memory only. */
+    fun canSync(): Boolean = testSource != null || AxonServerSettings.getInstance().url.isNotEmpty()
+
+    private fun requireServer() {
+        if (!canSync()) throw AxonCopyException(Kind.NOT_CONFIGURED, "Set the Axon server URL in Settings | Languages & Frameworks | Fantom | Axon. Only the server can sync from SkySpark.")
+    }
+
+    /**
+     * "Sync Axon Functions": the server reads the active project from SkySpark
+     * (`sync=true`), the copy is written again, and the result says which functions
+     * were added, changed or removed. Blocks.
+     */
+    fun syncNow(check: () -> Unit = {}): AxonSyncResult {
+        requireServer()
+        // one ticket and one key: a pick that comes in between cancels this sync
+        val ticket = choice.get()
+        val key = activeKey ?: throw AxonCopyException(Kind.NOT_CONFIGURED, "No Axon project is chosen.")
+        val before = registered?.copy?.takeIf { it.key == key }?.functions.orEmpty().associate { it.name to it.hash }
+        val after = fetchAndStore(key, true, check, ticket, onlyIfActive = true)
+        return AxonSyncResult.diff(key, before, after.functions.associate { it.name to it.hash })
+    }
+
+    /**
+     * The same for a folder that an [AxonSyncTarget] claims (proj-folder mode): the server
+     * syncs [AxonSyncTarget.Target.key] and the hook writes the functions; the read-only
+     * copy is not touched. Blocks.
+     */
+    fun syncNow(match: AxonSyncTarget.Match, check: () -> Unit = {}): AxonSyncResult {
+        requireServer()
+        val target = match.hook.prepare(project, match.target, check)
+        val key = target.key
+        val list = source().fetch(key, true, check)
+        if (list.key != key) throw AxonCopyException(Kind.BAD_REPLY, "The reply is for another project.")
+        check()
+        return match.hook.write(project, target, list, check)
     }
 
     /** Forgets the active project and deletes its copy. */
@@ -309,6 +347,18 @@ class AxonProjectCopy(private val project: Project) {
         background("Refreshing Axon functions of $key") { indicator ->
             val c = cancellable(indicator) { check -> fetchAndStore(key, true, check, ticket, onlyIfActive = true) }
             notify("Axon: $key refreshed, ${count(c.functions.size)}.", NotificationType.INFORMATION)
+        }
+    }
+
+    /**
+     * [syncNow] in the background, with a progress bar that can be cancelled. The result
+     * (or the error) is a notification. With [match] the hook's folder is synced.
+     */
+    fun sync(match: AxonSyncTarget.Match? = null) {
+        val key = match?.target?.key ?: activeKey ?: return
+        background("Syncing Axon functions of $key") { indicator ->
+            val r = cancellable(indicator) { check -> if (match != null) syncNow(match, check) else syncNow(check) }
+            notify(r.html(), if (r.conflicts.isEmpty()) NotificationType.INFORMATION else NotificationType.WARNING)
         }
     }
 
