@@ -63,7 +63,8 @@ class AxonReference(element: AxonNameUse, range: TextRange) : PsiReferenceBase<A
     override fun handleElementRename(newElementName: String): PsiElement {
         val leaf = element.referenceNameElement?.node as? LeafElement
             ?: throw IncorrectOperationException("No name to rename")
-        leaf.replaceWithText(newElementName)
+        // a project function is its file: a file rename passes "name.axon", and an Axon name has no dot
+        leaf.replaceWithText(newElementName.removeSuffix(".axon"))
         return element
     }
 }
