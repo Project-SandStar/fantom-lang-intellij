@@ -286,6 +286,35 @@ class AxonProjFolderTest : BasePlatformTestCase() {
         assertFalse(oldScope.contains(file("proj/demo/backup/site/func/old.axon")))
     }
 
+    /**
+     * Rename of a function file in a project folder: the calls in the same project get the new
+     * function name (never `name.axon`); a project with a function of the same name, and the
+     * backup and version copies, keep theirs.
+     */
+    fun testRenameOfAFunctionFileStaysInItsProject() {
+        layout()
+        myFixture.addFileToProject("proj/demo/site/func/siteTotal.axon", "() => siteArea(1) + siteArea(2)")
+        val target = PsiManager.getInstance(project).findFile(file("proj/demo/site/func/siteArea.axon"))!!
+        val others = listOf(
+            "proj/demo/other/func/otherOnly.axon",
+            "proj/demo/other/func/siteArea.axon",
+            "proj/demo/backup/site/func/old.axon",
+            "proj/demo/site/func/.versions/siteReport.axon",
+            "proj/demo/site/.backups/func/siteReport.axon",
+        ).associateWith { String(file(it).contentsToByteArray()) }
+
+        myFixture.renameElement(target, "siteSize.axon")
+
+        assertNotNull(myFixture.findFileInTempDir("proj/demo/site/func/siteSize.axon"))
+        val text = { path: String -> com.intellij.openapi.fileEditor.FileDocumentManager.getInstance().getDocument(file(path))!!.text }
+        assertEquals("() => readAll(site).map(siteSize)", text("proj/demo/site/func/siteReport.axon"))
+        assertEquals("() => siteSize(1) + siteSize(2)", text("proj/demo/site/func/siteTotal.axon"))
+        for ((path, before) in others) assertEquals(path, before, text(path))
+        assertNotNull("the other project keeps its function", myFixture.findFileInTempDir("proj/demo/other/func/siteArea.axon"))
+        val all = listOf("proj/demo/site/func/siteReport.axon", "proj/demo/site/func/siteTotal.axon") + others.keys
+        assertFalse(all.any { text(it).contains(".axon") })
+    }
+
     /** The `src` of a trio record in a project folder is Axon of that project too. */
     fun testTrioSrcInAProjectFolderResolvesInThatProject() {
         layout()
