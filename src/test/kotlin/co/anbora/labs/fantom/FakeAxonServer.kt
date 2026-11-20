@@ -36,6 +36,9 @@ class FakeAxonServer(private val token: String = "test-token") : AutoCloseable {
     @Volatile var redirectTo = ""
     private var pushes = 0
 
+    /** Sent as `removedDuplicates` in the next good push reply. */
+    @Volatile var duplicates: List<Map<String, Any?>> = emptyList()
+
     val url: String get() = "http://127.0.0.1:${server.address.port}"
 
     init {
@@ -94,6 +97,7 @@ class FakeAxonServer(private val token: String = "test-token") : AutoCloseable {
             return reply(ex, 200, if (mode == "cut") text.substring(0, text.length / 2) else text)
         }
         if (name != null && ex.requestMethod == "POST") {
+            if (mode == "readonly") return reply(ex, 403, """{"error":"your user is read-only and cannot commit"}""")
             val o = AxonJson.parseObject(body)
             val have = fns[name]
             if (have != null && have.mod != o["expectedMod"]) {
@@ -102,7 +106,7 @@ class FakeAxonServer(private val token: String = "test-token") : AutoCloseable {
             val src = o["src"] as String
             val mod = "2026-06-0${++pushes}T00:00:00Z"
             fns[name] = Fn(src, if (o.containsKey("doc")) o["doc"] as String? else have?.doc, mod)
-            return reply(ex, 200, AxonJson.write(linkedMapOf("status" to "ok", "mod" to mod, "hash" to AxonCopyLimits.sha256(src)), false))
+            return reply(ex, 200, AxonJson.write(linkedMapOf("status" to "ok", "mod" to mod, "hash" to AxonCopyLimits.sha256(src), "removedDuplicates" to duplicates), false))
         }
         reply(ex, 405, """{"error":"method"}""")
     }

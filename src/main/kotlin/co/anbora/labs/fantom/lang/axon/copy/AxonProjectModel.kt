@@ -40,6 +40,8 @@ class AxonCopyException(val kind: Kind, message: String, cause: Throwable? = nul
         NOT_CONFIGURED,
         /** 401: no token, or a wrong one. */
         UNAUTHORIZED,
+        /** HTTP 403: the key works, but its user is read-only and cannot commit. */
+        READ_ONLY,
         /** 404, or a fallback folder without that project. */
         UNKNOWN_PROJECT,
         TIMEOUT,

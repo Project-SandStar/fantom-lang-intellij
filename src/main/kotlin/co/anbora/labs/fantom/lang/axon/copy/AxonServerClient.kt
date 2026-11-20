@@ -10,8 +10,19 @@ import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.SocketTimeoutException
 
-/** The reply to a push: stored, or refused because the function changed on the server. */
-data class AxonPushResult(val ok: Boolean, val mod: String?, val hash: String?) {
+/** An older SkySpark record with the same name that the server backed up and removed on a push. */
+data class AxonRemovedDuplicate(val id: String?, val mod: String?, val backup: String?)
+
+/**
+ * The reply to a push: stored, or refused because the function changed on the server. On a
+ * conflict, [mod] and [hash] are the server's.
+ */
+data class AxonPushResult(
+    val ok: Boolean,
+    val mod: String?,
+    val hash: String?,
+    val removedDuplicates: List<AxonRemovedDuplicate> = emptyList(),
+) {
     val conflict: Boolean get() = !ok
 }
 
@@ -93,7 +104,10 @@ class AxonServerClient(
         val status = AxonJson.str(o["status"])
         val ok = reply.status == 200 && status == "ok"
         if (!ok && !(reply.status == 409 && status == "conflict")) throw bad("the reply has no known status")
-        return AxonPushResult(ok, AxonJson.str(o["mod"]), AxonJson.str(o["hash"]))
+        val removed = AxonJson.list(o["removedDuplicates"]).orEmpty().mapNotNull { AxonJson.obj(it) }.map {
+            AxonRemovedDuplicate(AxonJson.str(it["id"]), AxonJson.str(it["mod"]), AxonJson.str(it["backup"]))
+        }
+        return AxonPushResult(ok, AxonJson.str(o["mod"]), AxonJson.str(o["hash"]), removed)
     }
 
     private fun projectPath(key: AxonProjectKey) = "/api/ide/projects/" + segment(key.instance) + "/" + segment(key.project)
@@ -109,7 +123,8 @@ class AxonServerClient(
         val said = runCatching { AxonJson.str(AxonJson.parseObject(reply.body)["error"]) }.getOrNull()
             ?.take(200)?.let { " The server said: $it" }.orEmpty()
         return when (reply.status) {
-            401, 403 -> AxonCopyException(Kind.UNAUTHORIZED, "The Axon server refused the token (HTTP ${reply.status}).")
+            401 -> AxonCopyException(Kind.UNAUTHORIZED, "The Axon server refused the token (HTTP ${reply.status}).")
+            403 -> AxonCopyException(Kind.READ_ONLY, "The access key belongs to a read-only user of the Axon server: it can read and sync, but not commit to SkySpark.$said")
             404 -> if (key != null) AxonCopyException(Kind.UNKNOWN_PROJECT, "The Axon server does not know the project $key.")
             else AxonCopyException(Kind.IO, "The Axon server has no IDE API at this URL (HTTP 404).")
             in 300..399 -> AxonCopyException(Kind.IO, "The Axon server sent a redirect (HTTP ${reply.status}). Redirects are not followed; set the final URL.")

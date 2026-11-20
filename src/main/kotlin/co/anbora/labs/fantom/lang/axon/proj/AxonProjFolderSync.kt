@@ -312,6 +312,8 @@ class AxonProjFolderSync : AxonSyncTarget {
             e["lastModified"] = before?.get("lastModified")?.takeIf { modIso != null && before["modIso"] == modIso }
                 ?: AxonFallbackFolder.folderTimeOf(s.f.mod) ?: before?.get("lastModified")
             e["synced"] = nowIso
+            // the server's own text of the mod: the next push sends it back as expectedMod
+            e["mod"] = s.f.mod
             e["modIso"] = modIso
             e["doc"] = s.f.doc
             // the trio the folder got from SkySpark: a local trio that differs from it is an edit
@@ -330,7 +332,7 @@ class AxonProjFolderSync : AxonSyncTarget {
     // ---- the writes ----------------------------------------------------------------------------
 
     /** The VFS writes of one sync. Every method but [command] runs in a write action. */
-    private class Writer(private val project: Project, private val now: Instant) {
+    internal class Writer(private val project: Project, private val now: Instant, private val name: String = "Sync Axon Functions") {
         private val group = "AxonProjFolderSync-" + UUID.randomUUID()
         private val stamp = STAMP.format(now)
 
@@ -340,7 +342,7 @@ class AxonProjFolderSync : AxonSyncTarget {
             ApplicationManager.getApplication().invokeAndWait({
                 try {
                     WriteCommandAction.writeCommandAction(project)
-                        .withName("Sync Axon Functions")
+                        .withName(name)
                         .withGroupId(group)
                         .withGlobalUndo()
                         .run<Exception> { work() }
@@ -432,7 +434,7 @@ class AxonProjFolderSync : AxonSyncTarget {
         private const val BATCH = 50
         private val NAME = Regex("[A-Za-z_][A-Za-z0-9_]{0,199}")
         /** An instant as JavaScript's `toISOString` writes it, as the server does: always with milliseconds. */
-        private val JS_ISO = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.ROOT).withZone(ZoneOffset.UTC)
+        internal val JS_ISO = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.ROOT).withZone(ZoneOffset.UTC)
         private val STAMP = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss-SSS'Z'", Locale.ROOT).withZone(ZoneOffset.UTC)
 
         private fun globalRoot(): String? =
