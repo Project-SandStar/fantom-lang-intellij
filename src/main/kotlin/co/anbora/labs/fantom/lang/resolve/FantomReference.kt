@@ -81,7 +81,10 @@ class FantomReference(
             Kind.BARE -> {}
         }
         val fan = resolveAll()
-        if (fan.isNotEmpty() || kind == Kind.SLOT) return fan
+        if (fan.isNotEmpty()) return fan
+        // `class FanDate : JDate { ... getTime() ... }`: a slot inherited from a Java superclass.
+        if (kind == Kind.BARE || thisReceiver) javaInheritedSlot(file)?.let { return it }
+        if (kind == Kind.SLOT) return fan
         return FantomFfi.resolveType(name, file)
     }
 
@@ -110,6 +113,22 @@ class FantomReference(
         if (java.isEmpty()) return null
         if (java.size < 2) return java
         return FantomFfi.pickOverloads(java, callArgTypes(), element.project)
+    }
+
+    /**
+     * The members named like this slot on a Java class the enclosing Fantom type extends or
+     * implements (`class FanDate : JDate`), or null when there is none. The compiler allows
+     * one level: a Fantom class may subclass a Java class, not a Fantom subclass of one.
+     */
+    private fun javaInheritedSlot(file: PsiFile): List<PsiElement>? {
+        val type = FantomScope.enclosingType(element) ?: return null
+        for (superName in FantomScope.superTypeNames(type)) {
+            if (!FantomFfi.isJavaType(superName, file)) continue
+            val java = FantomFfi.resolveSlot(superName, name, file)
+            if (java.isEmpty()) continue
+            return if (java.size < 2) java else FantomFfi.pickOverloads(java, callArgTypes(), element.project)
+        }
+        return null
     }
 
     /**

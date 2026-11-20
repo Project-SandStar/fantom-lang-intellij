@@ -307,6 +307,30 @@ class FantomJavaFfiTest : FantomInspectionTestBase() {
         assertTrue(submit.toString(), submit.all { (it as PsiMethod).parameterList.parametersCount == 1 })
     }
 
+    /** `class FanDate : JDate`: inherited Java methods resolve, and an override gets the gutter arrow. */
+    fun testSubclassOfJavaClass() {
+        if (skip()) return
+        myFixture.configureByText(
+            "A.fan",
+            """
+            using [java] java.util::Date as JDate
+            class FanDate : JDate {
+              new make(Int millis) : super(millis) {}
+              Int t() { return getTime() }
+              Int u() { return this.getTime() }
+              override Int hashCode() { return 1 }
+            }
+            """.trimIndent(),
+        )
+        assertEquals("java.util.Date", (targetsAt("getTime() }").single() as PsiMethod).containingClass?.qualifiedName)
+        assertEquals("getTime", (targetsAt("getTime() }\n  over").first() as PsiMethod).name)
+        val leaf = myFixture.file.findElementAt(myFixture.file.text.indexOf("hashCode"))!!
+        val marker = co.anbora.labs.fantom.ide.generate.FantomOverrideLineMarkerProvider().getLineMarkerInfo(leaf)
+        assertNotNull("override marker on hashCode", marker)
+        assertEquals("Overrides JDate.hashCode", marker!!.lineMarkerTooltip)
+        assertEmpty(myFixture.doHighlighting().filter { it.description?.startsWith("Cannot resolve") == true }.map { it.description })
+    }
+
     fun testFantomNamesStillReportedWithoutJavaPlugin() {
         if (skip()) return
         ExtensionTestUtil.maskExtensions(FantomFfi.EP_NAME, emptyList(), testRootDisposable)

@@ -27,7 +27,7 @@ class FantomOverrideLineMarkerProvider : LineMarkerProvider {
         if (slot.nameIdentifier != element) return null
         val mods = FantomPresentation.modifiers(slot)
         if ("override" in mods) {
-            val base = FantomOverrideCandidates.baseSlot(slot) ?: return null
+            val base = FantomOverrideCandidates.baseSlot(slot) ?: return javaBaseMarker(slot, element)
             return NavigationGutterIconBuilder.create(AllIcons.Gutter.OverridingMethod)
                 .setTargets(base)
                 .setTooltipText("Overrides ${ownerName(base)}.${base.name}")
@@ -40,6 +40,26 @@ class FantomOverrideLineMarkerProvider : LineMarkerProvider {
             .setTargets(overriding)
             .setTooltipText(if (overriding.size == 1) "Overridden in ${ownerName(overriding.single())}" else "Overridden in ${overriding.size} types")
             .createLineMarkerInfo(element)
+    }
+
+    /**
+     * `class FanDate : JDate { override Int hashCode() }`: the overridden method of a Java
+     * superclass (`using [java]`). Empty without the Java plugin.
+     */
+    private fun javaBaseMarker(slot: FantomNamedElement, element: PsiElement): LineMarkerInfo<*>? {
+        val name = slot.name ?: return null
+        val type = co.anbora.labs.fantom.lang.resolve.FantomScope.enclosingType(slot) ?: return null
+        val file = slot.containingFile ?: return null
+        for (superName in co.anbora.labs.fantom.lang.resolve.FantomScope.superTypeNames(type)) {
+            if (!co.anbora.labs.fantom.lang.resolve.FantomFfi.isJavaType(superName, file)) continue
+            val java = co.anbora.labs.fantom.lang.resolve.FantomFfi.resolveSlot(superName, name, file)
+            if (java.isEmpty()) continue
+            return NavigationGutterIconBuilder.create(AllIcons.Gutter.OverridingMethod)
+                .setTargets(java)
+                .setTooltipText("Overrides $superName.$name")
+                .createLineMarkerInfo(element)
+        }
+        return null
     }
 
     private fun ownerName(slot: FantomNamedElement): String =
