@@ -51,6 +51,14 @@ class FantOutputParser(private val clock: () -> Long = System::currentTimeMillis
         val failed: Boolean get() = failedAt >= 0
     }
 
+    /** One closed test: [qname] is `pod::Type.method`; [message] is set when it failed, [details] holds the trace. */
+    data class Result(val qname: String, val failed: Boolean, val message: String?, val details: String)
+
+    private val closed = ArrayList<Result>()
+
+    /** Every test closed so far, in run order. */
+    val results: List<Result> get() = closed.toList()
+
     /** What one line turned into: service messages, and whether the line itself is still shown as text. */
     data class Parsed(val messages: List<String>, val showLine: Boolean)
 
@@ -162,6 +170,8 @@ class FantOutputParser(private val clock: () -> Long = System::currentTimeMillis
         test = null
         pendingBlank = 0
         val end = if (current.failed) current.failedAt else clock()
+        closed += Result(current.qname, current.failed, if (current.failed) current.message ?: "Test failed" else null,
+            current.stack.toString().trimEnd())
         if (current.failed) {
             out += Msg("testFailed").name(current.name)
                 .addAttribute("message", current.message ?: "Test failed")

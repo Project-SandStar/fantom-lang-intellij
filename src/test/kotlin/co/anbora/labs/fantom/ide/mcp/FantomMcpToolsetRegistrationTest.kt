@@ -4,7 +4,7 @@ import com.intellij.mcpserver.McpToolset
 import com.intellij.mcpserver.annotations.McpTool
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
-/** fantom-mcp.xml must put the toolset on the MCP Server extension point, with the three tools. */
+/** fantom-mcp.xml must put the toolset on the MCP Server extension point, with its tools. */
 class FantomMcpToolsetRegistrationTest : BasePlatformTestCase() {
 
     fun testToolsetIsRegistered() {
@@ -17,6 +17,6 @@ class FantomMcpToolsetRegistrationTest : BasePlatformTestCase() {
             .filter { it.isAnnotationPresent(McpTool::class.java) }
             .map { it.name }
             .sorted()
-        assertEquals(listOf("fantom_diagnostics", "fantom_find_usages", "fantom_resolve"), names)
+        assertEquals(listOf("fantom_build", "fantom_diagnostics", "fantom_find_usages", "fantom_pod_deps", "fantom_resolve", "fantom_run_test", "fantom_type_of"), names)
     }
 }
