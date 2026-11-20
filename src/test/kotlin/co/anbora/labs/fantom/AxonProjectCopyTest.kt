@@ -751,6 +751,31 @@ class AxonProjectCopyTest : BasePlatformTestCase() {
         }
     }
 
+    fun testSettingsPageWarnsWhenTheKeyIsInMemoryOnly() {
+        // a host with no keychain (the remote host of a Gateway session): the key is lost on exit
+        val page = AxonConfigurable(project)
+        try {
+            page.createComponent()
+            assertEquals(true, page.tokenStored)
+            AxonServerToken.setMemoryOnlyHintForTest(true)
+            page.showTokenState()
+            assertEquals(AxonConfigurable.MEMORY_ONLY_TEXT, page.tokenState.text)
+            assertTrue(page.tokenState.text, page.tokenState.text.contains("KeePass"))
+
+            // a real store: the usual line
+            AxonServerToken.setMemoryOnlyHintForTest(false)
+            page.showTokenState()
+            assertTrue(page.tokenState.text, page.tokenState.text.contains("is stored"))
+
+            // the test store keeps keys on disk, as a keychain would
+            bg { AxonServerToken.get() }
+            assertEquals(false, AxonServerToken.memoryOnlyHint())
+        } finally {
+            AxonServerToken.setMemoryOnlyHintForTest(null)
+            page.disposeUIResources()
+        }
+    }
+
     fun testConnectionTestReportsTheResult() {
         // the good key: the server answers with its projects
         val ok = bg { AxonConfigurable.testConnection(server.url, token, typedKey = true) }

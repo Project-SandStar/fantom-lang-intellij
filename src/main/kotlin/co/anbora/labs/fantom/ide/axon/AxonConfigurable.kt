@@ -191,7 +191,13 @@ class AxonConfigurable(private val project: Project) : BoundConfigurable("Axon")
     internal fun showTokenState() {
         when (tokenStored) {
             null -> { tokenState.text = "Checking the password store…"; tokenState.icon = null }
-            true -> { tokenState.text = "An access key is stored. Type a new one to replace it."; tokenState.icon = AllIcons.General.InspectionsOK }
+            true -> if (AxonServerToken.memoryOnlyHint() == true) {
+                tokenState.text = MEMORY_ONLY_TEXT
+                tokenState.icon = AllIcons.General.Warning
+            } else {
+                tokenState.text = "An access key is stored. Type a new one to replace it."
+                tokenState.icon = AllIcons.General.InspectionsOK
+            }
             false -> { tokenState.text = "No access key is stored."; tokenState.icon = AllIcons.General.Warning }
         }
     }
@@ -267,6 +273,11 @@ class AxonConfigurable(private val project: Project) : BoundConfigurable("Axon")
     }
 
     companion object {
+        /** Shown when the password store keeps the key in memory only (no keychain on this host). */
+        internal const val MEMORY_ONLY_TEXT =
+            "The access key is kept in memory only and is lost when the IDE closes: this host has no keychain. " +
+                "Use KeePass in Settings | Appearance & Behavior | System Settings | Passwords to keep it."
+
         /**
          * One call to the server with [token]. Returns ok and a line for the page. Blocks: call
          * it off the UI thread. [typedKey] says whether the key came from the field (not yet
