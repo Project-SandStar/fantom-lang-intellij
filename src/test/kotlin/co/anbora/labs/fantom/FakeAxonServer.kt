@@ -31,7 +31,7 @@ class FakeAxonServer(private val token: String = "test-token") : AutoCloseable {
     val authHeaders = CopyOnWriteArrayList<String>()
     val bodies = CopyOnWriteArrayList<String>()
 
-    /** ok, slow, wrongKey, garbage, cut, error500, redirect, huge. */
+    /** ok, slow, wrongKey, garbage, cut, error500, forbidden (403 to all), readonly (403 to a POST), redirect, huge. */
     @Volatile var mode = "ok"
     @Volatile var redirectTo = ""
     private var pushes = 0
@@ -63,6 +63,7 @@ class FakeAxonServer(private val token: String = "test-token") : AutoCloseable {
             "slow" -> Thread.sleep(1500)
             "garbage" -> return reply(ex, 200, "<html>not json</html>")
             "error500" -> return reply(ex, 500, """{"error":"the database is down"}""")
+            "forbidden" -> return reply(ex, 403, """{"error":"forbidden"}""")
             "redirect" -> {
                 ex.responseHeaders.add("Location", redirectTo + uri.rawPath)
                 ex.sendResponseHeaders(302, -1)

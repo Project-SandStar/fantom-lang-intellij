@@ -7,6 +7,7 @@ import co.anbora.labs.fantom.lang.axon.copy.AxonJson
 import co.anbora.labs.fantom.lang.axon.copy.AxonProjectCopy
 import co.anbora.labs.fantom.lang.axon.copy.AxonProjectKey
 import co.anbora.labs.fantom.lang.axon.copy.AxonProjectSettings
+import co.anbora.labs.fantom.lang.axon.copy.AxonServerClient
 import co.anbora.labs.fantom.lang.axon.copy.AxonServerSettings
 import co.anbora.labs.fantom.lang.axon.copy.AxonServerToken
 import co.anbora.labs.fantom.lang.axon.copy.AxonSyncResult
@@ -25,6 +26,7 @@ import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -309,6 +311,37 @@ class AxonFunctionPushTest : BasePlatformTestCase() {
         val e = failsWith(AxonCopyException.Kind.READ_ONLY) { AxonFunctionPush.run(project, target("calcDailyAvg"), FakeUi()) }
         assertTrue(AxonPushAction.errorText(e), AxonPushAction.errorText(e).contains("read-only"))
         assertEquals("(points) => points.hisRead(yesterday)", server.projects["demo/site"]!!["calcDailyAvg"]!!.src)
+    }
+
+    fun testA403OnAReadIsARefusedKeyNotReadOnly() {
+        // the server sends 403 for a read-only user on a write only; a 403 on a read means the key is refused
+        server.mode = "forbidden"
+        failsWith(AxonCopyException.Kind.UNAUTHORIZED) { AxonServerClient(server.url, token).checkConnection() }
+        failsWith(AxonCopyException.Kind.UNAUTHORIZED) { AxonServerClient(server.url, token).fetch(key, true) {} }
+        failsWith(AxonCopyException.Kind.READ_ONLY) { AxonServerClient(server.url, token).pushFunction(key, "calcDailyAvg", "() => 1", null, null) }
+    }
+
+    fun testACancelAfterTheServerTookThePushStillUpdatesTheFolder() {
+        edit(File(func, "calcDailyAvg.axon"), "(points) => 5")
+        // the cancel comes once the request reached the server: SkySpark has the new source then
+        val check = { if (server.requests.isNotEmpty()) throw ProcessCanceledException() }
+        val out = bg { AxonFunctionPush.run(project, target("calcDailyAvg"), FakeUi(), check) }
+        assertTrue(out.toString(), out is Outcome.Pushed)
+        assertEquals("(points) => 5", server.projects["demo/site"]!!["calcDailyAvg"]!!.src)
+        assertEquals(AxonProjFolderSync.shortHash("(points) => 5"), metaFn("calcDailyAvg")!!["hash"])
+        assertEquals("2026-06-01T00:00:00Z", metaFn("calcDailyAvg")!!["mod"])
+    }
+
+    fun testACancelBeforeTheSendSendsNothing() {
+        edit(File(func, "calcDailyAvg.axon"), "(points) => 6")
+        val before = File(site, ".sync-metadata.json").readText()
+        try {
+            bg { AxonFunctionPush.run(project, target("calcDailyAvg"), FakeUi()) { throw ProcessCanceledException() } }
+            fail("expected a cancel")
+        } catch (e: ProcessCanceledException) {
+        }
+        assertEquals(emptyList<String>(), server.requests.toList())
+        assertEquals(before, File(site, ".sync-metadata.json").readText())
     }
 
     fun testARefusedKeyIs401() {

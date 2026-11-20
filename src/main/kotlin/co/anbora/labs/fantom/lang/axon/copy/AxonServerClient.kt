@@ -98,7 +98,9 @@ class AxonServerClient(
         body["src"] = src
         if (doc != null) body["doc"] = doc
         body["expectedMod"] = expectedMod
-        val reply = call(projectPath(key) + "/functions/" + segment(name), AxonJson.write(body, indent = false), check)
+        // a cancel stops the push before it is sent, never after: once sent, SkySpark may hold
+        // the new source, and the caller must read the reply to update the folder
+        val reply = call(projectPath(key) + "/functions/" + segment(name), AxonJson.write(body, indent = false), check, afterSend = {})
         if (reply.status != 200 && reply.status != 409) throw failure(reply, key)
         val o = json(reply)
         val status = AxonJson.str(o["status"])
@@ -112,7 +114,8 @@ class AxonServerClient(
 
     private fun projectPath(key: AxonProjectKey) = "/api/ide/projects/" + segment(key.instance) + "/" + segment(key.project)
 
-    private class Reply(val status: Int, val body: String)
+    /** [write] is true for a POST: only a write can be refused for a read-only key. */
+    private class Reply(val status: Int, val body: String, val write: Boolean = false)
 
     private fun json(reply: Reply): Map<String, Any?> =
         try { AxonJson.parseObject(reply.body) } catch (e: AxonJson.Malformed) { throw bad("the reply is not JSON") }
@@ -123,8 +126,10 @@ class AxonServerClient(
         val said = runCatching { AxonJson.str(AxonJson.parseObject(reply.body)["error"]) }.getOrNull()
             ?.take(200)?.let { " The server said: $it" }.orEmpty()
         return when (reply.status) {
+            // the server answers 403 to a read-only key on a write only; a 403 on a read is a refused token
             401 -> AxonCopyException(Kind.UNAUTHORIZED, "The Axon server refused the token (HTTP ${reply.status}).")
-            403 -> AxonCopyException(Kind.READ_ONLY, "The access key belongs to a read-only user of the Axon server: it can read and sync, but not commit to SkySpark.$said")
+            403 -> if (!reply.write) AxonCopyException(Kind.UNAUTHORIZED, "The Axon server refused the token (HTTP 403).$said")
+            else AxonCopyException(Kind.READ_ONLY, "The access key belongs to a read-only user of the Axon server: it can read and sync, but not commit to SkySpark.$said")
             404 -> if (key != null) AxonCopyException(Kind.UNKNOWN_PROJECT, "The Axon server does not know the project $key.")
             else AxonCopyException(Kind.IO, "The Axon server has no IDE API at this URL (HTTP 404).")
             in 300..399 -> AxonCopyException(Kind.IO, "The Axon server sent a redirect (HTTP ${reply.status}). Redirects are not followed; set the final URL.")
@@ -132,7 +137,8 @@ class AxonServerClient(
         }
     }
 
-    private fun call(path: String, body: String?, check: () -> Unit): Reply {
+    /** [check] runs before the request; [afterSend] while the reply is read. */
+    private fun call(path: String, body: String?, check: () -> Unit, afterSend: () -> Unit = check): Reply {
         val app = ApplicationManager.getApplication()
         if (app != null && (app.isDispatchThread || app.isReadAccessAllowed))
             throw IllegalStateException("No network on the UI thread or in a read action")
@@ -157,15 +163,15 @@ class AxonServerClient(
                     if (body != null) request.write(body)
                     val connection = request.connection as HttpURLConnection
                     val status = connection.responseCode
-                    check()
+                    afterSend()
                     val text = when {
                         // 3xx without a body, 204: nothing to read
                         status in 300..399 || status == 204 -> ""
                         // the body of an error is on the error stream; the input stream throws
-                        status >= 400 -> connection.errorStream?.use { readCapped(it, check) }.orEmpty()
-                        else -> readCapped(request.inputStream, check)
+                        status >= 400 -> connection.errorStream?.use { readCapped(it, afterSend) }.orEmpty()
+                        else -> readCapped(request.inputStream, afterSend)
                     }
-                    Reply(status, text)
+                    Reply(status, text, body != null)
                 }
         } catch (e: ProcessCanceledException) {
             throw e
