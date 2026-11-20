@@ -375,3 +375,33 @@ description says this, so the agent can pick the right one.
 - `axon_functions` returns at most 50 lines unless you ask for more (500 at
   most). `axon_function` cuts the source at 64 KB and the doc at 16 KB.
 - While the IDE indexes, each tool answers "indexing, retry".
+
+## Remote development (JetBrains Gateway)
+
+With JetBrains Gateway the IDE backend runs on a remote host and a thin
+client (JetBrains Client) runs on your machine. The plugin runs on the
+backend only, so install it on the remote IDE. The client draws the UI.
+
+| Part | Over Gateway |
+|---|---|
+| Editing, colouring, completion, navigation, inspections, refactoring, formatter | Works as on a local IDE. Typing goes to the backend, so a slow link adds a short delay |
+| Fantom installs, `sys` sources, Build Pod, compile on save | Use the files on the remote host. Set the Fantom home to a folder on that host |
+| Run and debug | The program and the debugger run on the remote host; the console and the debugger views show in the client |
+| Status bar widgets (Fantom target, Axon project) | Work. A click opens the popup a moment later |
+| Settings pages, the Axon project picker, notifications | Work. The client draws them |
+| File choosers (Fantom home, global proj folder) | Show the files of the remote host, not of your machine |
+| Axon project copy and Sync Axon Functions | Run on the remote host. The Axon server URL must be reachable from that host. The access key comes from the client, so a client must be connected |
+| Tools for AI agents (MCP) | The MCP server runs on the remote host. Run the agent there too |
+
+What to know:
+
+- The IDE sends each read and write of the access key to the password store
+  of JetBrains Client, on your machine. The remote host does not keep it.
+  So the key can only be read while a client is connected: an AI agent on
+  the remote host with no client open gets no key, and Sync then fails.
+- If the password store on your machine is set to keep passwords in memory
+  only, the key is lost when the IDE closes. Settings | Languages &
+  Frameworks | Fantom | Axon then says so. To keep the key, choose another
+  store in Settings | Appearance & Behavior | System Settings | Passwords.
+- Settings saved in the IDE (Fantom installs, Axon server URL, global proj
+  folder) are the ones of the remote IDE, not of your local IDE.

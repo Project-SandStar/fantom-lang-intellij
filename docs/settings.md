@@ -170,7 +170,7 @@ Settings | Languages & Frameworks | Fantom | Axon sets where the
 | Field | What it is | Where it is stored |
 |---|---|---|
 | Server URL | The base URL of the Axon server, with `http://` or `https://`. Empty by default | An IDE settings file on this machine, for all projects. Not part of settings sync |
-| Access key | Your access key from the Axon dashboard (Users page). The field is always shown empty; the line under it says whether a key is stored. Leave it empty to keep the stored key | The IDE password store. Never in a settings file |
+| Access key | Your access key from the Axon dashboard (Users page). The field is always shown empty; the line under it says whether a key is stored. Leave it empty to keep the stored key | The IDE password store. Never in a settings file. In a [Gateway](features.md#remote-development-jetbrains-gateway) session, the password store of JetBrains Client on your machine. If the store keeps passwords in memory only, the line under the field warns you |
 | Global proj folder | The `proj` folder of the Axon server: `proj/<connection>/<project>/func/<name>.axon`. An Axon file under it uses the functions of its own project. The project copy reads it when no server URL is set. `~` is your home folder. Empty by default | An IDE settings file on this machine, for all projects. Not part of settings sync |
 | Instance/project | The SkySpark project to copy, as `instance/project`. Empty drops the copy | The workspace file of the project |
 

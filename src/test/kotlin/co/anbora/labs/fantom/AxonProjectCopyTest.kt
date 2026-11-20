@@ -22,6 +22,9 @@ import co.anbora.labs.fantom.lang.axon.copy.AxonServerClient
 import co.anbora.labs.fantom.lang.axon.copy.AxonServerSettings
 import co.anbora.labs.fantom.lang.axon.copy.AxonServerToken
 import co.anbora.labs.fantom.lang.library.FantomSettings
+import com.intellij.credentialStore.CredentialAttributes
+import com.intellij.credentialStore.Credentials
+import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.StoragePathMacros
@@ -33,6 +36,7 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.WritingAccessProvider
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.xmlb.XmlSerializer
 import java.io.File
@@ -746,6 +750,97 @@ class AxonProjectCopyTest : BasePlatformTestCase() {
             assertEquals(token, AxonServerToken.get())
             page.reset()
             assertEquals(true, page.tokenStored)
+        } finally {
+            page.disposeUIResources()
+        }
+    }
+
+    /** The test password store, but it says the key is in memory only while [memoryOnly] is true. */
+    private class MemoryOnlyPasswordSafe(private val real: PasswordSafe) : PasswordSafe() {
+        @Volatile var memoryOnly = true
+        override var isRememberPasswordByDefault: Boolean
+            get() = real.isRememberPasswordByDefault
+            set(value) { real.isRememberPasswordByDefault = value }
+        override val isMemoryOnly: Boolean get() = memoryOnly
+        override fun get(attributes: CredentialAttributes): Credentials? = real.get(attributes)
+        override fun set(attributes: CredentialAttributes, credentials: Credentials?) = real.set(attributes, credentials)
+        override fun set(attributes: CredentialAttributes, credentials: Credentials?, memoryOnly: Boolean) =
+            real.set(attributes, credentials, memoryOnly)
+        override fun isPasswordStoredOnlyInMemory(attributes: CredentialAttributes, credentials: Credentials): Boolean = memoryOnly
+    }
+
+    private fun memoryOnlyStore(): MemoryOnlyPasswordSafe {
+        val stub = MemoryOnlyPasswordSafe(PasswordSafe.instance)
+        ApplicationManager.getApplication().replaceService(PasswordSafe::class.java, stub, testRootDisposable)
+        return stub
+    }
+
+    fun testTokenReadAndWriteSeeAMemoryOnlyStore() {
+        // the store of the test IDE keeps keys, as a keychain would
+        bg { AxonServerToken.get() }
+        assertEquals(false, AxonServerToken.memoryOnlyHint())
+
+        val store = memoryOnlyStore()
+        bg { AxonServerToken.get() }
+        assertEquals(true, AxonServerToken.memoryOnlyHint())
+
+        store.memoryOnly = false
+        bg { AxonServerToken.set(token) }
+        assertEquals(false, AxonServerToken.memoryOnlyHint())
+        store.memoryOnly = true
+        bg { AxonServerToken.set(token) }
+        assertEquals(true, AxonServerToken.memoryOnlyHint())
+
+        // no key: nothing to lose
+        bg { AxonServerToken.set(null) }
+        assertNull(AxonServerToken.memoryOnlyHint())
+        bg { AxonServerToken.get() }
+        assertNull(AxonServerToken.memoryOnlyHint())
+    }
+
+    fun testSettingsPageWarnsWhenTheKeyIsInMemoryOnly() {
+        // Settings | Passwords set to memory only (over Gateway: the client's setting)
+        val store = memoryOnlyStore()
+        val page = AxonConfigurable(project)
+        try {
+            page.createComponent()
+            assertEquals(true, page.tokenStored)
+            assertEquals(AxonConfigurable.MEMORY_ONLY_TEXT, page.tokenState.text)
+            assertTrue(page.tokenState.text, page.tokenState.text.contains("Passwords"))
+        } finally {
+            page.disposeUIResources()
+        }
+
+        // a store that keeps the key: the usual line
+        store.memoryOnly = false
+        val page2 = AxonConfigurable(project)
+        try {
+            page2.createComponent()
+            assertTrue(page2.tokenState.text, page2.tokenState.text.contains("is stored"))
+        } finally {
+            page2.disposeUIResources()
+        }
+    }
+
+    fun testSettingsPageRedrawsTheKeyLineAfterTheStoreWrite() {
+        // the page opens with a store that keeps the key, then the store turns memory only:
+        // only the write on Apply can tell, and the line must change once it is done
+        val store = memoryOnlyStore()
+        store.memoryOnly = false
+        val page = AxonConfigurable(project)
+        try {
+            page.createComponent()
+            assertTrue(page.tokenState.text, page.tokenState.text.contains("is stored"))
+            store.memoryOnly = true
+            page.tokenField.text = "new-token-7b2e"
+            page.apply()
+            val end = System.currentTimeMillis() + 10_000
+            while (page.tokenState.text != AxonConfigurable.MEMORY_ONLY_TEXT && System.currentTimeMillis() < end) {
+                PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+                Thread.sleep(10)
+            }
+            assertEquals(AxonConfigurable.MEMORY_ONLY_TEXT, page.tokenState.text)
+            assertEquals("new-token-7b2e", bg { AxonServerToken.get() })
         } finally {
             page.disposeUIResources()
         }

@@ -191,7 +191,13 @@ class AxonConfigurable(private val project: Project) : BoundConfigurable("Axon")
     internal fun showTokenState() {
         when (tokenStored) {
             null -> { tokenState.text = "Checking the password store…"; tokenState.icon = null }
-            true -> { tokenState.text = "An access key is stored. Type a new one to replace it."; tokenState.icon = AllIcons.General.InspectionsOK }
+            true -> if (AxonServerToken.memoryOnlyHint() == true) {
+                tokenState.text = MEMORY_ONLY_TEXT
+                tokenState.icon = AllIcons.General.Warning
+            } else {
+                tokenState.text = "An access key is stored. Type a new one to replace it."
+                tokenState.icon = AllIcons.General.InspectionsOK
+            }
             false -> { tokenState.text = "No access key is stored."; tokenState.icon = AllIcons.General.Warning }
         }
     }
@@ -260,6 +266,8 @@ class AxonConfigurable(private val project: Project) : BoundConfigurable("Axon")
         }
         if (tokenChanged) app.executeOnPooledThread {
             AxonServerToken.set(if (typed.isNotEmpty()) typed else null)
+            // only the write tells whether the store keeps the key in memory only: redraw
+            app.invokeLater({ if (hasUi) showTokenState() }, ModalityState.any())
             after.run()
         } else after.run()
         // the status bar entry shows only with a source or a project: re-check it now
@@ -267,6 +275,11 @@ class AxonConfigurable(private val project: Project) : BoundConfigurable("Axon")
     }
 
     companion object {
+        /** Shown when the password store keeps the key in memory only. */
+        internal const val MEMORY_ONLY_TEXT =
+            "The password store keeps the access key in memory only; it is lost when the IDE closes. " +
+                "To keep it, choose another store in Settings | Appearance & Behavior | System Settings | Passwords."
+
         /**
          * One call to the server with [token]. Returns ok and a line for the page. Blocks: call
          * it off the UI thread. [typedKey] says whether the key came from the field (not yet

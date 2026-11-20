@@ -1,6 +1,7 @@
 package co.anbora.labs.fantom.lang.axon.copy
 
 import com.intellij.credentialStore.CredentialAttributes
+import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.generateServiceName
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.application.ApplicationManager
@@ -122,17 +123,37 @@ object AxonServerToken {
 
     /** What the last [get] or [set] saw: true when a token is stored, null before the first. */
     @Volatile private var stored: Boolean? = null
+    /** Whether the last [get] or [set] found the token in memory only; null with no token. */
+    @Volatile private var memoryOnly: Boolean? = null
     private val warming = AtomicBoolean()
 
-    fun get(): String? = PasswordSafe.instance.getPassword(attributes())?.takeIf { it.isNotEmpty() }
-        .also { stored = it != null }
+    fun get(): String? {
+        val t = PasswordSafe.instance.getPassword(attributes())?.takeIf { it.isNotEmpty() }
+        stored = t != null
+        memoryOnly = t?.let { onlyInMemory(it) }
+        return t
+    }
 
     /** Stores [token]; null or blank removes it. */
     fun set(token: String?) {
         val t = token?.trim()?.takeIf { it.isNotEmpty() }
         PasswordSafe.instance.setPassword(attributes(), t)
         stored = t != null
+        memoryOnly = t?.let { onlyInMemory(it) }
     }
+
+    /**
+     * True when the password store keeps the token in memory only, so it is lost when the
+     * IDE closes: Settings | Passwords is set to "Do not save", or the store has no keychain
+     * to write to. Over Gateway the backend's store sends each read and write to the
+     * password store of the JetBrains Client, so this is the client's setting. Null when no
+     * token is stored or nothing was read yet. Memory only: safe on any thread.
+     */
+    fun memoryOnlyHint(): Boolean? = memoryOnly
+
+    private fun onlyInMemory(token: String): Boolean = runCatching {
+        PasswordSafe.instance.isPasswordStoredOnlyInMemory(attributes(), Credentials(null, token))
+    }.getOrDefault(false)
 
     /**
      * Whether a token is stored, as the last read saw it; null when nothing was read yet.
