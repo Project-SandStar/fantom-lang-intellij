@@ -173,7 +173,7 @@ class FantomConfigurable(private val project: Project) : BoundConfigurable("Fant
                 allowAgentRunBox = checkBox("Allow AI agents to build and run tests")
                     .comment("Lets the fantom_build and fantom_run_test MCP tools start bin/fan and fant for this project.")
                     .component
-                allowAgentRunBox.isSelected = settings.allowAgentRun
+                allowAgentRunBox.isSelected = FantomAgentSettings.getInstance(project).allowAgentRun
             }
             row("Source roots for project pods") {
                 button("Add…") { chooseSourceRoot() }
@@ -339,7 +339,7 @@ class FantomConfigurable(private val project: Project) : BoundConfigurable("Fant
         customFolders.addAll(FantomInstalls.customFolders(persisted, migration))
         defaultPath = settings.defaultTarget ?: migration?.defaultTarget
         if (::compileOnSaveBox.isInitialized) compileOnSaveBox.isSelected = settings.compileOnSave
-        if (::allowAgentRunBox.isInitialized) allowAgentRunBox.isSelected = settings.allowAgentRun
+        if (::allowAgentRunBox.isInitialized) allowAgentRunBox.isSelected = FantomAgentSettings.getInstance(project).allowAgentRun
         sourceRootsModel.clear()
         settings.sourceRoots.forEach(sourceRootsModel::addElement)
         pins.clear()
@@ -358,7 +358,7 @@ class FantomConfigurable(private val project: Project) : BoundConfigurable("Fant
         settings.installs = currentRows()
         settings.defaultTarget = currentDefault()
         settings.compileOnSave = compileOnSaveBox.isSelected
-        settings.allowAgentRun = allowAgentRunBox.isSelected
+        FantomAgentSettings.getInstance(project).allowAgentRun = allowAgentRunBox.isSelected
         val rootsChanged = settings.sourceRoots != currentSourceRoots().ifEmpty { listOf(FantomSettings.DEFAULT_SOURCE_ROOT) }
         settings.sourceRoots = currentSourceRoots()
         settings.pins = pins
