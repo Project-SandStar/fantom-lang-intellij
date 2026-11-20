@@ -209,3 +209,7 @@ hints on and off.
 
 Settings | Editor | Inspections | Fantom lets you change the severity of
 each inspection or turn it off.
+
+"Native slot without implementation" (on by default, warning) checks each
+`native` slot against the `javaDirs` and `jsDirs` folders of the pod's
+`build.fan`. Turn it off for pods whose peers are built elsewhere.

@@ -40,7 +40,21 @@ classes:
 
 - Go to Declaration on `Cipher` or `Base64` opens the JDK class.
 - `Cipher.getInstance(...)`, `c.doFinal(...)` and `Cipher.ENCRYPT_MODE`
-  resolve to the Java methods and fields. All overloads count.
+  resolve to the Java methods and fields.
+- Overloads are picked by the number and types of the arguments, as the
+  Fantom compiler does: `sb.append(5)` goes to `append(long)`, `sb.append("x")`
+  to `append(String)`. `foo.a` without parentheses means the field; on
+  `foo->a` the method hides the field.
+- Java types map to Fantom types: `long`, `int`, `short`, `byte` and `char`
+  are `Int`; `double` and `float` are `Float`; `boolean` is `Bool`; `String` is
+  `Str?`; other classes are nullable. So `enc := Base64.getEncoder()` knows its
+  type, and `enc.` completes the members of `Base64$Encoder` with no extra
+  `using` line.
+- Inner classes use the Java name: `using [java] java.util::Map$Entry as Entry`.
+- A closure fits a Java interface with one method, such as `Runnable`.
+- A Fantom class can extend a Java class (`class FanDate : JDate`). Inherited
+  Java methods resolve, and an `override` gets the gutter arrow to the Java method.
+- A Java annotation used as a facet (`@Retention { value = ... }`) resolves.
 - Completion after `Base64.` lists static members. After a Java object, such
   as `c.`, it lists all public members.
 - `fanx.interop` comes from `lib/java/sys.jar` of the configured Fantom
@@ -52,6 +66,17 @@ classes:
 
 In IDEs without the Java plugin, `[java]` names do not resolve. The plugin
 does not mark them as errors.
+
+## Natives
+
+A slot marked `native` is written in Java or JavaScript, in the pod's
+`java/` and `js/` folders (`javaDirs` and `jsDirs` in `build.fan`).
+
+- A gutter icon on a `native` slot jumps to its method in `<Type>Peer.java`
+  (or `<Type>.java`) and in `<Type>Peer.js` (or `<Type>.js`).
+- The inspection "Native slot without implementation" warns when a folder
+  `build.fan` declares has no implementation for the slot. Pods that declare
+  no such folder are not checked. This works without the JavaScript plugin.
 
 ## Refactoring
 
