@@ -57,9 +57,25 @@ class FantomConfigurableTest : BasePlatformTestCase() {
         s.fantomRoot = ""
         s.haxallRoot = ""
         s.skysparkRoot = ""
+        co.anbora.labs.fantom.ide.settings.FantomAgentSettings.getInstance(project).allowAgentRun = false
     }
 
     private fun row(folder: String): FantomInstall? = configurable.currentRows().firstOrNull { it.dir.name == folder }
+
+    fun testAllowAgentRunBox() {
+        val agent = co.anbora.labs.fantom.ide.settings.FantomAgentSettings.getInstance(project)
+        assertFalse(configurable.allowAgentRunBox.isSelected)
+        assertFalse(configurable.isModified)
+        configurable.allowAgentRunBox.isSelected = true
+        assertTrue(configurable.isModified)
+        configurable.apply()
+        assertTrue(agent.allowAgentRun)
+        assertFalse(configurable.isModified)
+        agent.allowAgentRun = false
+        configurable.reset()
+        assertFalse(configurable.allowAgentRunBox.isSelected)
+        assertFalse(configurable.isModified)
+    }
 
     fun testOpeningThePageChangesNothing() {
         assertFalse(configurable.isModified)

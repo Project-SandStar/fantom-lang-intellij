@@ -317,7 +317,7 @@ until you tick "Allow AI agents to build and run tests" in Settings, Languages
 - They save open editors first, as Build Pod does.
 - The pod goes to a private work folder, never into an install.
 - They run in the background, never on the UI thread. A build stops after 60
-  seconds and a test run after 5 minutes. At most 1 MB of output is kept.
+  seconds (no retry) and a test run after 5 minutes. At most 1 MB of output is kept.
 - Only one build or test run per project runs at a time; a second call answers
   "in progress, retry".
 - A failed build gives its compiler messages, and no tests run.

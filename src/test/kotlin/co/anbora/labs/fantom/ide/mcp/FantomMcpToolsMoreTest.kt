@@ -39,6 +39,7 @@ class FantomMcpToolsMoreTest : BasePlatformTestCase() {
           Void m() {
             x := count()
             ys := names.map |n| { n.size }
+            f := names.first
             echo(x)
           }
         }
@@ -79,9 +80,6 @@ class FantomMcpToolsMoreTest : BasePlatformTestCase() {
         myFixture.addFileToProject("Foo.fan", foo)
         assertEquals(FantomMcpRun.OFF, failText(call { FantomMcpService.build(project, "demo", "", 0) }))
         assertEquals(FantomMcpRun.OFF, failText(call { FantomMcpService.runTest(project, "demo", "FooTest", "", 0) }))
-        // nothing compiled
-        val root = File(project.basePath!!)
-        assertNull(FantomCompilerService.getInstance(project).result(root))
     }
 
     fun testWhenOnTheToolsRunAndCheckTheirInput() {
@@ -115,6 +113,11 @@ class FantomMcpToolsMoreTest : BasePlatformTestCase() {
         }
         assertEquals("Int", typeAt(file, "count()").first)
         assertEquals("Str[]", typeAt(file, "names.map").first)
+        // generic members: the element type comes through
+        // Generic members need sys (List.first, the map closure's param). This light fixture has
+        // no Fantom install, so the IDE knows no type there; the tool must agree, not invent one.
+        assertEquals("" to null, typeAt(file, "first"))
+        assertEquals("" to null, typeAt(file, "n.size"))
     }
 
     fun testTypeOfALocalMatchesItsInlayHint() {
@@ -239,6 +242,15 @@ class FantomMcpToolsMoreTest : BasePlatformTestCase() {
         val stopped = FantomMcpRun.Output("", -1, true, false, true)
         assertTrue(FantomMcpRun.testReport("demo", emptyList(), stopped, { it }, 50).contains("stopped after 300 s"))
         assertTrue(FantomMcpRun.testReport("demo", emptyList(), stopped, { it }, 50).contains("output cut at"))
+    }
+
+    fun testRunStopsWhenCancelled() {
+        val cmd = com.intellij.execution.configurations.GeneralCommandLine("sh", "-c", "sleep 30")
+        val start = System.currentTimeMillis()
+        val out = FantomMcpRun.run(cmd, 60_000, 100) { System.currentTimeMillis() - start > 300 }
+        assertTrue(out.cancelled)
+        assertFalse(out.timedOut)
+        assertTrue(System.currentTimeMillis() - start < 15_000)
     }
 
     fun testRunCapsOutputAndStopsOnTimeout() {

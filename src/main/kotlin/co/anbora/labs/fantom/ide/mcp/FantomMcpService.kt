@@ -242,14 +242,7 @@ object FantomMcpService {
         ApplicationManager.getApplication().invokeAndWait { FileDocumentManager.getInstance().saveAllDocuments() }
         cancellable { indicator ->
             val service = FantomCompilerService.getInstance(project)
-            var result = service.buildPod(root, env.runner, indicator, env.podPath)
-            // A compile on save that starts meanwhile stops this one: build again, a few times at most.
-            var tries = 0
-            while (result != null && !result.completed && !indicator.isCanceled && tries++ < 3) {
-                Thread.sleep(500)
-                result = service.buildPod(root, env.runner, indicator, env.podPath)
-            }
-            result
+            service.buildPod(root, env.runner, indicator, env.podPath)
         }
     }
 
