@@ -337,3 +337,25 @@ answers are the ones the IDE itself gives.
 - Each tool returns at most 50 lines unless you ask for more (500 at most).
 - Without the MCP Server plugin the Fantom plugin works as before; only these
   tools are missing.
+
+### Axon project tools
+
+These tools answer from the Axon files open in the IDE, with unsaved edits:
+a [proj folder](#axon-files-in-a-proj-folder) or the active project copy. For
+what SkySpark holds now, to run or commit Axon, or for a project that is not
+open in the IDE, an agent uses the Axon MCP server instead. Each tool
+description says this, so the agent can pick the right one.
+
+| Tool | What it answers |
+|---|---|
+| `axon_project_of` | The Axon project (`connection/project`) of a file or folder, as the editor sees it: its proj folder, else the active copy, else none. A backup or version folder gives none |
+| `axon_functions` | The functions of a project: name, file and the first line of the doc. Pick the project by a file in it, by `connection/project`, or give neither for the active copy. Takes a name filter |
+| `axon_function` | One function: name and parameters, project, file, `mod` (an ISO time), doc and source. Give its file, or a name. A function with the same name in another project is never returned |
+
+- They return only files in the open project or in the active copy. A global
+  proj folder that is not open in the IDE is refused.
+- If two open folders have the same `connection/project`, the tools list both
+  and ask for a path. They never pick one.
+- `axon_functions` returns at most 50 lines unless you ask for more (500 at
+  most). `axon_function` cuts the source at 64 KB and the doc at 16 KB.
+- While the IDE indexes, each tool answers "indexing, retry".

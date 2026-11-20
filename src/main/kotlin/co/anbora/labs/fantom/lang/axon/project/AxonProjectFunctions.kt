@@ -94,8 +94,17 @@ interface AxonProjectFunctions {
             val file = context.containingFile ?: return null
             val top = InjectedLanguageManager.getInstance(project).getTopLevelFile(file) ?: file
             val vFile = top.originalFile.virtualFile ?: top.viewProvider.virtualFile
+            return of(project, vFile)
+        }
+
+        /**
+         * The functions of the Axon project of [file] (a file or a folder), as the first
+         * provider that knows it answers; null for no project. The agent tools (task 4.31)
+         * ask this, so they give the answer the editor gives. Read action.
+         */
+        fun of(project: Project, file: VirtualFile?): AxonFunctionSet? {
             for (provider in EP_NAME.extensionList) {
-                provider.functionSet(project, vFile)?.let { return it }
+                provider.functionSet(project, file)?.let { return it }
             }
             return null
         }

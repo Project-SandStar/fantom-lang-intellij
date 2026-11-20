@@ -2,5 +2,6 @@
     <!-- Loaded only when the MCP Server plugin is present (com.intellij.mcpServer). -->
     <extensions defaultExtensionNs="com.intellij.mcpServer">
         <mcpToolset implementation="co.anbora.labs.fantom.ide.mcp.FantomMcpToolset"/>
+        <mcpToolset implementation="co.anbora.labs.fantom.ide.mcp.AxonMcpToolset"/>
     </extensions>
 </idea-plugin>
