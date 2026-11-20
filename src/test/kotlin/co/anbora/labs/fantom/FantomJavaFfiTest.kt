@@ -347,6 +347,36 @@ class FantomJavaFfiTest : FantomInspectionTestBase() {
         assertTrue(value.toString(), value.isNotEmpty() && value.all { it is PsiMethod && it.name == "value" })
     }
 
+    /**
+     * docLang JavaFFI "Overloaded Methods" and "Dynamic Calls": `foo.a` reads the field,
+     * `foo.a()` and `foo.a("x")` pick the method by arguments, `foo->a` hides the field.
+     */
+    fun testFieldMethodOverloadAndDynamicCall() {
+        if (skip()) return
+        myFixture.addFileToProject(
+            "acme/Foo.java",
+            "package acme; public class Foo { public String a; public String a() { return a; } " +
+                "public void a(String x) { a = x; } public String b() { return a; } }",
+        )
+        myFixture.configureByText(
+            "A.fan",
+            """
+            using [java] acme::Foo
+            class A { Void f(Foo foo) {
+              echo(foo.a)
+              echo(foo.a())
+              foo.a("x")
+              echo(foo->a)
+            } }
+            """.trimIndent(),
+        )
+        assertTrue(targetsAt("a)\n").first() is PsiField)
+        assertEquals(0, (targetsAt("a())").first() as PsiMethod).parameterList.parametersCount)
+        assertEquals(1, (targetsAt("a(\"x").first() as PsiMethod).parameterList.parametersCount)
+        val dyn = targetsAt("a)\n} }")
+        assertTrue(dyn.toString(), dyn.isNotEmpty() && dyn.all { it is PsiMethod })
+    }
+
     fun testFantomNamesStillReportedWithoutJavaPlugin() {
         if (skip()) return
         ExtensionTestUtil.maskExtensions(FantomFfi.EP_NAME, emptyList(), testRootDisposable)

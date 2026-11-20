@@ -119,6 +119,9 @@ object FantomFfi {
         return resolver.memberVariants(classes, staticOnly)
     }
 
+    /** True when [e] is a Java field. */
+    fun isJavaField(e: PsiElement): Boolean = resolver()?.signature(e)?.isField == true
+
     /** The Fantom type of a Java target (class, method, field), or null when it is none. */
     fun typeOf(target: PsiElement): FanType? = resolver()?.typeOf(target)
 

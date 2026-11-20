@@ -112,7 +112,17 @@ class FantomReference(
         }
         if (java.isEmpty()) return null
         if (java.size < 2) return java
-        return FantomFfi.pickOverloads(java, callArgTypes(), element.project)
+        val args = callArgTypes()
+        // `foo->a`: a dynamic call; the method hides a field of the same name (docLang JavaFFI).
+        if (isDynamicCall()) return FantomFfi.pickOverloads(java.filter { !FantomFfi.isJavaField(it) }.ifEmpty { java }, args, element.project)
+        // `foo.a` with no parentheses reads the field when there is one.
+        if (args == null) return java.sortedBy { if (FantomFfi.isJavaField(it)) 0 else 1 }
+        return FantomFfi.pickOverloads(java, args, element.project)
+    }
+
+    private fun isDynamicCall(): Boolean = when (element.parent?.parent?.parent) {
+        is co.anbora.labs.fantom.lang.core.psi.FantomDynCallStm, is co.anbora.labs.fantom.lang.core.psi.FantomSafeDynCallStm -> true
+        else -> false
     }
 
     /**
