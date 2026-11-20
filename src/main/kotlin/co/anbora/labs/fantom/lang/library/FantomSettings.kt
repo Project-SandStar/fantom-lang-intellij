@@ -38,6 +38,8 @@ class FantomSettings : SimplePersistentStateComponent<FantomSettings.State>(Stat
         var noHomeNoticeShown by property(false)
         /** Run `fan build.fan compile` on save and show the compiler's messages in the editor. */
         var compileOnSave by property(true)
+        /** Let the MCP tools `fantom_build` and `fantom_run_test` start processes; off until the user turns it on. */
+        var allowAgentRun by property(false)
         /** Root folders scanned for installs; null means `~/fantom`, `~/haxall`, `~/skyspark`. */
         var fantomRoot by string()
         var haxallRoot by string()
@@ -109,6 +111,11 @@ class FantomSettings : SimplePersistentStateComponent<FantomSettings.State>(Stat
     var compileOnSave: Boolean
         get() = state.compileOnSave
         set(value) { state.compileOnSave = value }
+
+    /** "Allow AI agents to build and run tests": the MCP build and test tools answer only when true. */
+    var allowAgentRun: Boolean
+        get() = state.allowAgentRun
+        set(value) { state.allowAgentRun = value }
 
     var fantomRoot: String
         get() = state.fantomRoot ?: FantomInstalls.defaultRoot(FantomHome.Kind.FANTOM)

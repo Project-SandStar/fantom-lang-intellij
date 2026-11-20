@@ -87,6 +87,7 @@ class FantomConfigurable(private val project: Project) : BoundConfigurable("Fant
     internal lateinit var table: JBTable
     internal lateinit var defaultTargetBox: ComboBox<FantomInstall>
     internal lateinit var compileOnSaveBox: JBCheckBox
+    internal lateinit var allowAgentRunBox: JBCheckBox
     internal lateinit var depsTable: JBTable
 
     /** The "Source roots for project pods" list. */
@@ -111,7 +112,7 @@ class FantomConfigurable(private val project: Project) : BoundConfigurable("Fant
 
     private data class Snapshot(
         val roots: List<String>, val rows: List<FantomInstall>, val defaultTarget: String?, val compileOnSave: Boolean,
-        val sourceRoots: List<String>, val pins: Map<String, String>,
+        val allowAgentRun: Boolean, val sourceRoots: List<String>, val pins: Map<String, String>,
     )
 
     override fun createPanel(): DialogPanel {
@@ -167,6 +168,12 @@ class FantomConfigurable(private val project: Project) : BoundConfigurable("Fant
                     .comment("Runs bin/fan build.fan compile into a temp folder; it never writes into an install.")
                     .component
                 compileOnSaveBox.isSelected = settings.compileOnSave
+            }
+            row {
+                allowAgentRunBox = checkBox("Allow AI agents to build and run tests")
+                    .comment("Lets the fantom_build and fantom_run_test MCP tools start bin/fan and fant for this project.")
+                    .component
+                allowAgentRunBox.isSelected = settings.allowAgentRun
             }
             row("Source roots for project pods") {
                 button("Add…") { chooseSourceRoot() }
@@ -310,7 +317,7 @@ class FantomConfigurable(private val project: Project) : BoundConfigurable("Fant
     }
 
     private fun snapshot() = Snapshot(rootTexts(), currentRows(), currentDefault(), compileOnSaveBox.isSelected,
-        currentSourceRoots(), LinkedHashMap(pins))
+        allowAgentRunBox.isSelected, currentSourceRoots(), LinkedHashMap(pins))
 
     override fun isModified(): Boolean = hasUi && snapshot() != shown
 
@@ -332,12 +339,13 @@ class FantomConfigurable(private val project: Project) : BoundConfigurable("Fant
         customFolders.addAll(FantomInstalls.customFolders(persisted, migration))
         defaultPath = settings.defaultTarget ?: migration?.defaultTarget
         if (::compileOnSaveBox.isInitialized) compileOnSaveBox.isSelected = settings.compileOnSave
+        if (::allowAgentRunBox.isInitialized) allowAgentRunBox.isSelected = settings.allowAgentRun
         sourceRootsModel.clear()
         settings.sourceRoots.forEach(sourceRootsModel::addElement)
         pins.clear()
         pins.putAll(settings.pins)
         rescan()
-        shown = if (::compileOnSaveBox.isInitialized) snapshot() else null
+        shown = if (::allowAgentRunBox.isInitialized) snapshot() else null
     }
 
     override fun apply() {
@@ -350,6 +358,7 @@ class FantomConfigurable(private val project: Project) : BoundConfigurable("Fant
         settings.installs = currentRows()
         settings.defaultTarget = currentDefault()
         settings.compileOnSave = compileOnSaveBox.isSelected
+        settings.allowAgentRun = allowAgentRunBox.isSelected
         val rootsChanged = settings.sourceRoots != currentSourceRoots().ifEmpty { listOf(FantomSettings.DEFAULT_SOURCE_ROOT) }
         settings.sourceRoots = currentSourceRoots()
         settings.pins = pins
