@@ -120,7 +120,9 @@ class FantomJavaFfiResolver : FantomFfiResolver {
                 "java.lang.Object" -> FanType.OBJ.withNullable(true)
                 "java.lang.String" -> FanType.STR.withNullable(true)
                 "java.math.BigDecimal" -> FanType.DECIMAL.withNullable(true)
-                else -> classType(c, nullable = true)
+                // The compiler maps `fan.sys.X` to the Fantom type `sys::X?`.
+                else -> if (c.qualifiedName?.startsWith("fan.sys.") == true) c.name?.let { FanType.Named(it, nullable = true) }
+                    else classType(c, nullable = true)
             }
         }
         else -> null

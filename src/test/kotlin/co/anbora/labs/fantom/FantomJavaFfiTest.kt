@@ -377,6 +377,33 @@ class FantomJavaFfiTest : FantomInspectionTestBase() {
         assertTrue(dyn.toString(), dyn.isNotEmpty() && dyn.all { it is PsiMethod })
     }
 
+    /** A long chain of Java calls stays fast: the receiver of each step is computed once. */
+    fun testLongJavaChainIsFast() {
+        if (skip()) return
+        val chain = (1..14).joinToString("") { ".append($it)" }
+        myFixture.configureByText(
+            "A.fan",
+            "using [java] java.lang::StringBuilder\nclass A { Void f() { sb := StringBuilder()\n  x := sb$chain.length()\n} }",
+        )
+        val start = System.currentTimeMillis()
+        assertEquals(co.anbora.labs.fantom.lang.types.FanType.INT, localType("x"))
+        assertEmpty(myFixture.doHighlighting().filter { it.description?.startsWith("Cannot resolve") == true }.map { it.description })
+        val ms = System.currentTimeMillis() - start
+        assertTrue("took $ms ms", ms < 20_000)
+    }
+
+    /** `fan.sys` classes returned by Java (`Interop.toFan`) are the Fantom sys types. */
+    fun testFanSysReturnIsFantomType() {
+        if (skip()) return
+        myFixture.configureByText(
+            "A.fan",
+            "using [java] fanx.interop\nusing [java] java.nio::ByteBuffer\nclass A { Void f(ByteBuffer bb) { b := Interop.toFan(bb) } }",
+        )
+        val b = localType("b") as co.anbora.labs.fantom.lang.types.FanType.Named
+        assertEquals("Buf", b.name)
+        assertNull(b.javaClass)
+    }
+
     fun testFantomNamesStillReportedWithoutJavaPlugin() {
         if (skip()) return
         ExtensionTestUtil.maskExtensions(FantomFfi.EP_NAME, emptyList(), testRootDisposable)

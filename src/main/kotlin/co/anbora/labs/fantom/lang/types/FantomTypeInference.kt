@@ -69,7 +69,17 @@ object FantomTypeInference {
      * Type of the receiver of a chain operator (`.x`, `?.x`, `->x`, `[i]`, `(...)`):
      * the term base plus every chain step before this one.
      */
-    fun receiverType(chainOp: PsiElement): FanType? {
+    fun receiverType(chainOp: PsiElement): FanType? =
+        // Cached per chain op: Java FFI resolve asks for the receiver of each step again, and
+        // without the cache a long chain (`sb.append(1).append(2)...`) costs far more than linear.
+        CachedValuesManager.getManager(chainOp.project).getCachedValue(chainOp, RECEIVER_KEY, {
+            val value = RecursionManager.doPreventingRecursion(chainOp to RECEIVER_KEY, false) { computeReceiverType(chainOp) }
+            CachedValueProvider.Result.create(value, PsiModificationTracker.MODIFICATION_COUNT)
+        }, false)
+
+    private val RECEIVER_KEY = com.intellij.openapi.util.Key.create<com.intellij.psi.util.CachedValue<FanType?>>("fantom.receiverType")
+
+    private fun computeReceiverType(chainOp: PsiElement): FanType? {
         val step = chainOp.parent as? FantomTermChain ?: return null
         val container = step.parent ?: return null
         val (base, chains) = when (container) {

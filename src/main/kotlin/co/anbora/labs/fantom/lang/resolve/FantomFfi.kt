@@ -156,8 +156,9 @@ object FantomFfi {
         if (paramJava != null) {
             if (paramJava.startsWith("fanx.interop.")) return arg.name == param.name
             if (argJava != null) return resolver.isSubclass(argJava, paramJava, project)
-            // A Fantom value passed to a Java class parameter: only `null` (Obj?) can fit.
-            return arg.name == "Obj"
+            // A Java type written in Fantom code (`ByteBuffer bb`) has no class name here: match
+            // by simple name. Any other Fantom value fits only as `null` (Obj?).
+            return arg.name == "Obj" || arg.name == param.name
         }
         if (argJava != null) return false
         // Both are Fantom types: names must match; Int and Float are distinct.
