@@ -241,13 +241,18 @@ object AxonMcpService {
     private fun shown(project: Project, vf: VirtualFile): String =
         if (ProjectFileIndex.getInstance(project).isInContent(vf)) FantomMcpQueries.displayPath(project, vf) else vf.path
 
-    /** The `mod` of the function: from the copy's index, or from `<name>.trio` beside a proj folder file. Reads the disk. */
+    /**
+     * The `mod` of the function: from the copy's index, or from `<name>.trio` beside a proj
+     * folder file. The folder holds `11/10/2023, 7:07:07 PM UTC`; both give ISO, so an agent
+     * sees one form. A value that is not a time is kept as it is. Reads the disk.
+     */
     private fun modOf(project: Project, t: Target, name: String, vf: VirtualFile): String? = when (t.kind) {
         Kind.COPY -> AxonProjectCopy.getInstance(project).copy?.entry(name)?.mod
         Kind.FOLDER -> vf.parent?.findChild("$name.trio")
             ?.takeIf { !it.isDirectory && it.length <= MAX_TRIO_BYTES }
             ?.let { trio -> runCatching { AxonFallbackFolder.trioTags(String(trio.contentsToByteArray(), trio.charset))["mod"] }.getOrNull() }
             ?.trim()?.takeIf { it.isNotEmpty() }
+            ?.let { AxonFallbackFolder.isoOf(it) ?: it }
     }
 
     // ---- helpers -----------------------------------------------------------------------------

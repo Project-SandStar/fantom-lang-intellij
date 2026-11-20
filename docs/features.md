@@ -318,7 +318,7 @@ description says this, so the agent can pick the right one.
 |---|---|
 | `axon_project_of` | The Axon project (`connection/project`) of a file or folder, as the editor sees it: its proj folder, else the active copy, else none. A backup or version folder gives none |
 | `axon_functions` | The functions of a project: name, file and the first line of the doc. Pick the project by a file in it, by `connection/project`, or give neither for the active copy. Takes a name filter |
-| `axon_function` | One function: name and parameters, project, file, `mod`, doc and source. Give its file, or a name. A function with the same name in another project is never returned |
+| `axon_function` | One function: name and parameters, project, file, `mod` (an ISO time), doc and source. Give its file, or a name. A function with the same name in another project is never returned |
 
 - They return only files in the open project or in the active copy. A global
   proj folder that is not open in the IDE is refused.

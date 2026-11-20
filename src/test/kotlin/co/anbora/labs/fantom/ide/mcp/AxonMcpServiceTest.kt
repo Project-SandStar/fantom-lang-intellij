@@ -258,6 +258,19 @@ class AxonMcpServiceTest : BasePlatformTestCase() {
         assertTrue(text, text.contains("\nmod: unknown\ndoc: none\nsrc:\n() => readAll(site).map(siteArea)"))
     }
 
+    fun testModInTheFoldersFormIsGivenAsIso() {
+        // Sync writes the mod as the server does: `11/10/2023, 7:07:07 PM UTC`; the copy gives ISO
+        myFixture.addFileToProject("proj/demo/site/.sync-metadata.json", meta("demo", "site"))
+        myFixture.addFileToProject("proj/demo/site/func/load.axon", "() => 42")
+        myFixture.addFileToProject("proj/demo/site/func/load.trio", "name: load\nfunc\nmod: \"11/10/2023, 7:07:07 PM UTC\"\nsrc: () => 42\n")
+        myFixture.addFileToProject("proj/demo/site/func/odd.axon", "() => 1")
+        myFixture.addFileToProject("proj/demo/site/func/odd.trio", "name: odd\nfunc\nmod: yesterday\nsrc: () => 1\n")
+        val text = ok(function("proj/demo/site/func/load.axon"))
+        assertTrue(text, text.contains("\nmod: 2023-11-10T19:07:07Z\n"))
+        // a value that is not a time is kept
+        assertTrue(ok(function("proj/demo/site/func/odd.axon")).contains("\nmod: yesterday\n"))
+    }
+
     fun testFunctionShowsUnsavedEdits() {
         layout()
         val vf = myFixture.findFileInTempDir("proj/demo/site/func/siteArea.axon")!!
