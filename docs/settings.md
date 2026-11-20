@@ -183,6 +183,12 @@ from the `.trio` file beside its `.axon` file.
 
 The copy itself is in the IDE system folder, under `fantom-axon-cache`.
 
+**Push to SkySpark** (see [Features](features.md#push-a-function-to-skyspark))
+uses the same server URL and access key. The key must belong to a user with
+the `user` or `admin` role on the Axon server; a `readonly` key can sync but
+not push. The shortcut is Ctrl+Alt+Shift+Y (Cmd+Alt+Shift+Y on macOS); change
+it in Settings | Keymap.
+
 Limits: a reply of at most 64 MB, at most 20,000 functions, a connect
 timeout of 10 seconds and a read timeout of 2 minutes. Redirects are not
 followed, so the token goes to the configured server only.

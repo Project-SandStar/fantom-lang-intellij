@@ -253,7 +253,9 @@ functions of the copy work like the functions of the file:
 Only the functions of the project you picked are used. Pick another project
 and the old names no longer resolve.
 
-Not there yet: editing a function and pushing it back from the IDE.
+To edit a function and send it back to SkySpark, open it in a `proj` folder and
+use "Push to SkySpark" (see [Push a function to SkySpark](#push-a-function-to-skyspark)).
+The files of the copy stay read-only.
 
 ## Axon files in a proj folder
 
@@ -287,6 +289,36 @@ the nearest `.sync-metadata.json`, at most four folders up. See
 
 For these files the project copy is not used. Files outside a `proj` folder
 work as before.
+
+## Push a function to SkySpark
+
+Edit a function in a project folder of the `proj` folder
+(`<proj>/<connection>/<project>/func/<name>.axon`) and send it to SkySpark with
+**Push to SkySpark**: right-click in the editor or on the file in the Project
+view, or press Ctrl+Alt+Shift+Y (Cmd+Alt+Shift+Y on macOS).
+
+- The file is saved first. The push runs in the background.
+- The push goes through the Axon server with your access key. The server
+  commits to SkySpark with its own connection: the IDE never holds a SkySpark
+  password.
+- When the doc in the `.trio` file beside the function differs from the doc
+  SkySpark gave the folder, the new doc goes along too.
+- The push sends the change time (`mod`) the folder last got from SkySpark.
+  When someone changed the function in SkySpark since, a window shows the
+  SkySpark version and your file side by side, with three buttons:
+  **Overwrite SkySpark** pushes your file, **Take SkySpark Version** puts the
+  SkySpark source into your file (your text is kept in `.versions`), and
+  **Cancel** changes nothing.
+- A function that is not in SkySpark yet is created; a dialog asks first.
+- After a good push the folder's `.sync-metadata.json` and the `.trio` file get
+  the new change time, so the next "Sync Axon Functions" sees no local edit.
+- When the server removed older records with the same name (and kept a
+  backup of each), the notification says so.
+- A read-only access key can sync but not push: the notification says so.
+
+The item is greyed out with no server URL, no access key, on a file of the
+read-only project copy or of a `.versions` or backup folder, and on an Axon
+file outside a project folder. Its tooltip says why.
 
 ## Tools for AI agents (MCP)
 
