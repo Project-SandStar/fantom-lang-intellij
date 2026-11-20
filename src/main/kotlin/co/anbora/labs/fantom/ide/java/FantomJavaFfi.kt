@@ -3,6 +3,8 @@ package co.anbora.labs.fantom.ide.java
 import co.anbora.labs.fantom.ide.icons.FantomIcons
 import co.anbora.labs.fantom.lang.library.FantomSettings
 import co.anbora.labs.fantom.lang.resolve.FantomFfiResolver
+import co.anbora.labs.fantom.lang.resolve.JavaSignature
+import co.anbora.labs.fantom.lang.types.FanType
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.navigation.ItemPresentation
@@ -16,12 +18,17 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.NonClasspathClassFinder
+import com.intellij.psi.PsiArrayType
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiPrimitiveType
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.search.GlobalSearchScope
 import java.io.File
 import javax.swing.Icon
@@ -36,7 +43,106 @@ class FantomJavaFfiResolver : FantomFfiResolver {
     override fun findClasses(fqns: List<String>, project: Project): List<PsiElement> {
         val facade = JavaPsiFacade.getInstance(project)
         val scope = GlobalSearchScope.allScope(project)
-        return fqns.mapNotNull { facade.findClass(it, scope) }.distinct()
+        // Fantom names an inner class `Outer$Inner`; Java PSI names it `Outer.Inner`.
+        return fqns.mapNotNull { fqn ->
+            facade.findClass(fqn, scope) ?: fqn.takeIf { '$' in it }?.let { facade.findClass(it.replace('$', '.'), scope) }
+        }.distinct()
+    }
+
+    override fun typeOf(target: PsiElement): FanType? = when (target) {
+        is PsiClass -> classType(target, nullable = false)
+        is PsiMethod -> if (target.isConstructor) target.containingClass?.let { classType(it, nullable = false) }
+            else target.returnType?.let(::toFan)
+        is PsiField -> toFan(target.type)
+        else -> null
+    }
+
+    override fun signature(member: PsiElement): JavaSignature? = when (member) {
+        is PsiMethod -> {
+            val params = member.parameterList.parameters
+            JavaSignature(
+                isField = false,
+                params = params.map { toFan(it.type) },
+                primitives = params.map { (it.type as? PsiPrimitiveType)?.canonicalText },
+                returns = typeOf(member),
+            )
+        }
+        is PsiField -> JavaSignature(isField = true, params = emptyList(), primitives = emptyList(), returns = toFan(member.type))
+        else -> null
+    }
+
+    override fun isSubclass(sub: String, base: String, project: Project): Boolean {
+        if (sub == base) return true
+        val facade = JavaPsiFacade.getInstance(project)
+        val scope = GlobalSearchScope.allScope(project)
+        val s = facade.findClass(sub, scope) ?: return false
+        val b = facade.findClass(base, scope) ?: return false
+        return s == b || s.isInheritor(b, true)
+    }
+
+    override fun isFunctionalInterface(fqn: String, project: Project): Boolean {
+        val c = JavaPsiFacade.getInstance(project).findClass(fqn, GlobalSearchScope.allScope(project)) ?: return false
+        if (!c.isInterface || c.isAnnotationType) return false
+        val abstract = c.allMethods.filter { m ->
+            m.hasModifierProperty(PsiModifier.ABSTRACT) && !isObjectMethod(m)
+        }.map { it.name to it.parameterList.parametersCount }.toSet()
+        return abstract.size == 1
+    }
+
+    // `equals`, `hashCode` and `toString` an interface redeclares do not count (`Comparator`).
+    private fun isObjectMethod(m: PsiMethod): Boolean = when (m.name) {
+        "equals" -> m.parameterList.parametersCount == 1
+        "hashCode", "toString" -> m.parameterList.isEmpty
+        else -> false
+    }
+
+    /**
+     * A Java type as Fantom sees it, as the compiler's `JavaReflect.toFanType` maps it:
+     * `long`, `int`, `short`, `byte`, `char` are `Int`; `double`, `float` are `Float`;
+     * `boolean` is `Bool`; `Object`, `String`, `BigDecimal` are `Obj?`, `Str?`, `Decimal?`;
+     * other classes are nullable Java types; primitive arrays are the `fanx.interop` arrays.
+     * Object arrays have no Fantom type here (null).
+     */
+    private fun toFan(t: PsiType): FanType? = when (t) {
+        is PsiPrimitiveType -> when (t.canonicalText) {
+            "boolean" -> FanType.BOOL
+            "long", "int", "short", "byte", "char" -> FanType.INT
+            "double", "float" -> FanType.FLOAT
+            "void" -> FanType.VOID
+            else -> null
+        }
+        is PsiArrayType -> (t.componentType as? PsiPrimitiveType)?.let { PRIMITIVE_ARRAYS[it.canonicalText] }
+            ?.let { FanType.Named(it, nullable = true, javaClass = "fanx.interop.$it") }
+        is PsiClassType -> when (val c = t.resolve()) {
+            null -> null
+            is PsiTypeParameter -> FanType.OBJ.withNullable(true)
+            else -> when (c.qualifiedName) {
+                "java.lang.Object" -> FanType.OBJ.withNullable(true)
+                "java.lang.String" -> FanType.STR.withNullable(true)
+                "java.math.BigDecimal" -> FanType.DECIMAL.withNullable(true)
+                else -> classType(c, nullable = true)
+            }
+        }
+        else -> null
+    }
+
+    /** The Fantom name of [c] (`Outer$Inner` for an inner class) with its Java name. */
+    private fun classType(c: PsiClass, nullable: Boolean): FanType? {
+        val fqn = c.qualifiedName ?: return null
+        var name = c.name ?: return null
+        var outer = c.containingClass
+        while (outer != null) {
+            name = "${outer.name}$$name"
+            outer = outer.containingClass
+        }
+        return FanType.Named(name, nullable, javaClass = fqn)
+    }
+
+    private companion object {
+        val PRIMITIVE_ARRAYS = mapOf(
+            "boolean" to "BooleanArray", "byte" to "ByteArray", "short" to "ShortArray", "char" to "CharArray",
+            "int" to "IntArray", "long" to "LongArray", "float" to "FloatArray", "double" to "DoubleArray",
+        )
     }
 
     override fun findMembers(classes: List<PsiElement>, name: String): List<PsiElement> =

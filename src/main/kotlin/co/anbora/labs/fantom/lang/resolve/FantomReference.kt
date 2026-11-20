@@ -1,17 +1,20 @@
 package co.anbora.labs.fantom.lang.resolve
 
 import co.anbora.labs.fantom.lang.core.psi.FantomAssignExpr
+import co.anbora.labs.fantom.lang.core.psi.FantomCall
 import co.anbora.labs.fantom.lang.core.psi.FantomField
 import co.anbora.labs.fantom.lang.core.psi.FantomFieldDef
 import co.anbora.labs.fantom.lang.core.psi.FantomLocal
 import co.anbora.labs.fantom.lang.core.psi.FantomNamedElement
 import co.anbora.labs.fantom.lang.index.FantomDeclarationIndex
 import co.anbora.labs.fantom.lang.index.FantomDeclarationKind
+import co.anbora.labs.fantom.lang.types.FanType
 import co.anbora.labs.fantom.lang.types.FantomItScope
 import co.anbora.labs.fantom.lang.types.FantomTypeInference
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiPolyVariantReferenceBase
 import com.intellij.psi.PsiElementResolveResult
 import com.intellij.psi.ResolveResult
@@ -73,11 +76,7 @@ class FantomReference(
                 return fan
             }
             Kind.SLOT -> if (!thisReceiver) {
-                val owner = ownerName ?: receiverTypeName()
-                if (owner != null && FantomFfi.isJavaType(owner, file)) {
-                    val java = FantomFfi.resolveSlot(owner, name, file)
-                    if (java.isNotEmpty()) return java
-                }
+                javaSlotTargets(file)?.let { return it }
             }
             Kind.BARE -> {}
         }
@@ -88,6 +87,69 @@ class FantomReference(
 
     /** The Java type of an FFI receiver: `Type.x` with a Java `Type`, or `recv.x` whose type is one. */
     fun ffiOwnerName(): String? = if (thisReceiver) null else ownerName ?: receiverTypeName()
+
+    /**
+     * The fully qualified Java class of the receiver of `recv.x` when its type came from a
+     * Java signature (`Base64.getEncoder().x`), so no `using` line has to name it.
+     */
+    fun ffiOwnerClass(): String? =
+        if (thisReceiver || ownerName != null) null else (receiverType() as? FanType.Named)?.javaClass
+
+    /**
+     * The Java members this slot names, or null when the receiver is not a Java class.
+     * Of several overloads, the ones that fit the call's argument types win ([FantomFfi.pickOverloads]).
+     */
+    private fun javaSlotTargets(file: PsiFile): List<PsiElement>? {
+        val fqn = ffiOwnerClass()
+        val java = if (fqn != null) FantomFfi.resolveSlotOf(fqn, name, element.project)
+        else {
+            val owner = ffiOwnerName() ?: return null
+            if (!FantomFfi.isJavaType(owner, file)) return null
+            FantomFfi.resolveSlot(owner, name, file)
+        }
+        if (java.isEmpty()) return null
+        if (java.size < 2) return java
+        return FantomFfi.pickOverloads(java, callArgTypes(), element.project)
+    }
+
+    /**
+     * The argument types of the call this slot names: `x.m(a, b)`, `x.m(a) |p| { }` (the closure
+     * is the last argument), `x.m` with no parentheses (no arguments). Null for a field use.
+     */
+    private fun callArgTypes(): List<FanType?>? {
+        val call = element.parent as? FantomCall
+        var exprs = call?.args?.exprList
+        var closure = call?.closure
+        if (exprs == null && closure == null) {
+            // `recv.m(a)` parses as the field `.m` and a call step `(a)` after it.
+            val op = nextCallOp()
+            if (op != null) {
+                exprs = op.args?.exprList
+                closure = op.closure
+            } else if (call == null) return null
+        }
+        val args = exprs.orEmpty().map { FantomTypeInference.typeOf(it) }
+        // A closure only has to fit a functional interface; its own type is not needed (and
+        // inferring it here could loop back into this call's resolution).
+        return if (closure != null) args + FanType.Func(emptyList(), null) else args
+    }
+
+    /** The call step (`(args)` or a closure) right after this slot name in its chain, if any. */
+    private fun nextCallOp(): co.anbora.labs.fantom.lang.core.psi.FantomCallOp? {
+        var p: PsiElement? = element.parent
+        val chains = run {
+            while (p != null) {
+                when (val c = p) {
+                    is co.anbora.labs.fantom.lang.core.psi.FantomTermExpr -> return@run c.termChainList
+                    is co.anbora.labs.fantom.lang.core.psi.FantomGroupedExpr -> return@run c.termChainList
+                }
+                p = p?.parent
+            }
+            return null
+        }
+        val end = element.textRange.endOffset
+        return chains.firstOrNull { it.textRange.startOffset >= end }?.callOp
+    }
 
     /**
      * When a name is declared both in the project and in the Fantom library (for
@@ -165,10 +227,12 @@ class FantomReference(
         FantomDeclarationIndex.findDeclarations(name, project, scope) { it.isType }
 
     // The short type name of the receiver of `recv.x`, from the chain operator that holds this id.
-    private fun receiverTypeName(): String? {
+    private fun receiverTypeName(): String? = receiverType()?.slotOwnerName
+
+    private fun receiverType(): FanType? {
         val slotExpr = element.parent?.parent as? co.anbora.labs.fantom.lang.core.psi.FantomSlotExpr ?: return null
         val chainOp = slotExpr.parent ?: return null
-        return FantomTypeInference.receiverType(chainOp)?.slotOwnerName
+        return FantomTypeInference.receiverType(chainOp)
     }
 
     private fun slotsInEnclosingTypeChain(name: String, scope: GlobalSearchScope): List<FantomNamedElement> {

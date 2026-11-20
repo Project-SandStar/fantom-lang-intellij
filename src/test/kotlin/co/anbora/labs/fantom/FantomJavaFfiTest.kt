@@ -162,7 +162,8 @@ class FantomJavaFfiTest : FantomInspectionTestBase() {
         assertTrue(getInstance.isNotEmpty())
         assertTrue(getInstance.all { it is PsiMethod && it.containingClass?.qualifiedName == "javax.crypto.Cipher" })
         assertTrue(targetsAt("doFinal").all { it is PsiMethod && it.name == "doFinal" })
-        assertTrue(targetsAt("doFinal").size > 1) // overloads
+        // `doFinal(toByteArray(...))`: of the overloads, the argument types pick `doFinal(byte[])` first.
+        assertEquals("byte[]", (targetsAt("doFinal").first() as PsiMethod).parameterList.parameters.single().type.canonicalText)
         assertTrue(targetsAt("ENCRYPT_MODE").single() is PsiField)
         assertEquals("make", (targetsAt("make(buf").single() as PsiMethod).name)
         // `Key` is a Java class here (package import), though some Fantom pod may declare a `Key`.
@@ -203,6 +204,107 @@ class FantomJavaFfiTest : FantomInspectionTestBase() {
         assertNull(FantomFfi.resolver())
         checkWarnings(crypto)
         assertEmpty(targetsAt("Cipher c"))
+    }
+
+    private fun localType(name: String): co.anbora.labs.fantom.lang.types.FanType? {
+        val def = com.intellij.psi.util.PsiTreeUtil.findChildrenOfType(
+            myFixture.file, co.anbora.labs.fantom.lang.core.psi.FantomLocalDef::class.java,
+        ).first { it.name == name }
+        return co.anbora.labs.fantom.lang.types.FantomTypeInference.typeOfDeclaration(def)
+    }
+
+    /** Java return types map to Fantom types: primitives, `String` as `Str?`, other classes nullable. */
+    fun testJavaTypesMapToFantom() {
+        if (skip()) return
+        myFixture.configureByText(
+            "A.fan",
+            """
+            using [java] java.util::Base64
+            using [java] java.lang::StringBuilder
+            class A { Void f(ByteArray b) {
+              enc := Base64.getEncoder()
+              s := enc.encodeToString(b)
+              sb := StringBuilder()
+              n := sb.length()
+              ok := sb.isEmpty()
+            } }
+            """.trimIndent(),
+        )
+        val enc = localType("enc") as co.anbora.labs.fantom.lang.types.FanType.Named
+        assertEquals("Base64\$Encoder", enc.name)
+        assertTrue(enc.nullable)
+        assertEquals("java.util.Base64.Encoder", enc.javaClass)
+        assertEquals(co.anbora.labs.fantom.lang.types.FanType.STR.withNullable(true), localType("s"))
+        assertEquals("java.lang.StringBuilder", (localType("sb") as co.anbora.labs.fantom.lang.types.FanType.Named).javaClass)
+        assertEquals(co.anbora.labs.fantom.lang.types.FanType.INT, localType("n"))
+        assertEquals(co.anbora.labs.fantom.lang.types.FanType.BOOL, localType("ok"))
+    }
+
+    /** A receiver typed from a Java return value completes its members with no `using` line for it. */
+    fun testCompletionOnInferredJavaReceiver() {
+        if (skip()) return
+        myFixture.configureByText(
+            "A.fan",
+            "using [java] java.util::Base64\nclass A { Void f() { enc := Base64.getEncoder(); enc.encodeToS<caret> } }",
+        )
+        val items = myFixture.completeBasic()?.map { it.lookupString }
+        if (items == null) assertTrue(myFixture.editor.document.text, "enc.encodeToString" in myFixture.editor.document.text)
+        else assertTrue(items.toString(), "encodeToString" in items)
+    }
+
+    private fun firstParamType(marker: String): String =
+        (targetsAt(marker).first() as PsiMethod).parameterList.parameters.single().type.canonicalText
+
+    /** Overloads: the compiler's rules pick by argument count and type; `Int` prefers `long`. */
+    fun testOverloadsByArgumentTypes() {
+        if (skip()) return
+        myFixture.configureByText(
+            "A.fan",
+            """
+            using [java] java.lang::StringBuilder
+            class A { Void f() {
+              sb := StringBuilder()
+              sb.append(5)
+              sb.append("x")
+              sb.append(1.5f)
+              sb.append(true)
+            } }
+            """.trimIndent(),
+        )
+        assertEquals("long", firstParamType("append(5"))
+        assertEquals("java.lang.String", firstParamType("append(\"x"))
+        assertEquals("double", firstParamType("append(1.5f"))
+        assertEquals("boolean", firstParamType("append(true"))
+        assertEmpty(myFixture.doHighlighting().filter { it.description?.startsWith("Cannot resolve") == true }.map { it.description })
+    }
+
+    /** `Outer$Inner` names a Java inner class. */
+    fun testInnerClass() {
+        if (skip()) return
+        myFixture.configureByText(
+            "A.fan",
+            "using [java] java.util::Map\$Entry\nclass A { Void f(Map\$Entry e) { echo(e.getKey()) } }",
+        )
+        assertEquals("java.util.Map.Entry", (targetsAt("Map\$Entry e").single() as PsiClass).qualifiedName)
+        assertTrue(targetsAt("getKey").all { it is PsiMethod && it.name == "getKey" })
+        assertTrue(targetsAt("getKey").isNotEmpty())
+    }
+
+    /** A closure passed where Java wants a functional interface (`Runnable`, `Callable`). */
+    fun testClosureAsFunctionalInterface() {
+        if (skip()) return
+        val resolver = FantomFfi.resolver()!!
+        assertTrue(resolver.isFunctionalInterface("java.lang.Runnable", project))
+        assertTrue(resolver.isFunctionalInterface("java.util.Comparator", project))
+        assertFalse(resolver.isFunctionalInterface("java.util.List", project))
+        assertFalse(resolver.isFunctionalInterface("java.lang.String", project))
+        myFixture.configureByText(
+            "A.fan",
+            "using [java] java.util.concurrent::ExecutorService\nclass A { Void f(ExecutorService ex) { ex.submit |->| { echo(1) } } }",
+        )
+        val submit = targetsAt("submit")
+        assertTrue(submit.isNotEmpty())
+        assertTrue(submit.toString(), submit.all { (it as PsiMethod).parameterList.parametersCount == 1 })
     }
 
     fun testFantomNamesStillReportedWithoutJavaPlugin() {

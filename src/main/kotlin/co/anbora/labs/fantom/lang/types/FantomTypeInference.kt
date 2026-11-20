@@ -21,6 +21,7 @@ import co.anbora.labs.fantom.lang.core.psi.FantomTypes.THIS
 import co.anbora.labs.fantom.lang.core.psi.FantomTypes.URI_LITERAL
 import co.anbora.labs.fantom.lang.index.FantomDeclarationIndex
 import co.anbora.labs.fantom.lang.resolve.FantomEnumSlots
+import co.anbora.labs.fantom.lang.resolve.FantomFfi
 import co.anbora.labs.fantom.lang.resolve.FantomReference
 import co.anbora.labs.fantom.lang.resolve.FantomScope
 import com.intellij.openapi.project.Project
@@ -254,8 +255,8 @@ object FantomTypeInference {
         e.namedSuper?.let { return fromPsiType(it.type) }
         e.staticCall?.let { sc -> return slotType(sc.slotExpr, fromPsiType(sc.type)) }
         e.dsl?.let { return fromPsiType(it.type) }
-        e.simple?.let { return fromPsiType(it.type)?.withNullable(false) }
-        e.ctorBlock?.let { return fromPsiType(it.type)?.withNullable(false) }
+        e.simple?.let { return javaCtorType(it.type) ?: fromPsiType(it.type)?.withNullable(false) }
+        e.ctorBlock?.let { return javaCtorType(it.type) ?: fromPsiType(it.type)?.withNullable(false) }
         e.closure?.let { return typeOfClosure(it) }
         return null
     }
@@ -285,8 +286,31 @@ object FantomTypeInference {
     private fun typeOfReference(id: FantomId?): FanType? {
         val ref = id?.reference as? FantomReference ?: return null
         val targets = ref.resolveAll()
+        if (targets.isEmpty()) return javaType(ref)
         val types = targets.mapNotNull { FantomEnumSlots.typeOf(it, ref.name) ?: typeOfDeclaration(it) }.distinct()
         return types.singleOrNull()
+    }
+
+    /**
+     * The Fantom type of the Java targets [ref] resolves to (`using [java]`), or null when
+     * it resolves to none. Of several overloads the best fit comes first, so when their
+     * types differ the first one wins.
+     */
+    /** `JavaType(...)`: the Java class, with its full name, when [type] names one (`using [java]`). */
+    private fun javaCtorType(type: FantomType): FanType? {
+        val file = type.containingFile ?: return null
+        if (FantomFfi.javaImports(file).isEmpty) return null
+        if (fromPsiType(type) !is FanType.Named) return null
+        val ref = type.simpleType?.idList?.lastOrNull()?.reference as? FantomReference ?: return null
+        val cls = ref.resolveWithFfi().firstOrNull { it !is FantomNamedElement } ?: return null
+        return FantomFfi.typeOf(cls)?.withNullable(false)
+    }
+
+    private fun javaType(ref: FantomReference): FanType? {
+        val java = ref.resolveWithFfi().filter { it !is FantomNamedElement }
+        if (java.isEmpty()) return null
+        val types = java.mapNotNull { FantomFfi.typeOf(it) }.distinct()
+        return types.singleOrNull() ?: FantomFfi.typeOf(java.first())
     }
 
     private fun applyChains(start: FanType, chains: List<FantomTermChain>): FanType? {
@@ -337,6 +361,10 @@ object FantomTypeInference {
         val ref = (slotExpr?.field?.id ?: call?.id)?.reference as? FantomReference ?: return null
         val closureArg = closure ?: call?.let { closureArgument(it) }
         val args = call?.args?.exprList ?: nextArgs
+        // A slot on a Java receiver: the Java member's type (its overload by argument types).
+        if (ref.ffiOwnerClass() != null || ref.ffiOwnerName()?.let { o -> FantomFfi.isJavaType(o, ref.element.containingFile) } == true) {
+            javaType(ref)?.let { return it }
+        }
         val types = ref.resolveAll().mapNotNull { target ->
             FantomEnumSlots.typeOf(target, ref.name)?.let { return@mapNotNull it }
             val declared = typeOfDeclaration(target) ?: return@mapNotNull null

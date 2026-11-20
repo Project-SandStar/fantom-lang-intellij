@@ -15,7 +15,13 @@ sealed class FanType {
     /** How the type prints in hints and docs. */
     abstract val presentableText: String
 
-    data class Named(val name: String, override val nullable: Boolean = false) : FanType() {
+    /**
+     * [javaClass] is the fully qualified name when the type is a Java FFI class that came
+     * from a Java signature, so a chain such as `Base64.getEncoder().encodeToString` finds
+     * the members of `java.util.Base64.Encoder` without a `using` line for it. [name] is
+     * then the name Fantom gives the class: `Base64$Encoder` for an inner class.
+     */
+    data class Named(val name: String, override val nullable: Boolean = false, val javaClass: String? = null) : FanType() {
         override val slotOwnerName get() = name
         override val presentableText get() = name + q()
         override fun withNullable(nullable: Boolean) = copy(nullable = nullable)
