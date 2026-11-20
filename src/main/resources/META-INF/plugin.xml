@@ -242,5 +242,17 @@
             <add-to-group group-id="ToolsMenu" anchor="last"/>
             <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
         </action>
+        <!-- Task 4.34: push an Axon function of a proj folder to SkySpark through the Axon server -->
+        <action id="Fantom.AxonPush"
+                class="co.anbora.labs.fantom.ide.axon.AxonPushAction"
+                text="Push to SkySpark"
+                description="Push this Axon function to SkySpark through the Axon server"
+                icon="AllIcons.Actions.Upload">
+            <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt shift Y"/>
+            <keyboard-shortcut keymap="Mac OS X" first-keystroke="meta alt shift Y" replace-all="true"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta alt shift Y" replace-all="true"/>
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+            <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+        </action>
     </actions>
 </idea-plugin>
