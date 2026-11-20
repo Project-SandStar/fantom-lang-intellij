@@ -8,6 +8,12 @@ object FantomIcons {
 
     val FILE = getIcon("icon_file.svg")
 
+    /** .axon files: a page with a lambda arrow (axon_file_dark.svg in dark themes). */
+    val AXON_FILE = getIcon("axon_file.svg")
+
+    /** .trio files: a page with record rows (trio_file_dark.svg in dark themes). */
+    val TRIO_FILE = getIcon("trio_file.svg")
+
     val FUNCTION = AllIcons.Nodes.Function
     val PARAMETER = AllIcons.Nodes.Parameter
 

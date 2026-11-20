@@ -80,7 +80,7 @@ object TrioFileType : LanguageFileType(TrioLanguage) {
     override fun getName(): String = "Trio"
     override fun getDescription(): String = "Haystack trio records"
     override fun getDefaultExtension(): String = "trio"
-    override fun getIcon(): Icon = FantomIcons.FILE
+    override fun getIcon(): Icon = FantomIcons.TRIO_FILE
 }
 
 class TrioParserDefinition : ParserDefinition {

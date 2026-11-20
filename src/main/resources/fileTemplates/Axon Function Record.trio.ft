@@ -1,0 +1,7 @@
+name:"${NAME}"
+doc:
+  
+src:
+  () => do
+    
+  end

@@ -121,7 +121,7 @@ object AxonFileType : LanguageFileType(AxonLanguage) {
     override fun getName(): String = "Axon"
     override fun getDescription(): String = "Axon script (SkySpark, Haxall)"
     override fun getDefaultExtension(): String = "axon"
-    override fun getIcon(): Icon = FantomIcons.FILE
+    override fun getIcon(): Icon = FantomIcons.AXON_FILE
 }
 
 class AxonFile(viewProvider: FileViewProvider) : PsiFileBase(viewProvider, AxonLanguage) {

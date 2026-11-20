@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <!-- Trio: a page with three record rows -->
+  <path d="M3 1.5h6.5L13 5v9.5H3z" fill="#F4F4F4" stroke="#6C707E"/>
+  <path d="M9.5 1.5V5H13" fill="none" stroke="#6C707E"/>
+  <rect x="1" y="7" width="10" height="7" rx="1.5" fill="#208A3C"/>
+  <path d="M2.8 8.9h6.4M2.8 10.5h6.4M2.8 12.1h6.4" fill="none" stroke="#FFFFFF" stroke-width="1" stroke-linecap="round"/>
+</svg>

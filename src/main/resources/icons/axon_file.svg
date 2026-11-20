@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <!-- Axon: a page with a lambda arrow "=>" -->
+  <path d="M3 1.5h6.5L13 5v9.5H3z" fill="#F4F4F4" stroke="#6C707E"/>
+  <path d="M9.5 1.5V5H13" fill="none" stroke="#6C707E"/>
+  <rect x="1" y="7" width="10" height="7" rx="1.5" fill="#E8762D"/>
+  <path d="M2.8 9.4h3.1M2.8 11.6h3.1M5.9 8.4l2.3 2.1-2.3 2.1" fill="none" stroke="#FFFFFF" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

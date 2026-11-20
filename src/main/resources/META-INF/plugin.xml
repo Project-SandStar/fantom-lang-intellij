@@ -59,6 +59,9 @@
         <enterHandlerDelegate implementation="co.anbora.labs.fantom.ide.typing.FantomEnterHandler" order="first"/>
         <backspaceHandlerDelegate implementation="co.anbora.labs.fantom.ide.typing.FantomBackspaceHandler"/>
         <internalFileTemplate name="Fantom Class"/>
+        <internalFileTemplate name="Axon File"/>
+        <internalFileTemplate name="Trio File"/>
+        <internalFileTemplate name="Axon Function Record"/>
         <lang.foldingBuilder language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.folding.FantomFoldingBuilder"/>
         <lang.formatter language="fantom_lang" implementationClass="co.anbora.labs.fantom.ide.formatter.FantomFormattingModelBuilder"/>
         <langCodeStyleSettingsProvider implementation="co.anbora.labs.fantom.ide.formatter.FantomLanguageCodeStyleSettingsProvider"/>
@@ -226,6 +229,18 @@
                 text="Fantom Class"
                 description="Create new Fantom class">
             <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
+        </action>
+        <action id="Fantom.NewAxonFile"
+                class="co.anbora.labs.fantom.ide.actions.CreateNewAxonFileAction"
+                text="Axon File"
+                description="Create a new Axon function file">
+            <add-to-group group-id="NewGroup" anchor="after" relative-to-action="Fantom.NewFantomClass"/>
+        </action>
+        <action id="Fantom.NewTrioFile"
+                class="co.anbora.labs.fantom.ide.actions.CreateNewTrioFileAction"
+                text="Trio File"
+                description="Create a new Trio records file">
+            <add-to-group group-id="NewGroup" anchor="after" relative-to-action="Fantom.NewAxonFile"/>
         </action>
     </actions>
     <actions>
