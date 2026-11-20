@@ -144,15 +144,12 @@ object AxonServerToken {
 
     /**
      * True when the password store keeps the token in memory only, so it is lost when the
-     * IDE closes. This happens on a host with no keychain, for example the remote host of
-     * a Gateway session, unless KeePass is set. Null when no token is stored or nothing was
-     * read yet. Memory only: safe on any thread.
+     * IDE closes: Settings | Passwords is set to "Do not save", or the store has no keychain
+     * to write to. Over Gateway the backend's store sends each read and write to the
+     * password store of the JetBrains Client, so this is the client's setting. Null when no
+     * token is stored or nothing was read yet. Memory only: safe on any thread.
      */
     fun memoryOnlyHint(): Boolean? = memoryOnly
-
-    /** The test password store never keeps a key in memory only: tests set the hint here. */
-    @TestOnly
-    internal fun setMemoryOnlyHintForTest(value: Boolean?) { memoryOnly = value }
 
     private fun onlyInMemory(token: String): Boolean = runCatching {
         PasswordSafe.instance.isPasswordStoredOnlyInMemory(attributes(), Credentials(null, token))
