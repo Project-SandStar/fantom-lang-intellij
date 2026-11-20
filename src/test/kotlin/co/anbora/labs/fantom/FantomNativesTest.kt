@@ -55,10 +55,47 @@ class FantomNativesTest : FantomInspectionTestBase() {
         myFixture.enableInspections(FantomMissingNativeInspection())
         checkWarnings(
             "class Clock {\n  native static Int now()\n" +
-                "  native Int <warning descr=\"Native 'tick' has no JS implementation in the pod's jsDirs\">tick</warning>()\n" +
+                "  native Int <warning descr=\"Native 'tick' has no method in ClockPeer.js\">tick</warning>()\n" +
                 "  Int plain() { return 0 }\n}\n",
             "demo/fan/Clock.fan",
         )
+    }
+
+    /** The old JS peer style (`tick = function(self)`, as in dom/js/StoragePeer.js) counts. */
+    fun testOldJsFunctionStyleCounts() {
+        addPod("fan.demo.ClockPeer.prototype.\$ctor = function(self) {}\nfan.demo.ClockPeer.prototype.now = function(self) { return 1; }\n" +
+            "var o = { tick: function(self) { return 2; } };\n")
+        myFixture.enableInspections(FantomMissingNativeInspection())
+        checkWarnings(clock, "demo/fan/Clock.fan")
+    }
+
+    /** A call `.tick(` or a longer name `ticker(` in the peer is not the method itself. */
+    fun testCallIsNotAnImplementation() {
+        addPod("class ClockPeer { now(self) { return this.tick(self) + ticker(self); } }")
+        myFixture.enableInspections(FantomMissingNativeInspection())
+        checkWarnings(
+            "class Clock {\n  native static Int now()\n" +
+                "  native Int <warning descr=\"Native 'tick' has no method in ClockPeer.js\">tick</warning>()\n}\n",
+            "demo/fan/Clock.fan",
+        )
+    }
+
+    /** A type with no peer file in a declared folder is not built for that language: no warning. */
+    fun testTypeWithoutPeerFileNotChecked() {
+        addPod()
+        myFixture.enableInspections(FantomMissingNativeInspection())
+        checkWarnings("class Coord {\n  native Float lat()\n}\n", "demo/fan/Coord.fan")
+    }
+
+    /** `javaDirs = Uri[,]` (as in the crypto pod) declares no folder, even when java/ exists. */
+    fun testEmptyJavaDirsNotChecked() {
+        myFixture.addFileToProject(
+            "empty/build.fan",
+            "using build\nclass Build : BuildPod { new make() { podName = \"empty\"\njavaDirs = Uri[,] } }\n",
+        )
+        myFixture.addFileToProject("empty/java/ClockPeer.java", "public class ClockPeer { }")
+        myFixture.enableInspections(FantomMissingNativeInspection())
+        checkWarnings("class Clock {\n  native Int tick()\n}\n", "empty/fan/Clock.fan")
     }
 
     /** A pod whose build.fan declares no java/js folders is not checked. */

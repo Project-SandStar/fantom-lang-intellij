@@ -37,6 +37,10 @@ class FantomBuildFile(
      * of the pod's dependencies.
      */
     val dependsChangedInCode: Boolean = false,
+    /** The literal `javaDirs` list (`[`java/`]`), or null when there is none or it is not a literal. */
+    val javaDirs: List<String>? = null,
+    /** The literal `jsDirs` list, or null when there is none or it is not a literal. */
+    val jsDirs: List<String>? = null,
 ) {
     /** One `depends` entry: `"concurrent 1.0+"` is pod `concurrent`, constraint `1.0+`. */
     data class Dependency(val pod: String, val constraint: String)
@@ -101,9 +105,11 @@ class FantomBuildFile(
             val depends = values["depends"]?.let { stringList(it, STRING) }?.map(::dependency)
             val srcDirs = values["srcDirs"]?.let { stringList(it, URI) }
             val resDirs = values["resDirs"]?.let { stringList(it, URI) }
+            val javaDirs = values["javaDirs"]?.let { stringList(it, URI) }
+            val jsDirs = values["jsDirs"]?.let { stringList(it, URI) }
             val podNameOffset = values["podName"]?.let { (it.parent as? FantomAssignExpr)?.ifExpr?.textOffset } ?: -1
             val dependsUses = PsiTreeUtil.findChildrenOfType(file, FantomId::class.java).count { it.text == "depends" }
-            return FantomBuildFile(podName, version, depends, srcDirs, resDirs, podNameOffset, dependsUses > 1)
+            return FantomBuildFile(podName, version, depends, srcDirs, resDirs, podNameOffset, dependsUses > 1, javaDirs, jsDirs)
         }
 
         /** The list literal [value] is, when it is exactly one; null otherwise. */

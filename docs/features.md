@@ -74,9 +74,11 @@ A slot marked `native` is written in Java or JavaScript, in the pod's
 
 - A gutter icon on a `native` slot jumps to its method in `<Type>Peer.java`
   (or `<Type>.java`) and in `<Type>Peer.js` (or `<Type>.js`).
-- The inspection "Native slot without implementation" warns when a folder
-  `build.fan` declares has no implementation for the slot. Pods that declare
-  no such folder are not checked. This works without the JavaScript plugin.
+- The inspection "Native slot without implementation" warns when the type's
+  peer file has no method for the slot. Both JS styles count: `now(self)` and
+  `now = function(self)`. A type with no peer file in a folder, and a pod that
+  declares no such folder, are not checked. This works without the JavaScript
+  plugin.
 
 ## Refactoring
 

@@ -4,8 +4,9 @@ import co.anbora.labs.fantom.ide.presentation.FantomPresentation
 import co.anbora.labs.fantom.lang.core.psi.FantomFieldDef
 import co.anbora.labs.fantom.lang.core.psi.FantomMethodDef
 import co.anbora.labs.fantom.lang.core.psi.FantomNamedElement
+import co.anbora.labs.fantom.lang.library.FantomBuildFile
 import co.anbora.labs.fantom.lang.resolve.FantomScope
-import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
@@ -17,8 +18,11 @@ import com.intellij.psi.PsiManager
  * `<Type>Peer.js` (or `<Type>.js`). The folders are the `javaDirs` and `jsDirs` of the
  * pod's `build.fan`; without them, `java/` and `js/` when they exist.
  *
- * The lookup is by file name and text (`name(` in the file), so it needs neither the Java
- * nor the JavaScript plugin. It reads the VFS only, which is cached.
+ * The lookup is by file name and text, so it needs neither the Java nor the JavaScript
+ * plugin. A Java or JS method counts when the file holds `name(` (`now(self)`,
+ * `long now(Clock self)`) or the old JS style `name = function(` / `name: function(`.
+ * `build.fan` is read from its cached PSI ([FantomBuildFile]); peer files are read from
+ * their file view provider, which uses the open document or the VFS content cache.
  */
 object FantomNatives {
 
@@ -31,62 +35,64 @@ object FantomNatives {
     fun isNative(slot: PsiElement): Boolean =
         (slot is FantomMethodDef || slot is FantomFieldDef) && "native" in FantomPresentation.modifiers(slot as FantomNamedElement)
 
-    /** The pod folder of [file]: the nearest folder above it that holds a `build.fan`. */
-    fun podDir(file: VirtualFile?): VirtualFile? {
-        var dir = file?.parent
-        while (dir != null) {
-            if (dir.findChild("build.fan") != null) return dir
-            dir = dir.parent
-        }
-        return null
-    }
-
     /**
-     * The folders of [kind] the pod's `build.fan` declares (`javaDirs = [`java/`]`).
+     * The folders of [kind] the pod of [slot] declares in `build.fan` (`javaDirs = [`java/`]`).
      * [declaredOnly] false falls back to `java/` or `js/` when `build.fan` names none.
+     * `javaDirs = Uri[,]` declares no folder.
      */
-    fun dirs(pod: VirtualFile, kind: Kind, declaredOnly: Boolean): List<VirtualFile> {
-        val build = pod.findChild("build.fan") ?: return emptyList()
-        val text = try { VfsUtilCore.loadText(build) } catch (_: java.io.IOException) { return emptyList() }
-        val list = Regex("""\b${kind.buildField}\s*=\s*\[([^\]]*)]""").find(text)?.groupValues?.get(1)
-        if (list != null) {
-            return Regex("`([^`]+)`").findAll(list).mapNotNull { pod.findFileByRelativePath(it.groupValues[1].trimEnd('/')) }
-                .filter { it.isDirectory }.toList()
+    fun dirs(slot: PsiElement, kind: Kind, declaredOnly: Boolean): List<VirtualFile> {
+        val vf = slot.containingFile?.originalFile?.virtualFile ?: return emptyList()
+        val buildVf = FantomBuildFile.findBuildFile(vf) ?: return emptyList()
+        val pod = buildVf.parent ?: return emptyList()
+        val build = FantomBuildFile.forFile(vf, slot.project) ?: return emptyList()
+        val declared = when (kind) {
+            Kind.JAVA -> build.javaDirs
+            Kind.JS -> build.jsDirs
+        }
+        if (declared != null) {
+            return declared.mapNotNull { pod.findFileByRelativePath(it.trimEnd('/')) }.filter { it.isDirectory }
         }
         if (declaredOnly) return emptyList()
         return listOfNotNull(pod.findChild(kind.defaultDir)?.takeIf { it.isDirectory })
     }
 
+    /** The peer files of the type of [slot] in [kind]'s folders: `<Type>Peer.ext` or `<Type>.ext`. */
+    fun peerFiles(slot: FantomNamedElement, kind: Kind, declaredOnly: Boolean = false): List<VirtualFile> {
+        val typeName = FantomScope.enclosingType(slot)?.name ?: return emptyList()
+        val names = listOf("${typeName}Peer.${kind.ext}", "$typeName.${kind.ext}")
+        return dirs(slot, kind, declaredOnly).flatMap { findFiles(it, names) }
+    }
+
     /** The places [slot] (a native slot) is written in [kind]'s folders: one element per hit. */
     fun implementations(slot: FantomNamedElement, kind: Kind, declaredOnly: Boolean = false): List<PsiElement> {
         val name = slot.name ?: return emptyList()
-        val typeName = FantomScope.enclosingType(slot)?.name ?: return emptyList()
-        val pod = podDir(slot.containingFile?.originalFile?.virtualFile) ?: return emptyList()
-        val files = listOf("${typeName}Peer.${kind.ext}", "$typeName.${kind.ext}")
         val psiManager = PsiManager.getInstance(slot.project)
+        val pattern = methodPattern(name)
         val out = ArrayList<PsiElement>()
-        val call = Regex("""\b${Regex.escape(name)}\s*\(""")
-        for (dir in dirs(pod, kind, declaredOnly)) {
-            for (vf in findFiles(dir, files)) {
-                val text = try { VfsUtilCore.loadText(vf) } catch (_: java.io.IOException) { continue }
-                val hit = call.find(text) ?: continue
-                val psi = psiManager.findFile(vf) ?: continue
-                out += psi.findElementAt(hit.range.first) ?: psi
-            }
+        for (vf in peerFiles(slot, kind, declaredOnly)) {
+            ProgressManager.checkCanceled()
+            val view = psiManager.findViewProvider(vf) ?: continue
+            val hit = pattern.find(view.contents) ?: continue
+            val psi = view.getPsi(view.baseLanguage) ?: continue
+            out += psi.findElementAt(hit.range.first) ?: psi
         }
         return out
     }
 
-    /** True when [kind]'s folders exist for the pod of [slot] (declared in `build.fan`). */
-    fun hasDeclaredDirs(slot: FantomNamedElement, kind: Kind): Boolean {
-        val pod = podDir(slot.containingFile?.originalFile?.virtualFile) ?: return false
-        return dirs(pod, kind, declaredOnly = true).isNotEmpty()
+    /**
+     * `name(` (not a call `.name(` and not part of a longer name), or `name = function(` /
+     * `name: function(` (also `X.prototype.name = function(`).
+     */
+    internal fun methodPattern(name: String): Regex {
+        val n = Regex.escape(name)
+        return Regex("""(?<![\w$.])$n\s*\(|(?<![\w$])$n\s*[=:]\s*function\s*\(""")
     }
 
     // Files named one of [names] in [dir] and its subfolders (`js/es/`), up to three levels.
     private fun findFiles(dir: VirtualFile, names: List<String>, depth: Int = 0): List<VirtualFile> {
         val out = ArrayList<VirtualFile>()
         for (child in dir.children) {
+            ProgressManager.checkCanceled()
             if (child.isDirectory) { if (depth < 3) out += findFiles(child, names, depth + 1) }
             else if (child.name in names) out += child
         }

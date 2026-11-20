@@ -68,6 +68,14 @@ class FantomBuildFileTest : BasePlatformTestCase() {
         assertEquals(listOf("res/img/"), b.resDirs)
     }
 
+    fun testJavaDirsAndJsDirs() {
+        val b = parse("podName = \"foo\"\njavaDirs = [`java/`]\njsDirs   = [`js/`, `es/`]")
+        assertEquals(listOf("java/"), b.javaDirs)
+        assertEquals(listOf("js/", "es/"), b.jsDirs)
+        assertEquals(emptyList<String>(), parse("podName = \"foo\"\njavaDirs = Uri[,]").javaDirs)
+        assertNull(parse("podName = \"foo\"").jsDirs)
+    }
+
     fun testNonLiteralSrcDirs() {
         assertNull(parse("podName = \"foo\"\nsrcDirs = dirs()").srcDirs)
     }

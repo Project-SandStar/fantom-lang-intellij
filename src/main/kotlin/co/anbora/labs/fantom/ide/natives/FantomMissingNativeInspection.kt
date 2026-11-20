@@ -7,10 +7,13 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 
 /**
- * Warns on a `native` slot that has no implementation in a folder the pod's `build.fan`
- * declares: `javaDirs` (`<Type>Peer.java` or `<Type>.java`) or `jsDirs` (`<Type>Peer.js`
- * or `<Type>.js`). A pod that declares neither is not checked. The check is by file name
- * and `name(` in the file text, as [FantomNatives] finds them.
+ * Warns on a `native` slot whose peer file has no method for it. The peer file is
+ * `<Type>Peer.java` / `<Type>.java` in a folder of the pod's `javaDirs`, or
+ * `<Type>Peer.js` / `<Type>.js` in a folder of its `jsDirs`.
+ *
+ * Only a peer file that exists is checked: a type with no peer file in a folder is taken
+ * as not built for that language (many `@Js` types have no Java peer). A pod that declares
+ * neither field is not checked. The check is by file text, as [FantomNatives] finds it.
  */
 class FantomMissingNativeInspection : LocalInspectionTool() {
 
@@ -21,11 +24,12 @@ class FantomMissingNativeInspection : LocalInspectionTool() {
                 if (!FantomNatives.isNative(slot)) return
                 val name = slot.nameIdentifier ?: return
                 for (kind in FantomNatives.Kind.entries) {
-                    if (!FantomNatives.hasDeclaredDirs(slot, kind)) continue
+                    val peers = FantomNatives.peerFiles(slot, kind, declaredOnly = true)
+                    if (peers.isEmpty()) continue
                     if (FantomNatives.implementations(slot, kind, declaredOnly = true).isNotEmpty()) continue
                     holder.registerProblem(
                         name,
-                        "Native '${slot.name}' has no ${kind.label} implementation in the pod's ${kind.buildField}",
+                        "Native '${slot.name}' has no method in ${peers.first().name}",
                     )
                 }
             }
