@@ -227,3 +227,10 @@ hints on and off.
 
 Settings | Editor | Inspections | Fantom lets you change the severity of
 each inspection or turn it off.
+
+"Native slot without implementation" (on by default, warning) checks each
+`native` slot against its type's peer file (`<Type>Peer.java`, `<Type>Peer.js`)
+in the `javaDirs` and `jsDirs` folders of the pod's `build.fan`. It warns when
+the peer file has no method for the slot. A type with no peer file in a folder
+is not checked for that language. Turn it off for pods whose peers are built
+elsewhere.

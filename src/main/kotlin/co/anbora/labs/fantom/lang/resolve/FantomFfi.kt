@@ -1,5 +1,6 @@
 package co.anbora.labs.fantom.lang.resolve
 
+import co.anbora.labs.fantom.lang.types.FanType
 import co.anbora.labs.fantom.lang.types.FantomTypeInference
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -101,11 +102,101 @@ object FantomFfi {
         if (classes.isEmpty()) return emptyList()
         return resolver()?.memberVariants(classes, staticOnly) ?: emptyList()
     }
+
+    /** Methods and fields named [slot] on the Java class with the fully qualified name [fqn]. */
+    fun resolveSlotOf(fqn: String, slot: String, project: Project): List<PsiElement> {
+        val resolver = resolver() ?: return emptyList()
+        val classes = resolver.findClasses(listOf(fqn), project)
+        if (classes.isEmpty()) return emptyList()
+        return resolver.findMembers(classes, slot)
+    }
+
+    /** Completion items for the members of the Java class with the fully qualified name [fqn]. */
+    fun memberVariantsOf(fqn: String, staticOnly: Boolean, project: Project): List<LookupElement> {
+        val resolver = resolver() ?: return emptyList()
+        val classes = resolver.findClasses(listOf(fqn), project)
+        if (classes.isEmpty()) return emptyList()
+        return resolver.memberVariants(classes, staticOnly)
+    }
+
+    /** True when [e] is a Java field. */
+    fun isJavaField(e: PsiElement): Boolean = resolver()?.signature(e)?.isField == true
+
+    /** The Fantom type of a Java target (class, method, field), or null when it is none. */
+    fun typeOf(target: PsiElement): FanType? = resolver()?.typeOf(target)
+
+    /**
+     * The Java overloads in [targets] that fit a call with [args] argument types, best first,
+     * by the rules of the compiler's `CallResolver`: the argument count must match; a known
+     * argument type must fit the parameter type; among the fits, `Int` prefers `long` and
+     * `Float` prefers `double`. An unknown argument type (null) fits any parameter.
+     * With no [args] list (a field, or no parentheses) every target stays.
+     */
+    fun pickOverloads(targets: List<PsiElement>, args: List<FanType?>?, project: Project): List<PsiElement> {
+        val resolver = resolver() ?: return targets
+        if (args == null || targets.size < 2) return targets
+        val sigs = targets.map { it to resolver.signature(it) }
+        val fits = sigs.filter { (_, sig) ->
+            sig != null && !sig.isField && sig.params.size == args.size &&
+                sig.params.indices.all { i -> fits(args[i], sig.params[i], resolver, project) }
+        }
+        if (fits.isEmpty()) return targets
+        return fits.sortedByDescending { (_, sig) -> score(args, sig!!) }.map { it.first }
+    }
+
+    private fun fits(arg: FanType?, param: FanType?, resolver: FantomFfiResolver, project: Project): Boolean {
+        if (arg == null || param == null) return true
+        if (param !is FanType.Named) return true
+        if (param.name == "Obj") return true
+        val paramJava = param.javaClass
+        // A closure fits a Java functional interface (or a Fantom `Func` parameter).
+        if (arg is FanType.Func) return if (paramJava != null) resolver.isFunctionalInterface(paramJava, project) else param.name == "Func"
+        if (arg !is FanType.Named) return paramJava == null
+        val argJava = arg.javaClass
+        if (paramJava != null) {
+            if (paramJava.startsWith("fanx.interop.")) return arg.name == param.name
+            if (argJava != null) return resolver.isSubclass(argJava, paramJava, project)
+            // A Java type written in Fantom code (`ByteBuffer bb`) has no class name here: match
+            // by simple name. Any other Fantom value fits only as `null` (Obj?).
+            return arg.name == "Obj" || arg.name == param.name
+        }
+        if (argJava != null) return false
+        // Both are Fantom types: names must match; Int and Float are distinct.
+        return arg.name == param.name || arg.name == "Obj"
+    }
+
+    // Higher is better: a parameter of the argument's own type beats `Obj` (the most
+    // specific overload wins), and of the primitives the compiler's default widths win.
+    private fun score(args: List<FanType?>, sig: JavaSignature): Int =
+        args.indices.sumOf { i ->
+            val arg = args[i] as? FanType.Named ?: return@sumOf 0
+            val param = sig.params[i] as? FanType.Named
+            var s = 0
+            if (param != null && param.name != "Obj" && param.name == arg.name) s += 2
+            s += when (arg.name) {
+                "Int" -> if (sig.primitives[i] == "long") 1 else 0
+                "Float" -> if (sig.primitives[i] == "double") 1 else 0
+                else -> 0
+            }
+            s
+        }
 }
+
+/**
+ * The Fantom view of a Java member: a field, or a method with its parameter types.
+ * [primitives] holds the Java primitive name of each parameter (`long`, `int`, ...) or
+ * null, so `Int` can prefer `long` and `Float` can prefer `double` as the compiler does.
+ */
+data class JavaSignature(
+    val isField: Boolean,
+    val params: List<FanType?>,
+    val primitives: List<String?>,
+    val returns: FanType?,
+)
 
 /** Finds Java classes and members for [FantomFfi]. Implemented in the Java plugin config only. */
 interface FantomFfiResolver {
-    /** The classes of these fully qualified names that exist, in order. */
+    /** The classes of these fully qualified names that exist, in order. `Outer$Inner` finds the inner class. */
     fun findClasses(fqns: List<String>, project: Project): List<PsiElement>
 
     /** Methods (every overload) and fields named [name] on [classes] and their supertypes. */
@@ -113,4 +204,20 @@ interface FantomFfiResolver {
 
     /** One completion item per member name of [classes]; only static members when [staticOnly]. */
     fun memberVariants(classes: List<PsiElement>, staticOnly: Boolean): List<LookupElement>
+
+    /**
+     * The Fantom type of a Java target: a class is its own (non-nullable) type, a method
+     * its return type, a field its type. Primitives map to `Int`, `Float`, `Bool`, `Void`;
+     * `Object`, `String`, `BigDecimal` to `Obj?`, `Str?`, `Decimal?`; other objects are nullable.
+     */
+    fun typeOf(target: PsiElement): FanType?
+
+    /** The signature of a Java method or field, or null for anything else. */
+    fun signature(member: PsiElement): JavaSignature?
+
+    /** True when the Java class [sub] is [base] or extends or implements it. */
+    fun isSubclass(sub: String, base: String, project: Project): Boolean
+
+    /** True when the Java class [fqn] is an interface with one abstract method (a closure fits it). */
+    fun isFunctionalInterface(fqn: String, project: Project): Boolean
 }

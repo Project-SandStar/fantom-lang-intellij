@@ -41,6 +41,7 @@ import co.anbora.labs.fantom.lang.resolve.FantomFfi
 import co.anbora.labs.fantom.lang.resolve.FantomScope
 import co.anbora.labs.fantom.lang.resolve.FantomSlotLookup
 import co.anbora.labs.fantom.lang.resolve.FantomUsingScope
+import co.anbora.labs.fantom.lang.types.FanType
 import co.anbora.labs.fantom.lang.types.FantomItScope
 import co.anbora.labs.fantom.lang.types.FantomTypeInference
 import com.intellij.codeInsight.completion.CompletionContributor
@@ -148,8 +149,14 @@ class FantomCompletionContributor : CompletionContributor() {
                             val type = receiverTypeDef(chainOp, project)
                             if (type == null) {
                                 // `recv.x` on a Java FFI object: the Java class's members.
-                                val javaType = if (isThisOrSuperReceiver(chainOp)) null
-                                    else FantomTypeInference.receiverType(chainOp)?.slotOwnerName
+                                if (isThisOrSuperReceiver(chainOp)) return
+                                val recv = FantomTypeInference.receiverType(chainOp)
+                                val javaClass = (recv as? FanType.Named)?.javaClass
+                                if (javaClass != null) {
+                                    FantomFfi.memberVariantsOf(javaClass, staticOnly = false, project).forEach(::add)
+                                    return
+                                }
+                                val javaType = recv?.slotOwnerName
                                 if (javaType != null) FantomFfi.memberVariants(javaType, staticOnly = false, id.containingFile).forEach(::add)
                                 return
                             }
