@@ -113,11 +113,13 @@ class FantomMcpToolsMoreTest : BasePlatformTestCase() {
         }
         assertEquals("Int", typeAt(file, "count()").first)
         assertEquals("Str[]", typeAt(file, "names.map").first)
-        // generic members: the element type comes through
-        // Generic members need sys (List.first, the map closure's param). This light fixture has
-        // no Fantom install, so the IDE knows no type there; the tool must agree, not invent one.
-        assertEquals("" to null, typeAt(file, "first"))
-        assertEquals("" to null, typeAt(file, "n.size"))
+        // Generic members need sys (List.first, the map closure's param). Without a Fantom install
+        // the IDE knows no type there; with one it knows Str?. Either way the tool must agree.
+        for (text in listOf("first", "n.size")) {
+            val (tool, ide) = typeAt(file, text)
+            assertEquals("at '$text'", ide ?: "", tool)
+            if (ide != null && text == "first") assertEquals("Str?", ide)
+        }
     }
 
     fun testTypeOfALocalMatchesItsInlayHint() {
@@ -251,6 +253,26 @@ class FantomMcpToolsMoreTest : BasePlatformTestCase() {
         assertTrue(out.cancelled)
         assertFalse(out.timedOut)
         assertTrue(System.currentTimeMillis() - start < 15_000)
+    }
+
+    fun testRunKillsAProcessThatIgnoresTheSoftStop() {
+        // sh ignores SIGINT and SIGTERM; a soft stop alone leaves it running.
+        val script = "trap '' INT TERM; for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do sleep 1; done"
+        val cmd = com.intellij.execution.configurations.GeneralCommandLine("sh", "-c", script)
+        val start = System.currentTimeMillis()
+        val out = FantomMcpRun.run(cmd, 60_000, 100) { System.currentTimeMillis() - start > 300 }
+        assertTrue(out.cancelled)
+        assertTrue("the process must be gone, exit ${out.exitCode}", out.exitCode != -1)
+        assertTrue(System.currentTimeMillis() - start < 15_000)
+    }
+
+    fun testRunAnswersWhenTheProcessCannotStart() {
+        val cmd = com.intellij.execution.configurations.GeneralCommandLine("/no/such/dir/fant", "demo")
+        val out = FantomMcpRun.run(cmd, 10_000, 1_000) { false }
+        assertEquals(-1, out.exitCode)
+        assertTrue(out.text, out.text.startsWith("cannot start"))
+        val text = FantomMcpRun.testReport("demo", emptyList(), out, { it }, 50)
+        assertTrue(text, text.contains("cannot start"))
     }
 
     fun testRunCapsOutputAndStopsOnTimeout() {

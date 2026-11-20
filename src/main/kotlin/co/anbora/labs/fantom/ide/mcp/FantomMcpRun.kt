@@ -5,6 +5,7 @@ import co.anbora.labs.fantom.ide.compiler.FantomCompilerService
 import co.anbora.labs.fantom.ide.run.test.FantOutputParser
 import co.anbora.labs.fantom.lang.library.FantomBuildFile
 import co.anbora.labs.fantom.lang.library.deps.FantomDependencyResolver
+import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.KillableProcessHandler
 import com.intellij.execution.process.ProcessEvent
@@ -45,7 +46,11 @@ object FantomMcpRun {
      * call it on the UI thread or in a read action.
      */
     fun run(cmd: GeneralCommandLine, timeoutMs: Long, cap: Int, cancelled: () -> Boolean): Output {
-        val handler = KillableProcessHandler(cmd)
+        val handler = try {
+            KillableProcessHandler(cmd)
+        } catch (e: ExecutionException) {
+            return Output("cannot start ${cmd.exePath}: ${e.message}", -1, false, false, false)
+        }
         val text = StringBuilder()
         var truncated = false
         handler.addProcessListener(object : ProcessListener {
@@ -70,8 +75,12 @@ object FantomMcpRun {
             if (System.currentTimeMillis() > end) { timedOut = true; break }
         }
         if (timedOut || stopped) {
+            // The first stop is soft (SIGINT); a process that ignores it is killed.
             handler.destroyProcess()
-            handler.waitFor(5_000)
+            if (!handler.waitFor(3_000)) {
+                handler.killProcess()
+                handler.waitFor(5_000)
+            }
         }
         val out = synchronized(text) { text.toString() }
         return Output(out, handler.exitCode ?: -1, timedOut, stopped, synchronized(text) { truncated })
