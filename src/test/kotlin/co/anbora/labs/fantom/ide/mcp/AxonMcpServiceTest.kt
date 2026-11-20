@@ -25,6 +25,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.runBlocking
 import java.io.File
@@ -338,6 +339,24 @@ class AxonMcpServiceTest : BasePlatformTestCase() {
             assertTrue(failText(projectOf("../outside.axon")).startsWith("file not found"))
         } finally {
             FileUtil.delete(root)
+        }
+    }
+
+    fun testAnExcludedFuncFolderIsRefused() {
+        layout()
+        val func = myFixture.findFileInTempDir("proj/demo/site/func")!!
+        PsiTestUtil.addExcludedRoot(myFixture.module, func)
+        try {
+            // the project folder is open, its func folder is not: no names, no source
+            for (a in listOf(projectOf("proj/demo/site"), functions("proj/demo/site"), functions(key = "demo/site"), function(key = "demo/site", name = "siteArea"))) {
+                val t = failText(a)
+                assertTrue(t, t.startsWith("the func folder of that project is not open in the IDE"))
+                assertFalse(t, t.contains("siteArea"))
+            }
+            // the other project is still there
+            assertTrue(ok(functions(key = "demo/other")).startsWith("demo/other (proj folder)"))
+        } finally {
+            PsiTestUtil.removeExcludedRoot(myFixture.module, func)
         }
     }
 

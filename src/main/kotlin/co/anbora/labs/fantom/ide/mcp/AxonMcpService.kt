@@ -151,10 +151,7 @@ object AxonMcpService {
             when (val place = folders.placeOf(vf)) {
                 AxonProjFolders.Place.Copy -> Lookup.None("a backup or version folder; names in it resolve to nothing")
                 is AxonProjFolders.Place.InProject -> {
-                    val func = place.folder.findChild(AxonProjFolders.FUNC)
-                    if (func != null && !ProjectFileIndex.getInstance(project).isInContent(func)) {
-                        fail("the func folder of that project is not open in the IDE")
-                    }
+                    checkFuncOpen(project, place.folder)
                     AxonProjectFunctions.of(project, vf)?.let { Lookup.Found(Target(it, Kind.FOLDER, place.folder)) }
                         ?: Lookup.None("no functions for that project folder")
                 }
@@ -163,6 +160,16 @@ object AxonMcpService {
                         ?: Lookup.None(noCopy(project))
             }
         }
+    }
+
+    /**
+     * Read action. Stops when the `func` folder of the project folder [folder] is not in the
+     * IDE project content (excluded, or under a folder that is): the tools then give no names
+     * from it, whether the project came by path or by key.
+     */
+    private fun checkFuncOpen(project: Project, folder: VirtualFile) {
+        val func = folder.findChild(AxonProjFolders.FUNC) ?: return
+        if (!ProjectFileIndex.getInstance(project).isInContent(func)) fail("the func folder of that project is not open in the IDE")
     }
 
     private fun found(l: Lookup): Target = when (l) {
@@ -200,7 +207,8 @@ object AxonMcpService {
                 )
                 matches.size == 1 -> {
                     val folder = matches[0].folder
-                    val set = AxonProjectFunctions.of(project, folder) ?: fail("no functions for $key")
+                    checkFuncOpen(project, folder)
+                    val set =AxonProjectFunctions.of(project, folder) ?: fail("no functions for $key")
                     Target(set, Kind.FOLDER, folder)
                 }
                 AxonProjectCopy.getInstance(project).copy?.key == key ->
