@@ -64,6 +64,9 @@ class AxonPushAction : DumbAwareAction() {
         val target = AxonFunctionPush.targetOf(file) ?: return
         val fdm = FileDocumentManager.getInstance()
         fdm.getDocument(file)?.let { fdm.saveDocument(it) }
+        // the push rewrites the .trio: an unsaved edit of it must reach the disk first
+        target.folder.findChild("func")?.findChild(target.name + ".trio")
+            ?.let { fdm.getCachedDocument(it) }?.let { fdm.saveDocument(it) }
         ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Pushing ${target.name} to SkySpark", true) {
             override fun run(indicator: ProgressIndicator) {
                 indicator.isIndeterminate = true
@@ -124,11 +127,7 @@ class AxonPushAction : DumbAwareAction() {
         }
 
         override fun createCenterPanel(): JComponent {
-            val f = DiffContentFactory.getInstance()
-            val left = f.create(project, server?.src ?: "", AxonFileType)
-            val right = f.create(project, plan.src, AxonFileType)
-            val leftTitle = if (server == null) "SkySpark (the function is gone)" else "SkySpark (${server.mod ?: "no mod"})"
-            val request = SimpleDiffRequest("${plan.name} in ${plan.key}", left, right, leftTitle, "Local file")
+            val request = diffRequest(project, plan, server)
             val panel = DiffManager.getInstance().createRequestPanel(project, disposable, null)
             panel.setRequest(request)
             return panel.component.also { it.preferredSize = Dimension(900, 520) }
@@ -148,6 +147,15 @@ class AxonPushAction : DumbAwareAction() {
 
     companion object {
         const val ID = "Fantom.AxonPush"
+
+        /** The diff of the conflict window: the SkySpark version on the left, the local file on the right. */
+        internal fun diffRequest(project: Project, plan: AxonFunctionPush.Plan, server: AxonFunction?): SimpleDiffRequest {
+            val f = DiffContentFactory.getInstance()
+            val left = f.create(project, server?.src ?: "", AxonFileType)
+            val right = f.create(project, plan.src, AxonFileType)
+            val leftTitle = if (server == null) "SkySpark (the function is gone)" else "SkySpark (${server.mod ?: "no mod"})"
+            return SimpleDiffRequest("${plan.name} in ${plan.key}", left, right, leftTitle, "Local file")
+        }
 
         /** The text of a failed push; a read-only key and a refused key say what to do. */
         fun errorText(e: AxonCopyException): String = when (e.kind) {

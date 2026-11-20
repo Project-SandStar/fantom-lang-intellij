@@ -68,9 +68,10 @@ object AxonFunctionPush {
         val expectedMod: String?,
         val localDoc: String?,
         val storedDoc: String?,
+        /** True when the folder has no entry for the function: SkySpark does not have it yet. */
+        val isNew: Boolean,
     ) {
         val name: String get() = target.name
-        val isNew: Boolean get() = expectedMod == null
 
         /** The doc SkySpark holds after a good push. */
         val docAfterPush: String? get() = doc ?: localDoc ?: storedDoc
@@ -106,22 +107,53 @@ object AxonFunctionPush {
     /** Reads what the push of [target] sends: the file, its `.trio` and the folder's entry. Blocks. */
     fun plan(target: Target, check: () -> Unit = {}): Plan {
         noUiThread()
+        // the disk first: the key and the entry come from .sync-metadata.json as it is now
+        refresh(target.folder)
         val key = AxonProjFolders.getInstance().projectOfNow(target.file)?.key ?: throw AxonCopyException(Kind.IO, OUTSIDE)
         check()
         val src = textOf(target.file) ?: throw AxonCopyException(Kind.IO, "Cannot read ${target.file.name}.")
         if (src.isBlank()) throw AxonCopyException(Kind.IO, "${target.file.name} is empty: SkySpark needs a source.")
         val entry = AxonJson.obj(AxonJson.obj(readMeta(target.folder)?.get("functions"))?.get(target.name))
         val trio = trioFile(target)?.let(::textOf)
-        val trioTags = trio?.let { AxonFallbackFolder.trioTags(it) }.orEmpty()
-        val localDoc = trioTags["doc"]
+        val localDoc = trio?.let(::trioDoc)
         val storedDoc = AxonJson.str(entry?.get("doc"))
-        // the doc goes along only when the .trio says something else than SkySpark gave the folder
-        val doc = if (trio != null && localDoc.orEmpty() != storedDoc.orEmpty()) localDoc.orEmpty() else null
-        val expectedMod = AxonJson.str(entry?.get("mod"))
-            ?: AxonJson.str(entry?.get("modIso"))
-            ?: AxonFallbackFolder.isoOf(AxonJson.str(entry?.get("lastModified")))
-            ?: AxonFallbackFolder.isoOf(trioTags["mod"])
-        return Plan(target, key, src, doc, expectedMod, localDoc, storedDoc)
+        // the doc goes along only when the .trio was edited and says something else than SkySpark gave the folder
+        val storedTrioHash = AxonJson.str(entry?.get(TRIO_HASH))
+        val trioUnchanged = trio != null && storedTrioHash != null && AxonProjFolderSync.sameHash(storedTrioHash, AxonCopyLimits.sha256(trio))
+        val doc = if (trio != null && !trioUnchanged && localDoc.orEmpty() != storedDoc.orEmpty()) localDoc.orEmpty() else null
+        // the server compares the mod to the millisecond: only its own text (or modIso, with milliseconds) will do
+        val expectedMod = AxonJson.str(entry?.get("mod")) ?: AxonJson.str(entry?.get("modIso"))
+        if (entry != null && expectedMod == null)
+            throw AxonCopyException(Kind.BAD_REPLY, "The folder does not know when ${target.name} last changed in SkySpark. Run Sync Axon Functions first, then push again.")
+        return Plan(target, key, src, doc, expectedMod, localDoc, storedDoc, isNew = entry == null)
+    }
+
+    /**
+     * The `doc` tag of one trio record: a quoted value (it may hold raw line breaks, as the
+     * server writes them) or indented lines. Null when there is none.
+     */
+    internal fun trioDoc(trio: String): String? {
+        val block = AxonProjFolderSync.trioBlocks(trio)?.firstOrNull { it.first == "doc" }?.second ?: return null
+        val value = block.substring(block.indexOf(':') + 1)
+        val head = value.trimStart(' ', '\t')
+        if (head.startsWith("\"")) {
+            val sb = StringBuilder()
+            var i = 1
+            while (i < head.length) {
+                val c = head[i++]
+                if (c == '"') break
+                if (c != '\\' || i >= head.length) { if (c != '\r') sb.append(c); continue }
+                when (val e = head[i++]) {
+                    'n' -> sb.append('\n')
+                    'r' -> sb.append('\r')
+                    't' -> sb.append('\t')
+                    else -> sb.append(e)
+                }
+            }
+            return sb.toString()
+        }
+        if (head.isNotBlank() && !head.startsWith("\n")) return head.trim()
+        return value.split('\n').drop(1).joinToString("\n") { l -> if (l.startsWith("  ")) l.substring(2) else l.trimStart() }.trimEnd()
     }
 
     /**
@@ -133,9 +165,9 @@ object AxonFunctionPush {
         noUiThread()
         val r = client().pushFunction(plan.key, plan.name, plan.src, plan.doc, expectedMod, check)
         if (r.ok) {
-            check()
+            // SkySpark has the new source now: the folder must learn it, even after a cancel
             val fn = AxonFunction(plan.name, plan.src, plan.docAfterPush, r.mod, AxonCopyLimits.sha256(plan.src))
-            writeBack(project, plan.target, fn, writeSource = false)
+            writeBack(project, plan.key, plan.target, fn, writeSource = false)
         }
         return r
     }
@@ -149,7 +181,7 @@ object AxonFunctionPush {
     /** "Take SkySpark version": writes [fn] into the function file, the `.trio` and the folder's entry. Blocks. */
     fun takeServer(project: Project, plan: Plan, fn: AxonFunction) {
         noUiThread()
-        writeBack(project, plan.target, fn, writeSource = true)
+        writeBack(project, plan.key, plan.target, fn, writeSource = true)
     }
 
     // ---- the flow ------------------------------------------------------------------------------
@@ -220,14 +252,16 @@ object AxonFunctionPush {
     // ---- the folder ----------------------------------------------------------------------------
 
     /** Writes [fn] into the `.trio` (and the `.axon` with [writeSource]) and the folder's entry. */
-    private fun writeBack(project: Project, target: Target, fn: AxonFunction, writeSource: Boolean) {
+    private fun writeBack(project: Project, key: AxonProjectKey, target: Target, fn: AxonFunction, writeSource: Boolean) {
         val folderFile = File(target.folder.path)
+        refresh(target.folder)
         val now = Instant.now().truncatedTo(ChronoUnit.MILLIS)
         val nowIso = AxonProjFolderSync.JS_ISO.format(now)
         val meta = readMeta(target.folder)
         val out = LinkedHashMap<String, Any?>()
-        out["instance"] = target.key.instance
-        out["project"] = target.key.project
+        // the key the metadata names wins; the folder names are only a guess
+        out["instance"] = AxonJson.str(meta?.get("instance")) ?: key.instance
+        out["project"] = AxonJson.str(meta?.get("project")) ?: key.project
         meta?.forEach { (k, v) -> if (k !in out) out[k] = v }
         val fns = LinkedHashMap(AxonJson.obj(out["functions"]).orEmpty())
         val before = AxonJson.obj(fns[fn.name])
@@ -256,6 +290,11 @@ object AxonFunctionPush {
             writer.put(folderFile, func, fn.name + TRIO, trio, keep = writeSource)
             writer.put(folderFile, writer.root(folderFile), METADATA, AxonJson.write(out), keep = false)
         }
+    }
+
+    /** Reads the folder again from the disk, so a file another process wrote is seen. */
+    private fun refresh(folder: VirtualFile) {
+        if (folder.isValid) com.intellij.openapi.vfs.VfsUtil.markDirtyAndRefresh(false, true, true, folder)
     }
 
     private fun trioFile(target: Target): VirtualFile? =

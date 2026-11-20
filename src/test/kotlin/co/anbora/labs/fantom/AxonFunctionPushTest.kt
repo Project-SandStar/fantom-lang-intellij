@@ -190,6 +190,50 @@ class AxonFunctionPushTest : BasePlatformTestCase() {
         assertEquals("Pushed siteReport to demo/site in SkySpark.", AxonFunctionPush.message(plain.plan, plain.result))
     }
 
+    fun testAServerWrittenMultiLineDocIsNotPushed() {
+        // the server's trio: a doc with a raw line break inside the quotes, and no trioHash in the entry
+        File(func, "calcDailyAvg.trio").writeText("name:\"calcDailyAvg\"\ndoc:\"Daily\naverage\"\nmod:\"1/2/2026, 3:04:05 AM UTC\"\nsrc:\n  (points) => points.hisRead(yesterday)")
+        val m = File(site, ".sync-metadata.json")
+        val o = AxonJson.parseObject(m.readText()).toMutableMap()
+        val fns = AxonJson.obj(o["functions"])!!.toMutableMap()
+        fns["calcDailyAvg"] = AxonJson.obj(fns["calcDailyAvg"])!!.toMutableMap().also { it["doc"] = "Daily\naverage"; it.remove(AxonProjFolderSync.TRIO_HASH) }
+        o["functions"] = fns
+        m.writeText(AxonJson.write(o))
+        assertEquals("Daily\naverage", AxonFunctionPush.trioDoc(File(func, "calcDailyAvg.trio").readText()))
+        run("calcDailyAvg")
+        assertFalse(server.bodies.single(), server.bodies.single().contains("\"doc\""))
+    }
+
+    fun testTheMetadataKeyWinsOverTheFolderNames() {
+        // the folder is demo/site, but its metadata names the SkySpark project plant-a/bldg2
+        server.put("plant-a/bldg2", "siteReport", "() => readAll(site)", null, "2026-01-02T03:04:05Z")
+        val m = File(site, ".sync-metadata.json")
+        val o = AxonJson.parseObject(m.readText()).toMutableMap()
+        o["instance"] = "plant-a"
+        o["project"] = "bldg2"
+        m.writeText(AxonJson.write(o))
+        AxonProjFolders.clearForTest()
+        edit(File(func, "siteReport.axon"), "() => readAll(site).size")
+        run("siteReport")
+        assertEquals(listOf("POST /api/ide/projects/plant-a/bldg2/functions/siteReport"), server.requests.toList())
+        assertEquals("plant-a", meta()["instance"])
+        assertEquals("bldg2", meta()["project"])
+    }
+
+    fun testAnEntryWithNoModAsksForASyncFirst() {
+        val m = File(site, ".sync-metadata.json")
+        val o = AxonJson.parseObject(m.readText()).toMutableMap()
+        val fns = AxonJson.obj(o["functions"])!!.toMutableMap()
+        fns["siteReport"] = AxonJson.obj(fns["siteReport"])!!.toMutableMap().also { it.remove("mod"); it.remove("modIso") }
+        o["functions"] = fns
+        m.writeText(AxonJson.write(o))
+        val ui = FakeUi()
+        val e = failsWith(AxonCopyException.Kind.BAD_REPLY) { AxonFunctionPush.run(project, target("siteReport"), ui) }
+        assertTrue(e.message, e.message!!.contains("Sync Axon Functions first"))
+        assertEquals(emptyList<String>(), ui.asked)
+        assertEquals(emptyList<String>(), server.requests.toList())
+    }
+
     // ---- conflict ------------------------------------------------------------------------------
 
     private fun changeOnServer() =
@@ -298,6 +342,25 @@ class AxonFunctionPushTest : BasePlatformTestCase() {
         val old = File(versions, "calcDailyAvg_2026-01-01T00-00-00-000Z.axon").also { it.writeText("() => 0") }
         assertNull(AxonFunctionPush.targetOf(vf(old)))
         assertEquals(AxonFunctionPush.COPY, AxonFunctionPush.whyNot(project, vf(old)))
+    }
+
+    fun testAFileOfTheReadOnlyCopyIsRefused() {
+        bg { copy.selectNow(key) }
+        val inCopy = copy.findFunctionFile("calcDailyAvg") ?: error("no copy file")
+        assertNull(AxonFunctionPush.targetOf(inCopy))
+        assertEquals(AxonFunctionPush.COPY, AxonFunctionPush.whyNot(project, inCopy))
+    }
+
+    fun testTheConflictDiffShowsSkySparkAndTheLocalFile() {
+        changeOnServer()
+        edit(File(func, "calcDailyAvg.axon"), "(points) => 4")
+        val plan = bg { AxonFunctionPush.plan(target("calcDailyAvg")) }
+        val server = bg { AxonFunctionPush.serverVersion(plan) }
+        val r = AxonPushAction.diffRequest(project, plan, server)
+        assertEquals(listOf("SkySpark (2026-03-04T05:06:07Z)", "Local file"), r.contentTitles)
+        val texts = r.contents.map { (it as com.intellij.diff.contents.DocumentContent).document.text }
+        assertEquals(listOf("(points) => points.hisRead(lastWeek)", "(points) => 4"), texts)
+        assertEquals("SkySpark (the function is gone)", AxonPushAction.diffRequest(project, plan, null).contentTitles[0])
     }
 
     fun testNoNetworkOrDiskOnTheUiThread() {
