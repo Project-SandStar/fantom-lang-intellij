@@ -331,6 +331,22 @@ class FantomJavaFfiTest : FantomInspectionTestBase() {
         assertEmpty(myFixture.doHighlighting().filter { it.description?.startsWith("Cannot resolve") == true }.map { it.description })
     }
 
+    /** A Java annotation used as a facet: the name resolves to the annotation, a value to its element. */
+    fun testJavaAnnotationAsFacet() {
+        if (skip()) return
+        myFixture.configureByText(
+            "A.fan",
+            """
+            using [java] java.lang.annotation::Retention
+            @Retention { value = null }
+            class A {}
+            """.trimIndent(),
+        )
+        assertEquals("java.lang.annotation.Retention", (targetsAt("Retention {").single() as PsiClass).qualifiedName)
+        val value = targetsAt("value =")
+        assertTrue(value.toString(), value.isNotEmpty() && value.all { it is PsiMethod && it.name == "value" })
+    }
+
     fun testFantomNamesStillReportedWithoutJavaPlugin() {
         if (skip()) return
         ExtensionTestUtil.maskExtensions(FantomFfi.EP_NAME, emptyList(), testRootDisposable)
