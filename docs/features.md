@@ -320,15 +320,18 @@ backend only, so install it on the remote IDE. The client draws the UI.
 | Status bar widgets (Fantom target, Axon project) | Work. A click opens the popup a moment later |
 | Settings pages, the Axon project picker, notifications | Work. The client draws them |
 | File choosers (Fantom home, global proj folder) | Show the files of the remote host, not of your machine |
-| Axon project copy and Sync Axon Functions | Run on the remote host. The Axon server URL must be reachable from that host |
+| Axon project copy and Sync Axon Functions | Run on the remote host. The Axon server URL must be reachable from that host. The access key comes from the client, so a client must be connected |
 | Tools for AI agents (MCP) | The MCP server runs on the remote host. Run the agent there too |
 
 What to know:
 
-- The access key goes into the password store of the remote host. A host
-  with no keychain (most Linux servers) keeps it in memory only, and it is
-  lost when the remote IDE closes. Settings | Languages & Frameworks |
-  Fantom | Axon then says so. To keep the key, set KeePass in Settings |
-  Appearance & Behavior | System Settings | Passwords on the remote IDE.
+- The IDE sends each read and write of the access key to the password store
+  of JetBrains Client, on your machine. The remote host does not keep it.
+  So the key can only be read while a client is connected: an AI agent on
+  the remote host with no client open gets no key, and Sync then fails.
+- If the password store on your machine is set to keep passwords in memory
+  only, the key is lost when the IDE closes. Settings | Languages &
+  Frameworks | Fantom | Axon then says so. To keep the key, choose another
+  store in Settings | Appearance & Behavior | System Settings | Passwords.
 - Settings saved in the IDE (Fantom installs, Axon server URL, global proj
   folder) are the ones of the remote IDE, not of your local IDE.
