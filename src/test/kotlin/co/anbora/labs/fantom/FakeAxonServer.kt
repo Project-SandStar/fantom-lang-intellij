@@ -31,10 +31,13 @@ class FakeAxonServer(private val token: String = "test-token") : AutoCloseable {
     val authHeaders = CopyOnWriteArrayList<String>()
     val bodies = CopyOnWriteArrayList<String>()
 
-    /** ok, slow, wrongKey, garbage, cut, error500, redirect, huge. */
+    /** ok, slow, wrongKey, garbage, cut, error500, forbidden (403 to all), readonly (403 to a POST), redirect, huge. */
     @Volatile var mode = "ok"
     @Volatile var redirectTo = ""
     private var pushes = 0
+
+    /** Sent as `removedDuplicates` in the next good push reply. */
+    @Volatile var duplicates: List<Map<String, Any?>> = emptyList()
 
     val url: String get() = "http://127.0.0.1:${server.address.port}"
 
@@ -60,6 +63,7 @@ class FakeAxonServer(private val token: String = "test-token") : AutoCloseable {
             "slow" -> Thread.sleep(1500)
             "garbage" -> return reply(ex, 200, "<html>not json</html>")
             "error500" -> return reply(ex, 500, """{"error":"the database is down"}""")
+            "forbidden" -> return reply(ex, 403, """{"error":"forbidden"}""")
             "redirect" -> {
                 ex.responseHeaders.add("Location", redirectTo + uri.rawPath)
                 ex.sendResponseHeaders(302, -1)
@@ -94,6 +98,7 @@ class FakeAxonServer(private val token: String = "test-token") : AutoCloseable {
             return reply(ex, 200, if (mode == "cut") text.substring(0, text.length / 2) else text)
         }
         if (name != null && ex.requestMethod == "POST") {
+            if (mode == "readonly") return reply(ex, 403, """{"error":"your user is read-only and cannot commit"}""")
             val o = AxonJson.parseObject(body)
             val have = fns[name]
             if (have != null && have.mod != o["expectedMod"]) {
@@ -102,7 +107,7 @@ class FakeAxonServer(private val token: String = "test-token") : AutoCloseable {
             val src = o["src"] as String
             val mod = "2026-06-0${++pushes}T00:00:00Z"
             fns[name] = Fn(src, if (o.containsKey("doc")) o["doc"] as String? else have?.doc, mod)
-            return reply(ex, 200, AxonJson.write(linkedMapOf("status" to "ok", "mod" to mod, "hash" to AxonCopyLimits.sha256(src)), false))
+            return reply(ex, 200, AxonJson.write(linkedMapOf("status" to "ok", "mod" to mod, "hash" to AxonCopyLimits.sha256(src), "removedDuplicates" to duplicates), false))
         }
         reply(ex, 405, """{"error":"method"}""")
     }
