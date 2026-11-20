@@ -286,7 +286,7 @@ object FantomTypeInference {
     private fun typeOfReference(id: FantomId?): FanType? {
         val ref = id?.reference as? FantomReference ?: return null
         val targets = ref.resolveAll()
-        if (targets.isEmpty()) return javaType(ref)
+        if (targets.isEmpty()) return if (hasJava(ref)) javaType(ref) else null
         val types = targets.mapNotNull { FantomEnumSlots.typeOf(it, ref.name) ?: typeOfDeclaration(it) }.distinct()
         return types.singleOrNull()
     }
@@ -305,6 +305,10 @@ object FantomTypeInference {
         val cls = ref.resolveWithFfi().firstOrNull { it !is FantomNamedElement } ?: return null
         return FantomFfi.typeOf(cls)?.withNullable(false)
     }
+
+    // Java FFI work only in files with a `using [java]` line, so plain Fantom files pay nothing.
+    private fun hasJava(ref: FantomReference): Boolean =
+        ref.element.containingFile?.let { !FantomFfi.javaImports(it).isEmpty } == true
 
     private fun javaType(ref: FantomReference): FanType? {
         val java = ref.resolveWithFfi().filter { it !is FantomNamedElement }
@@ -362,7 +366,7 @@ object FantomTypeInference {
         val closureArg = closure ?: call?.let { closureArgument(it) }
         val args = call?.args?.exprList ?: nextArgs
         // A slot on a Java receiver: the Java member's type (its overload by argument types).
-        if (ref.ffiOwnerClass() != null || ref.ffiOwnerName()?.let { o -> FantomFfi.isJavaType(o, ref.element.containingFile) } == true) {
+        if (hasJava(ref) && ref.ffiOwnerClass() != null || hasJava(ref) &&ref.ffiOwnerName()?.let { o -> FantomFfi.isJavaType(o, ref.element.containingFile) } == true) {
             javaType(ref)?.let { return it }
         }
         val types = ref.resolveAll().mapNotNull { target ->
