@@ -299,9 +299,25 @@ answers are the ones the IDE itself gives.
 | `fantom_diagnostics` | The problems of a `.fan` or `.axon` file: syntax errors, enabled inspections, and compiler messages when a fresh compile exists. One line per problem: severity, line:column, message |
 | `fantom_resolve` | Where a name is defined, as Go to Declaration finds it. Give a file with an offset or a line and column, or give a name such as `demo::Foo.go`, `Foo.go` or `Foo` |
 | `fantom_find_usages` | Find Usages for a declaration, in project files only. Point at the declaration or at a use of it. An Axon name is searched in its own file |
+| `fantom_type_of` | The inferred type at a place in a `.fan` file, as Go to Type Declaration finds it, for example `Str[]` or `Int?`. Give a file with an offset or a line and column, or give a slot such as `demo::Foo.names` |
+| `fantom_pod_deps` | The `depends` of a project pod from its `build.fan`, each with the source the plugin picked for the current build target: this project, an install's sources, a tag or working copy, a stub, or not found |
+| `fantom_build` | Builds a project pod with the default build target, as Build Pod does. Returns pass or fail and each compiler message as `SEVERITY path:line:column message`. Off until you turn it on, see below |
+| `fantom_run_test` | Builds a pod, then runs `fant` on the pod, one test type or one test method. One line per test: `PASS` or `FAIL` with the message and `path:line`. Off until you turn it on, see below |
 
 - The tools read only files in the open project.
 - While the IDE indexes, each tool answers "indexing, retry".
 - Each tool returns at most 50 lines unless you ask for more (500 at most).
 - Without the MCP Server plugin the Fantom plugin works as before; only these
   tools are missing.
+
+`fantom_build` and `fantom_run_test` start `bin/fan` and `fant`, so they are off
+until you tick "Allow AI agents to build and run tests" in Settings, Languages
+& Frameworks, Fantom. Then:
+
+- They save open editors first, as Build Pod does.
+- The pod goes to a private work folder, never into an install.
+- They run in the background, never on the UI thread. A build stops after 60
+  seconds and a test run after 5 minutes. At most 1 MB of output is kept.
+- Only one build or test run per project runs at a time; a second call answers
+  "in progress, retry".
+- A failed build gives its compiler messages, and no tests run.

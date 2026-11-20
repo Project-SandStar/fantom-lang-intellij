@@ -159,9 +159,8 @@ object FantomMcpService {
      * resolved for the current build target. Reads the last dependency scan; never starts one.
      */
     suspend fun podDeps(project: Project, pod: String, path: String): Answer = guard(project) {
-        val root = podRootOf(project, pod, path)
-        val build = LocalFileSystem.getInstance().findFileByIoFile(File(root, FantomBuildFile.FILE_NAME))
-            ?: fail("no build.fan in ${root.name}")
+        val root = podRootVf(project, pod, path)
+        val build = root.findChild(FantomBuildFile.FILE_NAME) ?: fail("no build.fan in ${root.name}")
         val parsed = read(project) {
             if (!FantomMcpQueries.isProjectFile(project, build)) fail("not a pod in the project: ${root.name}")
             FantomBuildFile.forFile(build, project)
@@ -242,7 +241,15 @@ object FantomMcpService {
         val env = FantomBuildTargets.defaultEnv(project) ?: fail(FantomMcpRun.NO_HOME)
         ApplicationManager.getApplication().invokeAndWait { FileDocumentManager.getInstance().saveAllDocuments() }
         cancellable { indicator ->
-            FantomCompilerService.getInstance(project).buildPod(root, env.runner, indicator, env.podPath)
+            val service = FantomCompilerService.getInstance(project)
+            var result = service.buildPod(root, env.runner, indicator, env.podPath)
+            // A compile on save that starts meanwhile stops this one: build again, a few times at most.
+            var tries = 0
+            while (result != null && !result.completed && !indicator.isCanceled && tries++ < 3) {
+                Thread.sleep(500)
+                result = service.buildPod(root, env.runner, indicator, env.podPath)
+            }
+            result
         }
     }
 
@@ -262,20 +269,24 @@ object FantomMcpService {
         }
     }
 
+    /** The folder of a project pod on disk, by pod name or by a file in it. Never an install. */
+    private suspend fun podRootOf(project: Project, pod: String, path: String): File =
+        VfsUtilCore.virtualToIoFile(podRootVf(project, pod, path))
+
     /** The folder of a project pod, by pod name or by a file in it. Never an install. */
-    private suspend fun podRootOf(project: Project, pod: String, path: String): File {
+    private suspend fun podRootVf(project: Project, pod: String, path: String): VirtualFile {
         if (pod.isNotBlank()) {
             if (!FantomMcpRun.isIdentifier(pod)) fail("pod must be a plain name: $pod")
-            return FantomPodLaunch.podRoot(project, pod) ?: fail("no pod $pod in the project")
+            val dir = FantomPodLaunch.podRoot(project, pod) ?: fail("no pod $pod in the project")
+            return LocalFileSystem.getInstance().findFileByIoFile(dir) ?: fail("no pod $pod in the project")
         }
         if (path.isBlank()) fail("give pod or path")
         val vf = locate(project, path)
-        read(project) { if (!FantomMcpQueries.isProjectFile(project, vf) && !vf.isDirectory) fail("not a file in the project: $path") }
         val root = FantomPodRoot.find(vf) ?: fail("no build.fan with a podName above $path")
         if (!read(project) { com.intellij.openapi.roots.ProjectFileIndex.getInstance(project).isInContent(root) }) {
             fail("not a pod in the project: $path")
         }
-        return VfsUtilCore.virtualToIoFile(root)
+        return root
     }
 
     private suspend fun podNameOf(project: Project, root: File): String {

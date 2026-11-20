@@ -17,6 +17,7 @@ Installs found                                    [+ Add folder]
   [ ] SkySpark 3.0.29       ! Fantom 1.0.76 missing v   sys.pod
 Default build target  [ SkySpark 4.0.7 v ]
 [x] Compile on save
+[ ] Allow AI agents to build and run tests
 ```
 
 **Roots.** The plugin looks at each folder directly under the three roots.
@@ -148,6 +149,17 @@ warnings show up in the editor with the exact message. The compile runs in a
 temp folder with its own `fan.props`, so the pod file goes there and never
 into an install. While a fresh compiler result exists, the "Unresolved
 reference" inspection stays quiet for that file.
+
+## Allow AI agents to build and run tests
+
+Off by default. When on, the MCP tools `fantom_build` and `fantom_run_test`
+may start `bin/fan` and `fant` for this project (see
+[Features](features.md#tools-for-ai-agents-mcp)). When off, they answer that
+the switch is off and start nothing. The other MCP tools only read code and
+work either way.
+
+The switch is saved in your workspace file, not in `.idea/fantom.xml`, so a
+project you clone cannot turn it on for you.
 
 ## Axon
 
